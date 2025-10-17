@@ -2390,9 +2390,11 @@
 
                     // CORRECTION SIMPLE: Obtenir le texte directement depuis la cellule affichée
                     let travailSelectionne = '';
-                    const row = link.closest('tr');
-                    if (row) {
-                        const travailCell = row.querySelector('[data-column="Travail"]');
+
+                    // Utiliser la variable row qui existe déjà dans le scope parent
+                    const tableRow = link.closest('tr');
+                    if (tableRow) {
+                        const travailCell = tableRow.querySelector('[data-column="Travail"]');
                         if (travailCell) {
                             // Obtenir le select
                             const select = travailCell.querySelector('select');
@@ -2669,9 +2671,9 @@
                     document.body.removeChild(notaDeVentaPopup);
 
                     // Simuler le clic sur "Appliquer changem."
-                    const row = link.closest('tr');
-                    if (row) {
-                        applyChangesWithoutPrompt(row, false);
+                    const applyRow = link.closest('tr');
+                    if (applyRow) {
+                        applyChangesWithoutPrompt(applyRow, false);
                     }
 
                 } catch (e) {
