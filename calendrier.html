@@ -2518,43 +2518,39 @@
                     console.log('Tableau final avec travail:', body);
 
                     doc.autoTable({
-                        startY: currentY,
-                        head: headers,
-                        body: body,
-                        theme: 'grid',
-                        styles: {
-                            halign: 'center',
-                            fontSize: 10,
-                            cellPadding: 4,
-                            lineWidth: 0.1,
-                            lineColor: [100, 100, 100]
-                        },
-                        headStyles: {
-                            fillColor: [70, 130, 180],
-                            textColor: [255, 255, 255],
-                            fontStyle: 'bold',
-                            halign: 'center'
-                        },
-                        bodyStyles: {
-                            halign: 'center',
-                            textColor: [0, 0, 0]
-                        },
-                        margin: { left: marginX, right: marginX },
-                        columnStyles: {
-                            0: { cellWidth: 15, halign: 'center' },
-                            1: { cellWidth: 20, halign: 'center' },
-                            2: { cellWidth: 90, halign: 'center', minCellHeight: 15 }, // Largeur augmentée à 90
-                            3: { cellWidth: 30, halign: 'right' },
-                            4: { cellWidth: 30, halign: 'right' }
-                        },
-                        // Forcer le wrap du texte
-                        didParseCell: function(data) {
-                            if (data.column.index === 2) {
-                                data.cell.styles.cellWidth = 90;
-                                data.cell.styles.halign = 'center';
-                            }
+                      startY: currentY,
+                      head: headers,
+                      body: body,
+                      theme: 'grid',
+                      styles: {
+                        halign: 'center',
+                        valign: 'middle',                  // ← centrage vertical global
+                        fontSize: 10,
+                        cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
+                        lineWidth: 0.1,
+                        lineColor: [100, 100, 100]
+                      },
+                      headStyles: { halign: 'center', valign: 'middle', fillColor: [70,130,180], textColor: [255,255,255], fontStyle: 'bold' },
+                      bodyStyles: { halign: 'center', valign: 'middle', textColor: [0,0,0] },
+
+                      margin: { left: marginX, right: marginX },
+                      columnStyles: {
+                        0: { cellWidth: 15 },                 // N°
+                        1: { cellWidth: 20 },                 // Quantité
+                        2: { cellWidth: 90, halign: 'center', valign: 'middle', minCellHeight: 15 }, // Description (centré H/V)
+                        3: { cellWidth: 30, halign: 'right',  valign: 'middle' }, // Tarif unitaire
+                        4: { cellWidth: 30, halign: 'right',  valign: 'middle' }  // Montant
+                      },
+
+                      // Sécurise le centrage H/V pour la colonne Description
+                      didParseCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 2) {
+                          data.cell.styles.halign = 'center';
+                          data.cell.styles.valign = 'middle';
                         }
+                      }
                     });
+
 
                     currentY = doc.autoTable.previous.finalY + 15;
 
