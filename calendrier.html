@@ -2009,83 +2009,106 @@
             documentPopup.style.top = '50%';
             documentPopup.style.left = '50%';
             documentPopup.style.transform = 'translate(-50%, -50%)';
-            documentPopup.style.padding = '15px';
-            documentPopup.style.backgroundColor = '#f9f9f9';
-            documentPopup.style.border = '1px solid #ccc';
-            documentPopup.style.boxShadow = '0px 0px 5px rgba(0,0,0,0.2)';
-            documentPopup.style.borderRadius = '8px';
+            documentPopup.style.padding = '20px';
+            documentPopup.style.backgroundColor = '#ffffff';
+            documentPopup.style.border = '2px solid #333';
+            documentPopup.style.boxShadow = '0px 0px 15px rgba(0,0,0,0.3)';
+            documentPopup.style.borderRadius = '10px';
             documentPopup.style.zIndex = '1000';
             documentPopup.style.fontFamily = 'Arial, sans-serif';
-            documentPopup.style.width = '420px'; // Ajustez la largeur si nécessaire
-            documentPopup.style.height = 'auto';
+            documentPopup.style.width = '450px';
+            documentPopup.style.maxHeight = '90vh';
+            documentPopup.style.overflowY = 'auto';
 
-            // Formulaire pour les détails du document
+            // Formulaire pour les détails du document avec logo et meilleure mise en page
             documentPopup.innerHTML = `
-                <h3 style="color: #333; text-align: center; margin-bottom: 10px;" data-i18n="payment_receipt_heading">Reçu du paiement</h3>
-                <label style="font-weight: bold;" data-i18n="label_name">Nom:</label>
-                <input type="text" id="documentNom" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;" value="${link.closest('tr').querySelector('[data-column="Nom"]').textContent}">
-                <br>
-                <div style="display: flex; justify-content: space-between;">
-                    <div style="width: 48%; margin-right: 4%;">
-                        <label style="font-weight: bold;" data-i18n="label_date">Date:</label>
-                        <input type="text" id="documentDate" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;" value="${link.closest('tr').querySelector('[data-column="Date"]').textContent}">
-                    </div>
-                    <div style="width: 48%;">
-                        <label style="font-weight: bold;" data-i18n="label_price">Prix:</label>
-                        <input type="text" id="documentPrix" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;" value="${link.closest('tr').querySelector('[data-column="Prix"]').textContent}">
-                    </div>
-                </div>
-                <label style="font-weight: bold; margin-top: 10px;" data-i18n="label_work">Travail:</label>
-                <input type="text" id="documentTravail" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;" value="${link.closest('tr').querySelector('[data-column="Travail"]').textContent}">
-                <br>
-                <br>
-                <label style="font-weight: bold;" data-i18n="label_location">Lieu:</label>
-                <input type="text" id="documentLieu" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;" value="${link.closest('tr').querySelector('[data-column="Lieu"]').textContent}">
-                <br>
-                <br>
-                <label style="font-weight: bold; margin-top: 10px;" data-i18n="label_bank_details">Données bancaires:</label>
-
-                <div style="margin-top: 10px;">
-                    <label style="font-weight: bold; font-size: 12px;" data-i18n="label_branch">Sucursale:</label>
-                    <input type="text" id="documentBanco1" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;">
-                </div>
-                <div style="margin-top: 10px;">
-                    <label style="font-weight: bold; font-size: 12px;" data-i18n="label_account_number">N° de compte:</label>
-                    <input type="text" id="documentBanco2" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;">
-                </div>
-                <div style="margin-top: 10px;">
-                    <label style="font-weight: bold; font-size: 12px;" data-i18n="label_bank">Banque:</label>
-                    <input type="text" id="documentBanco" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;">
-                </div>
-                <div style="margin-top: 10px;">
-                    <label style="font-weight: bold; font-size: 12px;" data-i18n="label_iban">IBAN:</label>
-                    <input type="text" id="documentBanco3" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;">
-                </div>
-                <div style="margin-top: 10px;">
-                    <label style="font-weight: bold; font-size: 12px;" data-i18n="label_recipient">Destinataire:</label>
-                    <input type="text" id="documentBanco4" style="width: 100%; padding: 6px 8px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0;">
+                <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                    <img src="/images/cedunet.png" alt="Logo Cedunet" style="max-width: 150px; max-height: 80px; margin-bottom: 10px;">
+                    <h3 style="color: #333; margin: 10px 0 5px 0; font-size: 18px;" data-i18n="payment_receipt_heading">REÇU DE PAIEMENT</h3>
                 </div>
 
-                <br><br>
-                <div style="display: flex; justify-content: space-between;">
-                    <button id="enregistrerPaiement" style="padding: 8px 12px; border-radius: 4px; background-color: #66d19e; border: none; color: white; font-weight: bold;" data-i18n="button_save_payment">Enregistrer paiement</button>
-                    <button id="enregistrerEtAjouterPaiement" style="padding: 8px 12px; border-radius: 4px; background-color: #007bff; border: none; color: white; font-weight: bold;" data-i18n="button_save_and_add">Enregistrer et ajouter</button>
-                    <button id="annuler" style="padding: 8px 12px; border-radius: 4px; background-color: #dc3545; border: none; color: white; font-weight: bold;" data-i18n="button_cancel">Annuler</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div>
+                        <label style="font-weight: bold; font-size: 12px; display: block;" data-i18n="label_name">Nom:</label>
+                        <input type="text" id="documentNom" style="width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ddd; background-color: #f8f9fa;">
+                    </div>
+                    <div>
+                        <label style="font-weight: bold; font-size: 12px; display: block;" data-i18n="label_date">Date:</label>
+                        <input type="text" id="documentDate" style="width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ddd; background-color: #f8f9fa;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div>
+                        <label style="font-weight: bold; font-size: 12px; display: block;" data-i18n="label_price">Prix:</label>
+                        <input type="text" id="documentPrix" style="width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ddd; background-color: #f8f9fa;">
+                    </div>
+                    <div>
+                        <label style="font-weight: bold; font-size: 12px; display: block;" data-i18n="label_location">Lieu:</label>
+                        <input type="text" id="documentLieu" style="width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ddd; background-color: #f8f9fa;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold; font-size: 12px; display: block;" data-i18n="label_work">Travail:</label>
+                    <input type="text" id="documentTravail" style="width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ddd; background-color: #f8f9fa;">
+                </div>
+
+                <div style="background-color: #f0f0f0; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <h4 style="color: #333; margin: 0 0 10px 0; text-align: center; font-size: 14px;" data-i18n="label_bank_details">DONNÉES BANCAIRES</h4>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="font-weight: bold; font-size: 11px; display: block;" data-i18n="label_branch">Sucursale:</label>
+                            <input type="text" id="documentBanco1" style="width: 100%; padding: 6px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: white; font-size: 11px;">
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; font-size: 11px; display: block;" data-i18n="label_account_number">N° de compte:</label>
+                            <input type="text" id="documentBanco2" style="width: 100%; padding: 6px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: white; font-size: 11px;">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 8px;">
+                        <label style="font-weight: bold; font-size: 11px; display: block;" data-i18n="label_bank">Banque:</label>
+                        <input type="text" id="documentBanco" style="width: 100%; padding: 6px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: white; font-size: 11px;">
+                    </div>
+
+                    <div style="margin-top: 8px;">
+                        <label style="font-weight: bold; font-size: 11px; display: block;" data-i18n="label_iban">IBAN:</label>
+                        <input type="text" id="documentBanco3" style="width: 100%; padding: 6px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: white; font-size: 11px;">
+                    </div>
+
+                    <div style="margin-top: 8px;">
+                        <label style="font-weight: bold; font-size: 11px; display: block;" data-i18n="label_recipient">Destinataire:</label>
+                        <input type="text" id="documentBanco4" style="width: 100%; padding: 6px; margin: 3px 0; border-radius: 4px; border: 1px solid #ccc; background-color: white; font-size: 11px;">
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 20px;">
+                    <button id="enregistrerPaiement" style="padding: 10px 15px; border-radius: 5px; background-color: #28a745; border: none; color: white; font-weight: bold; flex: 1; cursor: pointer;" data-i18n="button_save_payment">Enregistrer paiement</button>
+                    <button id="enregistrerEtAjouterPaiement" style="padding: 10px 15px; border-radius: 5px; background-color: #007bff; border: none; color: white; font-weight: bold; flex: 1; cursor: pointer;" data-i18n="button_save_and_add">Enregistrer et ajouter</button>
+                    <button id="annuler" style="padding: 10px 15px; border-radius: 5px; background-color: #dc3545; border: none; color: white; font-weight: bold; flex: 1; cursor: pointer;" data-i18n="button_cancel">Annuler</button>
                 </div>
             `;
 
             document.body.appendChild(documentPopup);
 
-            // Appliquer les traductions après que le HTML soit ajouté au DOM
+            // Remplir les valeurs depuis la ligne du tableau
+            document.getElementById('documentNom').value = link.closest('tr').querySelector('[data-column="Nom"]').textContent;
+            document.getElementById('documentDate').value = link.closest('tr').querySelector('[data-column="Date"]').textContent;
+            document.getElementById('documentPrix').value = link.closest('tr').querySelector('[data-column="Prix"]').textContent;
+            document.getElementById('documentTravail').value = link.closest('tr').querySelector('[data-column="Travail"]').textContent;
+            document.getElementById('documentLieu').value = link.closest('tr').querySelector('[data-column="Lieu"]').textContent;
+
+            // Appliquer les traductions
             documentPopup.querySelectorAll('[data-i18n]').forEach(element => {
                 element.textContent = getTranslation(element.dataset.i18n);
             });
 
-            // Appel de la fonction pour charger les données bancaires dans les champs du popup
+            // Charger les données bancaires
             chargerDonneesBancaires();
 
-
-
+            // [Le reste du code pour dataURLtoBlob et les gestionnaires d'événements reste identique...]
             function dataURLtoBlob(dataURL) {
                 const arr = dataURL.split(',');
                 const mime = arr[0].match(/:(.*?);/)[1];
@@ -2098,7 +2121,7 @@
                 return new Blob([u8arr], { type: mime });
             }
 
-            // Gérer les boutons
+            // Gérer les boutons (le code reste identique)
             document.getElementById('enregistrerPaiement').addEventListener('click', function() {
                 const documentData = {
                     nom: document.getElementById('documentNom').value,
@@ -2106,75 +2129,59 @@
                     prix: document.getElementById('documentPrix').value,
                     travail: document.getElementById('documentTravail').value,
                     lieu: document.getElementById('documentLieu').value,
-                    // Assurez-vous que documentBanco est le bon ID pour 'Banque'
                     banque: document.getElementById('documentBanco').value
                 };
 
-                // Créer un Blob avec les données du document
                 const file = new Blob([JSON.stringify(documentData, null, 2)], { type: 'application/json' });
-
-                // Créer un lien de téléchargement
                 const url = URL.createObjectURL(file);
                 const a = document.createElement('a');
                 a.href = url;
-                // Traduire le nom du fichier
                 const fileNamePrefix = getTranslation('file_name_payment_prefix');
                 a.download = `${documentData.nom}_${fileNamePrefix}.json`;
                 document.body.appendChild(a);
                 a.click();
 
-                // Nettoyer l'URL objet et supprimer l'élément
                 setTimeout(() => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                 }, 0);
 
-                alert(getTranslation('alert_payment_saved_locally')); // Traduire l'alerte
-                document.body.removeChild(documentPopup); // Fermer le popup
+                alert(getTranslation('alert_payment_saved_locally'));
+                document.body.removeChild(documentPopup);
             });
 
             document.getElementById('enregistrerEtAjouterPaiement').addEventListener('click', function() {
-                documentPopup.style.width = "400px"; // Ou la largeur souhaitée
-                documentPopup.style.height = "auto";
-                // Utiliser html2canvas pour capturer le popup et créer une image
                 html2canvas(documentPopup).then(canvas => {
-                    // Convertir l'image en base64
                     const imageBase64 = canvas.toDataURL("image/png");
-
-                    // Convertir base64 en blob pour l'envoyer à Supabase
                     const blob = dataURLtoBlob(imageBase64);
-
-                    // Utiliser Supabase pour télécharger l'image
                     const userId = link.closest('tr').dataset.userId;
+
                     supabase.storage
                         .from('facturas_fran')
                         .upload(`facturas_fran/${userId}/document_image.png`, blob)
                         .then(({ data, error }) => {
                             if (error) {
-                                console.error(getTranslation('error_uploading_image'), error); // Traduire
-                                showTemporaryMessage(getTranslation('temp_msg_error_uploading_image')); // Traduire
+                                console.error(getTranslation('error_uploading_image'), error);
+                                showTemporaryMessage(getTranslation('temp_msg_error_uploading_image'));
                             } else {
-                                showTemporaryMessage(getTranslation('temp_msg_document_converted_uploaded')); // Traduire
+                                showTemporaryMessage(getTranslation('temp_msg_document_converted_uploaded'));
 
-                                // 🔹 Ajout de la mise à jour de event_quot1_fran
                                 supabase
                                     .from('event_quot1_fran')
-                                    .update({ paiement: data.path })  // Met à jour la facture
+                                    .update({ paiement: data.path })
                                     .eq('user_id', userId)
                                     .then(({ error: updateError }) => {
                                         if (updateError) {
-                                            console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError); // Traduire
+                                            console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError);
                                         } else {
-                                            console.log(getTranslation('log_payment_updated_success_event_quot1_fran')); // Traduire
+                                            console.log(getTranslation('log_payment_updated_success_event_quot1_fran'));
                                         }
                                     });
 
-                                // Mettre à jour le lien paiement pour afficher l'image
-                                link.textContent = getTranslation('link_view_payment'); // Traduire
+                                link.textContent = getTranslation('link_view_payment');
                                 link.dataset.paiement = data.path;
-                                document.body.removeChild(documentPopup); // Fermer le popup
+                                document.body.removeChild(documentPopup);
 
-                                // Simuler le clic sur "Appliquer changem."
                                 const row = link.closest('tr');
                                 if (row) {
                                     applyChangesWithoutPrompt(row, false);
@@ -2185,7 +2192,7 @@
             });
 
             document.getElementById('annuler').addEventListener('click', function() {
-                document.body.removeChild(documentPopup); // Fermer le popup
+                document.body.removeChild(documentPopup);
             });
         }
 
