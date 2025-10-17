@@ -2526,21 +2526,33 @@
                             halign: 'center',
                             fontSize: 10,
                             cellPadding: 4,
-                            overflow: 'linebreak',
-                            minCellHeight: 10
+                            lineWidth: 0.1,
+                            lineColor: [100, 100, 100]
                         },
                         headStyles: {
                             fillColor: [70, 130, 180],
                             textColor: [255, 255, 255],
-                            fontStyle: 'bold'
+                            fontStyle: 'bold',
+                            halign: 'center'
+                        },
+                        bodyStyles: {
+                            halign: 'center',
+                            textColor: [0, 0, 0]
                         },
                         margin: { left: marginX, right: marginX },
                         columnStyles: {
-                            0: { cellWidth: 15 },  // N°
-                            1: { cellWidth: 20 },  // Quantité
-                            2: { cellWidth: 80, halign: 'center' },  // Description - PLUS LARGE et centrée
-                            3: { cellWidth: 30, halign: 'right' },   // Tarif unitaire
-                            4: { cellWidth: 30, halign: 'right' }    // Montant
+                            0: { cellWidth: 15, halign: 'center' },
+                            1: { cellWidth: 20, halign: 'center' },
+                            2: { cellWidth: 90, halign: 'center', minCellHeight: 15 }, // Largeur augmentée à 90
+                            3: { cellWidth: 30, halign: 'right' },
+                            4: { cellWidth: 30, halign: 'right' }
+                        },
+                        // Forcer le wrap du texte
+                        didParseCell: function(data) {
+                            if (data.column.index === 2) {
+                                data.cell.styles.cellWidth = 90;
+                                data.cell.styles.halign = 'center';
+                            }
                         }
                     });
 
