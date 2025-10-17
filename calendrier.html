@@ -2522,24 +2522,15 @@
                         head: headers,
                         body: body,
                         theme: 'grid',
+                        styles: { halign: 'center' }, // FORCER le centrage global
                         headStyles: {
                             fillColor: [70, 130, 180],
-                            textColor: [255, 255, 255],
-                            fontStyle: 'bold',
-                            halign: 'center'
-                        },
-                        bodyStyles: {
-                            halign: 'center', // Centrer tout le body
-                            fontSize: 10,
-                            cellPadding: 4
+                            textColor: [255, 255, 255]
                         },
                         margin: { left: marginX, right: marginX },
                         columnStyles: {
-                            0: { cellWidth: 15 },
-                            1: { cellWidth: 20 },
-                            2: { cellWidth: 70 }, // Largeur fixe pour la description
-                            3: { cellWidth: 30, halign: 'right' },
-                            4: { cellWidth: 30, halign: 'right' }
+                            3: { halign: 'right' }, // Seulement les colonnes de prix à droite
+                            4: { halign: 'right' }
                         }
                     });
 
