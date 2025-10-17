@@ -2517,46 +2517,58 @@
 
                     console.log('Tableau final avec travail:', body);
 
-                    doc.autoTable({
-                        startY: currentY,
-                        head: headers,
-                        body: body,
-                        theme: 'grid',
-                        styles: {
-                            halign: 'center',
-                            fontSize: 10,
-                            cellPadding: 4,
-                            lineWidth: 0.1,
-                            lineColor: [100, 100, 100]
-                        },
-                        headStyles: {
-                            fillColor: [70, 130, 180],
-                            textColor: [255, 255, 255],
-                            fontStyle: 'bold',
-                            halign: 'center'
-                        },
-                        bodyStyles: {
-                            halign: 'center',
-                            textColor: [0, 0, 0]
-                        },
-                        margin: { left: marginX, right: marginX },
-                        columnStyles: {
-                            0: { cellWidth: 15, halign: 'center' },
-                            1: { cellWidth: 20, halign: 'center' },
-                            2: { cellWidth: 90, halign: 'center', minCellHeight: 15 }, // Largeur augmentée à 90
-                            3: { cellWidth: 30, halign: 'right' },
-                            4: { cellWidth: 30, halign: 'right' }
-                        },
-                        // Forcer le wrap du texte
-                        didParseCell: function(data) {
-                            if (data.column.index === 2) {
-                                data.cell.styles.cellWidth = 90;
-                                data.cell.styles.halign = 'center';
-                            }
-                        }
+                    // --- Création MANUELLE du tableau ---
+                    const tableTop = currentY;
+                    const colWidths = [15, 20, 90, 30, 30]; // Largeurs des colonnes
+                    const rowHeight = 12; // Augmenté un peu la hauteur pour mieux centrer
+
+                    // En-tête du tableau
+                    doc.setFillColor(70, 130, 180);
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(9);
+
+                    // Dessiner les cellules d'en-tête
+                    let xPos = marginX;
+                    headers[0].forEach((header, index) => {
+                        doc.rect(xPos, tableTop, colWidths[index], rowHeight, 'F');
+                        doc.text(header, xPos + colWidths[index]/2, tableTop + rowHeight/2 + 3, { align: 'center' });
+                        xPos += colWidths[index];
                     });
 
-                    currentY = doc.autoTable.previous.finalY + 15;
+                    // Corps du tableau
+                    doc.setFillColor(255, 255, 255);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9); // Taille de police réduite pour mieux tenir
+
+                    // Dessiner la ligne de données
+                    xPos = marginX;
+                    body[0].forEach((cell, index) => {
+                        // Fond de la cellule avec bordure
+                        doc.rect(xPos, tableTop + rowHeight, colWidths[index], rowHeight, 'S');
+
+                        // Texte de la cellule - TOUJOURS CENTRÉ sauf pour les prix
+                        const align = (index === 3 || index === 4) ? 'right' : 'center';
+                        const textX = (index === 3 || index === 4) ? xPos + colWidths[index] - 2 : xPos + colWidths[index]/2;
+                        const textY = tableTop + rowHeight + rowHeight/2 + 3;
+
+                        // Pour la colonne Description, s'assurer que le texte est bien centré
+                        if (index === 2) {
+                            // Forcer le centrage et réduire légèrement la police si le texte est long
+                            if (cell.toString().length > 20) {
+                                doc.setFontSize(8);
+                            }
+                            doc.text(cell.toString(), xPos + colWidths[index]/2, textY, { align: 'center' });
+                            doc.setFontSize(9); // Remettre la taille normale
+                        } else {
+                            doc.text(cell.toString(), textX, textY, { align: align });
+                        }
+
+                        xPos += colWidths[index];
+                    });
+
+                    currentY = tableTop + (rowHeight * 2) + 10;
 
                     // --- Section Totaux ---
                     const totalsStartX = doc.internal.pageSize.width - 100;
