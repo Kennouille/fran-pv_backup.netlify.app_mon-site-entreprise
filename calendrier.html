@@ -2388,59 +2388,50 @@
                 try {
                     console.log(getTranslation('log_logo_loaded_dimensions'), logoImg.naturalWidth, logoImg.naturalHeight);
 
-                    // CORRECTION: Obtenir le travail sélectionné depuis la ligne du tableau
+                    // CORRECTION SIMPLE: Obtenir le texte directement depuis la cellule affichée
                     let travailSelectionne = '';
-
-                    // Méthode 1: Chercher directement dans la ligne du tableau
                     const row = link.closest('tr');
                     if (row) {
                         const travailCell = row.querySelector('[data-column="Travail"]');
                         if (travailCell) {
-                            // Obtenir le select dans la cellule
+                            // Obtenir le select
                             const select = travailCell.querySelector('select');
                             if (select) {
                                 travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
-                                console.log('Travail trouvé via select:', travailSelectionne);
                             } else {
-                                // Si pas de select, prendre le texte direct
-                                travailSelectionne = travailCell.textContent.trim();
-                                console.log('Travail trouvé via texte:', travailSelectionne);
+                                // Prendre tout le texte de la cellule et nettoyer
+                                travailSelectionne = travailCell.textContent
+                                    .replace(/– Sélectionner le statut –/g, '')
+                                    .replace(/Lavage de vitres/g, '')
+                                    .replace(/Nettoyage de locaux/g, '')
+                                    .replace(/Nettoyage après chantier/g, '')
+                                    .replace(/Nettoyage de panneaux photovoltaïques/g, '')
+                                    .replace(/Lutte contre les nuisibles/g, '')
+                                    .replace(/Autre : Voir Observations/g, '')
+                                    .replace(/\s+/g, ' ')
+                                    .trim();
                             }
                         }
                     }
 
-                    // Méthode 2: Si la méthode 1 échoue, parser le HTML
-                    if (!travailSelectionne && eventData.travail) {
-                        console.log('Parsing HTML du travail:', eventData.travail);
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = eventData.travail;
+                    // Si toujours vide, utiliser une valeur par défaut basée sur le premier service non vide
+                    if (!travailSelectionne) {
+                        const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier',
+                                         'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
 
-                        const select = tempDiv.querySelector('select');
-                        if (select) {
-                            travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
-                        } else {
-                            // Extraire seulement le texte visible (sans les options non sélectionnées)
-                            travailSelectionne = tempDiv.textContent
-                                .replace(/– Sélectionner le statut –/g, '')
-                                .replace(/Lavage de vitres|Nettoyage de locaux|Nettoyage après chantier|Nettoyage de panneaux photovoltaïques|Lutte contre les nuisibles|Autre : Voir Observations/g, '')
-                                .replace(/\s+/g, ' ')
-                                .trim();
+                        for (let service of services) {
+                            if (eventData.travail.includes(service)) {
+                                travailSelectionne = service;
+                                break;
+                            }
+                        }
+
+                        if (!travailSelectionne) {
+                            travailSelectionne = 'Service de nettoyage';
                         }
                     }
 
-                    // Méthode 3: Si toujours vide, utiliser une valeur par défaut
-                    if (!travailSelectionne) {
-                        travailSelectionne = 'Service de nettoyage';
-                        console.log('Utilisation valeur par défaut');
-                    }
-
-                    // Nettoyage final
-                    travailSelectionne = travailSelectionne
-                        .replace(/– Sélectionner le statut –/g, '')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-
-                    console.log('Travail final pour PDF:', travailSelectionne);
+                    console.log('Travail sélectionné final:', travailSelectionne);
 
                     // Dimensions du logo
                     const logoWidth = 50;
@@ -2558,7 +2549,6 @@
                         }
                     });
 
-                    // Le reste du code reste identique...
                     currentY = doc.autoTable.previous.finalY + 15;
 
                     // --- Section Totaux ---
