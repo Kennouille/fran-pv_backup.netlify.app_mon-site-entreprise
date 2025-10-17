@@ -2388,41 +2388,59 @@
                 try {
                     console.log(getTranslation('log_logo_loaded_dimensions'), logoImg.naturalWidth, logoImg.naturalHeight);
 
-                    // CORRECTION: Extraire uniquement le travail sélectionné
+                    // CORRECTION: Obtenir le travail sélectionné depuis la ligne du tableau
                     let travailSelectionne = '';
 
-                    // Méthode 1: Si eventData.travail est un élément HTML avec des options
-                    if (eventData.travail.includes('<select') || eventData.travail.includes('<option')) {
-                        // Créer un élément DOM temporaire pour parser le HTML
+                    // Méthode 1: Chercher directement dans la ligne du tableau
+                    const row = link.closest('tr');
+                    if (row) {
+                        const travailCell = row.querySelector('[data-column="Travail"]');
+                        if (travailCell) {
+                            // Obtenir le select dans la cellule
+                            const select = travailCell.querySelector('select');
+                            if (select) {
+                                travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
+                                console.log('Travail trouvé via select:', travailSelectionne);
+                            } else {
+                                // Si pas de select, prendre le texte direct
+                                travailSelectionne = travailCell.textContent.trim();
+                                console.log('Travail trouvé via texte:', travailSelectionne);
+                            }
+                        }
+                    }
+
+                    // Méthode 2: Si la méthode 1 échoue, parser le HTML
+                    if (!travailSelectionne && eventData.travail) {
+                        console.log('Parsing HTML du travail:', eventData.travail);
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = eventData.travail;
 
-                        // Trouver l'option sélectionnée
                         const select = tempDiv.querySelector('select');
                         if (select) {
-                            const selectedOption = select.options[select.selectedIndex];
-                            travailSelectionne = selectedOption ? selectedOption.textContent : '';
+                            travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
                         } else {
-                            // Si pas de select, prendre le texte directement
-                            travailSelectionne = tempDiv.textContent || eventData.travail;
+                            // Extraire seulement le texte visible (sans les options non sélectionnées)
+                            travailSelectionne = tempDiv.textContent
+                                .replace(/– Sélectionner le statut –/g, '')
+                                .replace(/Lavage de vitres|Nettoyage de locaux|Nettoyage après chantier|Nettoyage de panneaux photovoltaïques|Lutte contre les nuisibles|Autre : Voir Observations/g, '')
+                                .replace(/\s+/g, ' ')
+                                .trim();
                         }
-                    } else {
-                        // Méthode 2: Si c'est déjà du texte simple
-                        travailSelectionne = eventData.travail;
                     }
 
-                    // Nettoyer le texte (enlever "– Sélectionner le statut –" et autres options)
-                    travailSelectionne = travailSelectionne.replace(/– Sélectionner le statut –/g, '')
-                                                          .replace(/\n/g, ' ')
-                                                          .replace(/\s+/g, ' ')
-                                                          .trim();
-
-                    // Si après nettoyage c'est vide, utiliser une valeur par défaut
+                    // Méthode 3: Si toujours vide, utiliser une valeur par défaut
                     if (!travailSelectionne) {
                         travailSelectionne = 'Service de nettoyage';
+                        console.log('Utilisation valeur par défaut');
                     }
 
-                    console.log('Travail sélectionné nettoyé:', travailSelectionne);
+                    // Nettoyage final
+                    travailSelectionne = travailSelectionne
+                        .replace(/– Sélectionner le statut –/g, '')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
+                    console.log('Travail final pour PDF:', travailSelectionne);
 
                     // Dimensions du logo
                     const logoWidth = 50;
@@ -2499,12 +2517,12 @@
                     const taxes = prixFloat * 0.15;
                     const totalWithTaxes = prixFloat + taxes;
 
-                    // UTILISER LE TRAVAIL SÉLECTIONNÉ NETTOYÉ
+                    // UTILISER LE TRAVAIL SÉLECTIONNÉ CORRECT
                     const body = [
                         [1, 1, travailSelectionne, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
                     ];
 
-                    console.log('Tableau final:', body);
+                    console.log('Tableau final avec travail:', body);
 
                     doc.autoTable({
                         startY: currentY,
@@ -2540,6 +2558,7 @@
                         }
                     });
 
+                    // Le reste du code reste identique...
                     currentY = doc.autoTable.previous.finalY + 15;
 
                     // --- Section Totaux ---
