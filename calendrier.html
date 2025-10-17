@@ -2367,6 +2367,7 @@
         }
 
         // --- NOUVELLE FONCTION pour générer le PDF et l'enregistrer dans Supabase ---
+        // --- NOUVELLE FONCTION pour générer le PDF et l'enregistrer dans Supabase ---
         async function generatePdfNotaDeVenta(eventData, link, notaDeVentaPopup, entrepriseData) {
             showTemporaryMessage(getTranslation('temp_msg_generating_saving_sales_note'), 'info');
 
@@ -2375,12 +2376,12 @@
             const doc = new jsPDF();
 
             // Coordonnées de base (en mm)
-            const marginX = 15; // Marge gauche/droite réduite
-            let currentY = 20; // Position Y de départ
+            const marginX = 15;
+            let currentY = 20;
 
             // --- Chargement et ajout du logo de l'entreprise ---
             const logoImg = new Image();
-            logoImg.src = './images/cedunet.png'; // VOTRE CHEMIN DE LOGO
+            logoImg.src = './images/cedunet.png';
 
             console.log(getTranslation('log_logo_path'), logoImg.src);
 
@@ -2388,15 +2389,15 @@
                 try {
                     console.log(getTranslation('log_logo_loaded_dimensions'), logoImg.naturalWidth, logoImg.naturalHeight);
 
-                    // Dimensions du logo dans le PDF
-                    const logoWidth = 50; // Largeur réduite pour mieux s'intégrer
+                    // Dimensions du logo
+                    const logoWidth = 50;
                     const logoHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * logoWidth;
 
-                    // Ajouter le logo en haut à gauche
+                    // Ajouter le logo
                     doc.addImage(logoImg, 'PNG', marginX, currentY, logoWidth, logoHeight);
 
-                    // --- En-tête avec informations de l'entreprise à droite du logo ---
-                    const headerRightX = marginX + logoWidth + 10; // Commence après le logo
+                    // --- En-tête avec informations de l'entreprise ---
+                    const headerRightX = marginX + logoWidth + 10;
 
                     doc.setFontSize(16);
                     doc.setFont("helvetica", "bold");
@@ -2409,12 +2410,12 @@
                     doc.text(`${getTranslation('label_email_short')}: ${entrepriseData.email}`, headerRightX, currentY + 27);
                     doc.text(`${getTranslation('label_website_short')}: ${entrepriseData.web}`, headerRightX, currentY + 33);
 
-                    currentY += logoHeight + 15; // Espace après le logo et l'en-tête
+                    currentY += logoHeight + 25; // ESPACE AUGMENTÉ ICI (de 15 à 25)
 
                     // --- Ligne de séparation ---
                     doc.setDrawColor(200, 200, 200);
                     doc.line(marginX, currentY, doc.internal.pageSize.width - marginX, currentY);
-                    currentY += 10;
+                    currentY += 15; // ESPACE AUGMENTÉ ICI (de 10 à 15)
 
                     // --- Titre du document ---
                     doc.setFontSize(20);
@@ -2423,8 +2424,6 @@
                     currentY += 15;
 
                     // --- Informations du document (numéro et date) ---
-                    const rightAlignX = doc.internal.pageSize.width - marginX;
-
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
 
@@ -2440,13 +2439,11 @@
                     doc.text(eventData.eventId, marginX + 45, currentY + 7);
                     doc.text(eventData.date, marginX + 45, currentY + 14);
 
-                    currentY += 25;
+                    currentY += 30; // ESPACE AUGMENTÉ ICI (de 25 à 30)
 
-                    // --- Informations du client ---
-                    doc.setFontSize(12);
-                    doc.setFont("helvetica", "bold");
-                    doc.text(getTranslation('pdf_client_information') + ":", marginX, currentY);
-                    currentY += 8;
+                    // --- Informations du client - TITRE SUPPRIMÉ ---
+                    // SUPPRIMÉ: doc.text(getTranslation('pdf_client_information') + ":", marginX, currentY);
+                    // SUPPRIMÉ: currentY += 8;
 
                     // Cadre pour les informations client
                     doc.setFillColor(250, 250, 250);
@@ -2460,19 +2457,23 @@
                     doc.text(eventData.nom, marginX + 30, currentY + 7);
                     doc.text(eventData.lieu, marginX + 100, currentY + 7);
 
-                    currentY += 20;
+                    currentY += 25; // ESPACE AUGMENTÉ ICI (de 20 à 25)
 
-                    // --- Tableau des articles avec jspdf-autotable ---
+                    // --- Tableau des articles ---
                     const headers = [
                         [getTranslation('pdf_table_header_num'), getTranslation('pdf_table_header_quantity'), getTranslation('pdf_table_header_description'), getTranslation('pdf_table_header_unit_price'), getTranslation('pdf_table_header_amount')]
                     ];
 
                     const prixFloat = parseFloat(eventData.prix.replace(',', '.'));
-                    const taxes = prixFloat * 0.15; // Taxes à 15%
+                    const taxes = prixFloat * 0.15;
                     const totalWithTaxes = prixFloat + taxes;
 
+                    // CORRECTION: Utiliser uniquement le travail sélectionné, pas tout le select
+                    const travailSelectionne = eventData.travail;
+                    console.log('Travail sélectionné pour le PDF:', travailSelectionne);
+
                     const body = [
-                        [1, 1, eventData.travail, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
+                        [1, 1, travailSelectionne, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
                     ];
 
                     console.log(getTranslation('log_table_body'), body);
@@ -2490,7 +2491,7 @@
                             lineWidth: 0.1
                         },
                         headStyles: {
-                            fillColor: [70, 130, 180], // Bleu plus professionnel
+                            fillColor: [70, 130, 180],
                             textColor: [255, 255, 255],
                             fontStyle: 'bold',
                             halign: 'center'
@@ -2516,33 +2517,28 @@
                     // --- Section Totaux ---
                     const totalsStartX = doc.internal.pageSize.width - 100;
 
-                    // Cadre pour les totaux
                     doc.setFillColor(240, 240, 240);
                     doc.rect(totalsStartX - 10, currentY, 90, 25, 'F');
 
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
 
-                    // Sous-total
                     doc.text(`${getTranslation('pdf_subtotal')}:`, totalsStartX, currentY + 8, { align: 'right' });
                     doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 60, currentY + 8, { align: 'right' });
 
-                    // Taxes
                     doc.text(`${getTranslation('pdf_taxes')} (15%):`, totalsStartX, currentY + 16, { align: 'right' });
                     doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 60, currentY + 16, { align: 'right' });
 
-                    // Ligne de séparation avant le total
                     doc.setDrawColor(150, 150, 150);
                     doc.line(totalsStartX, currentY + 19, totalsStartX + 60, currentY + 19);
 
-                    // Total
                     doc.setFont("helvetica", "bold");
                     doc.text(`${getTranslation('pdf_total')}:`, totalsStartX, currentY + 24, { align: 'right' });
                     doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 60, currentY + 24, { align: 'right' });
 
                     currentY += 35;
 
-                    // --- Section Notes / Remarques ---
+                    // --- Section Notes ---
                     if (currentY < doc.internal.pageSize.height - 40) {
                         doc.setFontSize(10);
                         doc.setFont("helvetica", "bold");
@@ -2565,7 +2561,6 @@
                     // --- Pied de page ---
                     const footerY = doc.internal.pageSize.height - 15;
 
-                    // Ligne de séparation du pied de page
                     doc.setDrawColor(200, 200, 200);
                     doc.line(marginX, footerY - 10, doc.internal.pageSize.width - marginX, footerY - 10);
 
@@ -2652,7 +2647,6 @@
             logoImg.onerror = () => {
                 console.error(getTranslation("error_loading_logo_path_check"));
                 showTemporaryMessage(getTranslation("error_logo_not_found_incorrect_path"), 'error');
-                // Vous pouvez choisir de générer le PDF sans logo ou d'arrêter le processus
             };
         }
 
