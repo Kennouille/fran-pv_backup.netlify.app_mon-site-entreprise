@@ -2368,204 +2368,253 @@
 
         // --- NOUVELLE FONCTION pour générer le PDF et l'enregistrer dans Supabase ---
         async function generatePdfNotaDeVenta(eventData, link, notaDeVentaPopup, entrepriseData) {
-            showTemporaryMessage(getTranslation('temp_msg_generating_saving_sales_note'), 'info'); // Traduire
+            showTemporaryMessage(getTranslation('temp_msg_generating_saving_sales_note'), 'info');
 
             // eslint-disable-next-line no-undef
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
             // Coordonnées de base (en mm)
-            const marginX = 20; // Marge gauche/droite
+            const marginX = 15; // Marge gauche/droite réduite
             let currentY = 20; // Position Y de départ
 
             // --- Chargement et ajout du logo de l'entreprise ---
             const logoImg = new Image();
-            logoImg.src = './images/cedunet.png'; // VOTRE CHEMIN DE LOGO CONFIRMÉ
+            logoImg.src = './images/cedunet.png'; // VOTRE CHEMIN DE LOGO
 
-            // Log pour vérifier le chemin du logo
-            console.log(getTranslation('log_logo_path'), logoImg.src); // Traduire
+            console.log(getTranslation('log_logo_path'), logoImg.src);
 
             logoImg.onload = async () => {
                 try {
-                    // Log pour vérifier les données de l'image du logo une fois chargée
-                    console.log(getTranslation('log_logo_loaded_dimensions'), logoImg.naturalWidth, logoImg.naturalHeight); // Traduire
+                    console.log(getTranslation('log_logo_loaded_dimensions'), logoImg.naturalWidth, logoImg.naturalHeight);
 
-                    // Dimensions du logo dans le PDF (ajustez si nécessaire)
-                    const logoWidth = 60; // Largeur désirée en mm
+                    // Dimensions du logo dans le PDF
+                    const logoWidth = 50; // Largeur réduite pour mieux s'intégrer
                     const logoHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * logoWidth;
+
+                    // Ajouter le logo en haut à gauche
                     doc.addImage(logoImg, 'PNG', marginX, currentY, logoWidth, logoHeight);
 
-                    // Déplacer le Y après le logo
-                    currentY += logoHeight + 10;
+                    // --- En-tête avec informations de l'entreprise à droite du logo ---
+                    const headerRightX = marginX + logoWidth + 10; // Commence après le logo
 
-                    // --- Informations de l'entreprise (en haut à droite) ---
-                    const rightAlignX = doc.internal.pageSize.width - marginX; // Côté droit du document avec marge
-
-                    // Logs pour vérifier les données de l'entreprise
-                    console.log(getTranslation('log_company_data'), entrepriseData); // Traduire
-
-                    doc.setFontSize(14);
+                    doc.setFontSize(16);
                     doc.setFont("helvetica", "bold");
-                    doc.text(entrepriseData.nom, rightAlignX, 20, { align: 'right' });
-                    doc.setFontSize(10);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(entrepriseData.adresse, rightAlignX, 26, { align: 'right' });
-                    doc.text(`${getTranslation('label_phone_short')}: ${entrepriseData.tel}`, rightAlignX, 32, { align: 'right' }); // Traduire
-                    doc.text(`${getTranslation('label_email_short')}: ${entrepriseData.email}`, rightAlignX, 38, { align: 'right' }); // Traduire
-                    doc.text(`${getTranslation('label_website_short')}: ${entrepriseData.web}`, rightAlignX, 44, { align: 'right' }); // Traduire
+                    doc.text(entrepriseData.nom, headerRightX, currentY + 8);
 
+                    doc.setFontSize(9);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(entrepriseData.adresse, headerRightX, currentY + 15);
+                    doc.text(`${getTranslation('label_phone_short')}: ${entrepriseData.tel}`, headerRightX, currentY + 21);
+                    doc.text(`${getTranslation('label_email_short')}: ${entrepriseData.email}`, headerRightX, currentY + 27);
+                    doc.text(`${getTranslation('label_website_short')}: ${entrepriseData.web}`, headerRightX, currentY + 33);
+
+                    currentY += logoHeight + 15; // Espace après le logo et l'en-tête
+
+                    // --- Ligne de séparation ---
+                    doc.setDrawColor(200, 200, 200);
+                    doc.line(marginX, currentY, doc.internal.pageSize.width - marginX, currentY);
+                    currentY += 10;
 
                     // --- Titre du document ---
-                    doc.setFontSize(24);
+                    doc.setFontSize(20);
                     doc.setFont("helvetica", "bold");
-                    doc.text(getTranslation('pdf_title_sales_certificate'), doc.internal.pageSize.width / 2, 70, { align: 'center' }); // Traduire
-                    currentY = 85; // Ajuster le Y après le titre
+                    doc.text(getTranslation('pdf_title_sales_certificate'), doc.internal.pageSize.width / 2, currentY, { align: 'center' });
+                    currentY += 15;
 
-                    // --- Numéro de Note et Date ---
+                    // --- Informations du document (numéro et date) ---
+                    const rightAlignX = doc.internal.pageSize.width - marginX;
+
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
 
-                    // Logs pour vérifier eventData.eventId et eventData.date
-                    console.log(getTranslation('log_event_id'), eventData.eventId); // Traduire
-                    console.log(getTranslation('log_event_date'), eventData.date); // Traduire
+                    // Cadre pour les informations du document
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(marginX, currentY, doc.internal.pageSize.width - (marginX * 2), 20, 'F');
 
-                    doc.text(`${getTranslation('pdf_sales_certificate_number')} : ${eventData.eventId}`, rightAlignX, currentY, { align: 'right' }); // Traduire
-                    doc.text(`${getTranslation('pdf_date')} : ${eventData.date}`, rightAlignX, currentY + 6, { align: 'right' }); // Traduire
-                    currentY += 20;
+                    doc.setFont("helvetica", "bold");
+                    doc.text(`${getTranslation('pdf_sales_certificate_number')}:`, marginX + 5, currentY + 7);
+                    doc.text(`${getTranslation('pdf_date')}:`, marginX + 5, currentY + 14);
+
+                    doc.setFont("helvetica", "normal");
+                    doc.text(eventData.eventId, marginX + 45, currentY + 7);
+                    doc.text(eventData.date, marginX + 45, currentY + 14);
+
+                    currentY += 25;
 
                     // --- Informations du client ---
                     doc.setFontSize(12);
                     doc.setFont("helvetica", "bold");
-                    doc.text(`${getTranslation('pdf_client_name')} :`, marginX, currentY); // Traduire
-                    doc.setFont("helvetica", "normal");
+                    doc.text(getTranslation('pdf_client_information') + ":", marginX, currentY);
+                    currentY += 8;
 
-                    // Logs pour vérifier eventData.nom et eventData.lieu
-                    console.log(getTranslation('log_event_name'), eventData.nom); // Traduire
-                    console.log(getTranslation('log_event_location'), eventData.lieu); // Traduire
+                    // Cadre pour les informations client
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(marginX, currentY, doc.internal.pageSize.width - (marginX * 2), 15, 'F');
 
-                    doc.text(eventData.nom, marginX + 35, currentY); // Ajuster l'indentation
-                    currentY += 6;
                     doc.setFont("helvetica", "bold");
-                    doc.text(`${getTranslation('pdf_location')} :`, marginX, currentY); // Traduire
+                    doc.text(`${getTranslation('pdf_client_name')}:`, marginX + 5, currentY + 7);
+                    doc.text(`${getTranslation('pdf_location')}:`, marginX + 80, currentY + 7);
+
                     doc.setFont("helvetica", "normal");
-                    doc.text(eventData.lieu, marginX + 35, currentY);
-                    currentY += 15; // Espacement avant le tableau
+                    doc.text(eventData.nom, marginX + 30, currentY + 7);
+                    doc.text(eventData.lieu, marginX + 100, currentY + 7);
+
+                    currentY += 20;
 
                     // --- Tableau des articles avec jspdf-autotable ---
                     const headers = [
-                        [getTranslation('pdf_table_header_num'), getTranslation('pdf_table_header_quantity'), getTranslation('pdf_table_header_description'), getTranslation('pdf_table_header_unit_price'), getTranslation('pdf_table_header_amount')] // Traduire
+                        [getTranslation('pdf_table_header_num'), getTranslation('pdf_table_header_quantity'), getTranslation('pdf_table_header_description'), getTranslation('pdf_table_header_unit_price'), getTranslation('pdf_table_header_amount')]
                     ];
 
-                    // Log pour vérifier le prix avant conversion
-                    console.log(getTranslation('log_price_before_conversion'), eventData.prix); // Traduire
                     const prixFloat = parseFloat(eventData.prix.replace(',', '.'));
-                    console.log(getTranslation('log_price_after_conversion'), prixFloat); // Log pour le prix après conversion
+                    const taxes = prixFloat * 0.15; // Taxes à 15%
+                    const totalWithTaxes = prixFloat + taxes;
 
                     const body = [
                         [1, 1, eventData.travail, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
                     ];
 
-                    // Log pour vérifier le corps du tableau
-                    console.log(getTranslation('log_table_body'), body); // Traduire
+                    console.log(getTranslation('log_table_body'), body);
 
                     doc.autoTable({
                         startY: currentY,
                         head: headers,
                         body: body,
                         theme: 'grid',
-                        styles: { fontSize: 10, cellPadding: 3, overflow: 'linebreak' },
-                        headStyles: { fillColor: [255, 102, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
+                        styles: {
+                            fontSize: 10,
+                            cellPadding: 4,
+                            overflow: 'linebreak',
+                            lineColor: [100, 100, 100],
+                            lineWidth: 0.1
+                        },
+                        headStyles: {
+                            fillColor: [70, 130, 180], // Bleu plus professionnel
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            halign: 'center'
+                        },
+                        bodyStyles: {
+                            halign: 'center'
+                        },
+                        alternateRowStyles: {
+                            fillColor: [248, 248, 248]
+                        },
                         margin: { left: marginX, right: marginX },
                         columnStyles: {
                             0: { cellWidth: 15, halign: 'center' },
                             1: { cellWidth: 20, halign: 'center' },
-                            2: { cellWidth: 'auto', minCellWidth: 60 },
+                            2: { cellWidth: 'auto', minCellWidth: 70, halign: 'left' },
                             3: { cellWidth: 30, halign: 'right' },
                             4: { cellWidth: 30, halign: 'right' }
                         }
                     });
 
-                    currentY = doc.autoTable.previous.finalY + 10;
+                    currentY = doc.autoTable.previous.finalY + 15;
 
-                    // --- Sous-total, Taxes, Total ---
-                    const valueColX = rightAlignX - 40;
+                    // --- Section Totaux ---
+                    const totalsStartX = doc.internal.pageSize.width - 100;
 
-                    // Logs pour vérifier les totaux
-                    console.log(getTranslation('log_subtotal'), prixFloat.toFixed(2)); // Traduire
-                    const taxes = prixFloat * 0.15; // Exemple de calcul de taxes à 15%
-                    const totalWithTaxes = prixFloat + taxes;
-                    console.log(getTranslation('log_taxes'), taxes.toFixed(2)); // Traduire
-                    console.log(getTranslation('log_total_with_taxes'), totalWithTaxes.toFixed(2)); // Traduire
+                    // Cadre pour les totaux
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(totalsStartX - 10, currentY, 90, 25, 'F');
 
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
-                    doc.text(`${getTranslation('pdf_subtotal')} :`, valueColX, currentY, { align: 'right' }); // Traduire
-                    doc.text(`${prixFloat.toFixed(2)} €`, rightAlignX, currentY, { align: 'right' });
-                    currentY += 6;
 
-                    doc.text(`${getTranslation('pdf_taxes')} (15%) :`, valueColX, currentY, { align: 'right' }); // Traduire
-                    doc.text(`${taxes.toFixed(2)} €`, rightAlignX, currentY, { align: 'right' });
-                    currentY += 6;
+                    // Sous-total
+                    doc.text(`${getTranslation('pdf_subtotal')}:`, totalsStartX, currentY + 8, { align: 'right' });
+                    doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 60, currentY + 8, { align: 'right' });
 
+                    // Taxes
+                    doc.text(`${getTranslation('pdf_taxes')} (15%):`, totalsStartX, currentY + 16, { align: 'right' });
+                    doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 60, currentY + 16, { align: 'right' });
+
+                    // Ligne de séparation avant le total
+                    doc.setDrawColor(150, 150, 150);
+                    doc.line(totalsStartX, currentY + 19, totalsStartX + 60, currentY + 19);
+
+                    // Total
                     doc.setFont("helvetica", "bold");
-                    doc.text(`${getTranslation('pdf_total')} :`, valueColX, currentY, { align: 'right' }); // Traduire
-                    doc.text(`${totalWithTaxes.toFixed(2)} €`, rightAlignX, currentY, { align: 'right' });
-                    currentY += 15;
+                    doc.text(`${getTranslation('pdf_total')}:`, totalsStartX, currentY + 24, { align: 'right' });
+                    doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 60, currentY + 24, { align: 'right' });
 
-                    // --- Pied de page général (informations de l'entreprise en bas) ---
+                    currentY += 35;
+
+                    // --- Section Notes / Remarques ---
+                    if (currentY < doc.internal.pageSize.height - 40) {
+                        doc.setFontSize(10);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(getTranslation('pdf_notes') + ":", marginX, currentY);
+                        doc.setFont("helvetica", "normal");
+
+                        const notes = [
+                            getTranslation('pdf_note_payment_terms'),
+                            getTranslation('pdf_note_delivery_terms'),
+                            getTranslation('pdf_note_validity_terms')
+                        ];
+
+                        notes.forEach((note, index) => {
+                            if (currentY < doc.internal.pageSize.height - 20) {
+                                doc.text(`• ${note}`, marginX + 5, currentY + 7 + (index * 5));
+                            }
+                        });
+                    }
+
+                    // --- Pied de page ---
                     const footerY = doc.internal.pageSize.height - 15;
+
+                    // Ligne de séparation du pied de page
+                    doc.setDrawColor(200, 200, 200);
+                    doc.line(marginX, footerY - 10, doc.internal.pageSize.width - marginX, footerY - 10);
+
                     doc.setFontSize(8);
                     doc.setFont("helvetica", "normal");
                     doc.text(entrepriseData.nom, doc.internal.pageSize.width / 2, footerY - 5, { align: 'center' });
-                    doc.text(entrepriseData.web, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
-                    doc.text(`${entrepriseData.email} / ${entrepriseData.tel}`, doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
-
+                    doc.text(`${entrepriseData.adresse} - ${getTranslation('label_phone_short')}: ${entrepriseData.tel} - ${getTranslation('label_email_short')}: ${entrepriseData.email}`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
+                    doc.text(getTranslation('pdf_thank_you_message'), doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
 
                     // --- Enregistrer le PDF dans Supabase ---
-                    const pdfBlob = doc.output('blob'); // Obtenir le PDF en tant que Blob
+                    const pdfBlob = doc.output('blob');
 
                     const userId = eventData.userId;
                     const eventId = eventData.eventId;
                     const safeClientName = eventData.nom.replace(/[^a-zA-Z0-9]/g, '_');
-                    const fileName = `${getTranslation('pdf_file_name_prefix')}_${safeClientName}_${eventId}.pdf`; // Traduire
+                    const fileName = `${getTranslation('pdf_file_name_prefix')}_${safeClientName}_${eventId}.pdf`;
 
-                    // Logs pour l'upload Supabase
-                    console.log(getTranslation('log_supabase_upload_preparation')); // Traduire
-                    console.log(getTranslation('log_user_id_for_upload'), userId); // Traduire
-                    console.log(getTranslation('log_event_id_for_upload'), eventId); // Traduire
-                    console.log(getTranslation('log_file_name_for_upload'), fileName); // Traduire
-
+                    console.log(getTranslation('log_supabase_upload_preparation'));
+                    console.log(getTranslation('log_user_id_for_upload'), userId);
+                    console.log(getTranslation('log_event_id_for_upload'), eventId);
+                    console.log(getTranslation('log_file_name_for_upload'), fileName);
 
                     if (!userId || !eventId) {
-                        console.error(getTranslation("error_missing_user_event_id")); // Traduire
-                        showTemporaryMessage(getTranslation("error_incomplete_event_data"), 'error'); // Traduire
+                        console.error(getTranslation("error_missing_user_event_id"));
+                        showTemporaryMessage(getTranslation("error_incomplete_event_data"), 'error');
                         return;
                     }
 
                     const { data, error } = await supabase.storage
                         .from('facturas_fran')
-                        .upload(`facturas_fran/${userId}/${fileName}`, pdfBlob, { // C'était 'facturas_fran' ici
+                        .upload(`facturas_fran/${userId}/${fileName}`, pdfBlob, {
                             cacheControl: '3600',
                             upsert: true
                         });
 
-                    // Log de la réponse d'upload
-                    console.log(getTranslation('log_supabase_upload_response_data'), data); // Traduire
-                    console.log(getTranslation('log_supabase_upload_response_error'), error); // Traduire
-
+                    console.log(getTranslation('log_supabase_upload_response_data'), data);
+                    console.log(getTranslation('log_supabase_upload_response_error'), error);
 
                     if (error) {
-                        console.error(getTranslation('error_saving_pdf'), error); // Traduire
-                        showTemporaryMessage(getTranslation('error_saving_pdf_message') + error.message, 'error'); // Traduire
+                        console.error(getTranslation('error_saving_pdf'), error);
+                        showTemporaryMessage(getTranslation('error_saving_pdf_message') + error.message, 'error');
                         return;
                     }
 
-                    showTemporaryMessage(getTranslation('temp_msg_sales_note_generated_uploaded')); // Traduire
+                    showTemporaryMessage(getTranslation('temp_msg_sales_note_generated_uploaded'));
 
-                    // Mettre à jour le lien "paiement" dans la table Supabase `event_quot1_fran`
-                    // Log pour le chemin de mise à jour dans la DB
-                    console.log(getTranslation('log_payment_path_to_update'), data.path); // Traduire
-                    console.log(getTranslation('log_event_user_id_for_update'), eventId); // Note: Assurez-vous que eventId est bien l'ID de l'utilisateur pour cette ligne.
+                    // Mettre à jour le lien "paiement" dans la table Supabase
+                    console.log(getTranslation('log_payment_path_to_update'), data.path);
+                    console.log(getTranslation('log_event_user_id_for_update'), eventId);
 
                     const { error: updateError } = await supabase
                         .from('event_quot1_fran')
@@ -2573,15 +2622,15 @@
                         .eq('user_id', eventId);
 
                     if (updateError) {
-                        console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError); // Traduire
-                        showTemporaryMessage(getTranslation('error_updating_pdf_link_db'), 'error'); // Traduire
+                        console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError);
+                        showTemporaryMessage(getTranslation('error_updating_pdf_link_db'), 'error');
                     } else {
-                        console.log(getTranslation('log_sales_note_updated_success_event_quot1_fran')); // Traduire
-                        showTemporaryMessage(getTranslation('temp_msg_sales_note_link_updated_db')); // Traduire
+                        console.log(getTranslation('log_sales_note_updated_success_event_quot1_fran'));
+                        showTemporaryMessage(getTranslation('temp_msg_sales_note_link_updated_db'));
                     }
 
-                    // Mettre à jour le lien "Voir la note de vente" dans l'interface utilisateur
-                    link.textContent = getTranslation('link_view_sales_note'); // Traduire
+                    // Mettre à jour l'interface utilisateur
+                    link.textContent = getTranslation('link_view_sales_note');
                     link.dataset.paiement = data.path;
 
                     // Fermer le popup
@@ -2594,18 +2643,16 @@
                     }
 
                 } catch (e) {
-                    console.error(getTranslation("error_unexpected_pdf_generation_save"), e); // Traduire
-                    showTemporaryMessage(getTranslation("error_unexpected_pdf_creation"), 'error'); // Traduire
+                    console.error(getTranslation("error_unexpected_pdf_generation_save"), e);
+                    showTemporaryMessage(getTranslation("error_unexpected_pdf_creation"), 'error');
                 }
             };
 
             // Gérer le cas où le logo ne peut pas être chargé
             logoImg.onerror = () => {
-                console.error(getTranslation("error_loading_logo_path_check")); // Traduire
-                showTemporaryMessage(getTranslation("error_logo_not_found_incorrect_path"), 'error'); // Traduire
-                // Optionnel: vous pouvez appeler une version de generatePdfNotaDeVenta sans logo ici
-                // si vous voulez que le PDF soit généré même sans l'image.
-                // Pour l'instant, l'erreur est juste logguée.
+                console.error(getTranslation("error_loading_logo_path_check"));
+                showTemporaryMessage(getTranslation("error_logo_not_found_incorrect_path"), 'error');
+                // Vous pouvez choisir de générer le PDF sans logo ou d'arrêter le processus
             };
         }
 
