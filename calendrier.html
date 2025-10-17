@@ -2522,15 +2522,25 @@
                         head: headers,
                         body: body,
                         theme: 'grid',
-                        styles: { halign: 'center' }, // FORCER le centrage global
+                        styles: {
+                            halign: 'center',
+                            fontSize: 10,
+                            cellPadding: 4,
+                            overflow: 'linebreak',
+                            minCellHeight: 10
+                        },
                         headStyles: {
                             fillColor: [70, 130, 180],
-                            textColor: [255, 255, 255]
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold'
                         },
                         margin: { left: marginX, right: marginX },
                         columnStyles: {
-                            3: { halign: 'right' }, // Seulement les colonnes de prix à droite
-                            4: { halign: 'right' }
+                            0: { cellWidth: 15 },  // N°
+                            1: { cellWidth: 20 },  // Quantité
+                            2: { cellWidth: 80, halign: 'center' },  // Description - PLUS LARGE et centrée
+                            3: { cellWidth: 30, halign: 'right' },   // Tarif unitaire
+                            4: { cellWidth: 30, halign: 'right' }    // Montant
                         }
                     });
 
