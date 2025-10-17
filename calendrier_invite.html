@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <div class="background-image"></div>
+    <link rel="icon" href="data:,">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page_title_daily_calendar_agenda">Calendrier et Agenda Quotidien</title>
+    <style>
+        #noteText {
+            width: 100%; /* Largeur complète */
+            height: 100px; /* Hauteur maximale */
+            overflow-y: auto; /* Défilement vertical si nécessaire */
+            resize: none; /* Désactive le redimensionnement manuel */
+        }
+
+        /* Case avec un événement */
+        .has-event {
+          background-color: #2196f3;   /* Vert clair */
+          font-weight: bold;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        .background-image {
+            position: fixed; /* L'élément est fixé dans le viewport */
+            top: 50%;
+            left: 50%;
+            width: 1500px;
+            height: 1200px;
+            background-image: url('./images/cedunet.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
+            transform: translate(-50%, -50%); /* Pour un centrage parfait */
+        }
+
+        /* 📱 Petits écrans : ajustements pour les médias queries */
+        @media (max-width: 1024px) {
+            .background-image {
+                width: 1200px;
+                height: 960px;
+                /* Le positionnement fixed ci-dessus gère le comportement de zoom */
+                position: fixed
+            }
+        }
+
+
+    </style>
+    <link rel="stylesheet" href="calendrier.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <script type="module">
+        import { supabase } from './supabaseClientAgendaJour.js';
+
+        // Variables globales (assurez-vous qu'elles sont déclarées une seule fois dans votre fichier)
+        let translations = {};
+        let currentLang = 'fr'; // Valeur par défaut, sera mise à jour au chargement de la langue
+        let monthNames = []; // Sera rempli par loadLanguage
+        var currentMonth = new Date().getMonth();
+        var currentYear = new Date().getFullYear();
+        var event = {}; // Objet pour stocker les événements par date
+        let employeeNames = []; // variable globale
+
+        async function loadEmployees() {
+          const { data, error } = await supabase
+            .from("access_code1_fran")
+            .select("Nom"); // On récupère seulement la colonne Nom
+
+          if (error) {
+            console.error("Erreur récupération employés:", error);
+            return;
+          }
+
+          // On garde le tableau simple de noms
+          employeeNames = data.map(emp => emp.Nom);
+          // console.log("Noms des employés récupérés :", employeeNames);
+        }
+
+
+        // Fonction utilitaire pour obtenir une traduction
+        function getTranslation(key) {
+            return translations[key] || key; // Retourne la clé si la traduction n'est pas trouvée
+        }
+
+        // Fonction pour mettre à jour la classe 'active-lang'
+        function updateActiveLanguageFlag(selectedLang) {
+            const languageSelector = document.querySelector('.language-selector');
+            if (languageSelector) {
+                languageSelector.querySelectorAll('img').forEach(img => {
+                    if (img.dataset.lang === selectedLang) {
+                        img.classList.add('active-lang');
+                    } else {
+                        img.classList.remove('active-lang');
+                    }
+                });
+            }
+        }
+
+        // Fonction pour charger et appliquer les traductions
+        async function loadLanguage(lang) {
+            try {
+                const response = await fetch(`lang/${lang}.json`);
+                translations = await response.json();
+                // >>> AJOUTEZ CES DEUX LIGNES POUR LE DIAGNOSTIC <<<
+                // console.log("Translations chargées :", translations);
+                // console.log("Clé 'welcome_message_prefix' :", translations.welcome_message_prefix);
+
+                currentLang = lang;
+                localStorage.setItem('lang', lang);
+
+                monthNames = [
+                    getTranslation('month_jan'), getTranslation('month_feb'), getTranslation('month_mar'),
+                    getTranslation('month_apr'), getTranslation('month_may'), getTranslation('month_jun'),
+                    getTranslation('month_jul'), getTranslation('month_aug'), getTranslation('month_sep'),
+                    getTranslation('month_oct'), getTranslation('month_nov'), getTranslation('month_dec')
+                ];
+
+                applyTranslations();
+                // Assurez-vous que showPermanentWelcomeMessage() est appelée APRÈS loadLanguage()
+                // Si vous l'appelez via DOMContentLoaded, c'est bon.
+                // Si vous aviez un appel à updateWelcomeMessage() ici, remplacez-le par showPermanentWelcomeMessage()
+                // updateWelcomeMessage(); // Supprimez ou remplacez par showPermanentWelcomeMessage() si c'est le cas
+
+                updateActiveLanguageFlag(lang);
+
+
+            } catch (error) {
+                console.error(`Erreur lors du chargement des traductions pour ${lang}:`, error);
+                translations = {};
+                // Si une erreur survient, le message de bienvenue ne pourra pas être traduit.
+                // showPermanentWelcomeMessage() sera appelée mais affichera la clé brute.
+            }
+        }
+
+        function applyTranslations() {
+            // Traduit le titre de la page
+            document.title = getTranslation('page_title_daily_calendar_agenda');
+
+            // Traduit les éléments avec data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[key]) {
+                    element.textContent = translations[key];
+                }
+            });
+
+            // Traduit les placeholders avec data-i18n-placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[key]) {
+                    element.placeholder = translations[key];
+                }
+            });
+
+            // Le code pour le message de bienvenue a été déplacé dans updateWelcomeMessage()
+        }
+
+
+        // Assurez-vous d'appeler loadLanguage au chargement initial
+        document.addEventListener('DOMContentLoaded', async function() {
+            const savedLang = localStorage.getItem('lang') || 'fr';
+            await loadLanguage(savedLang); // Charge les traductions
+            await generateCalendar(currentMonth, currentYear);
+            chargerPrefixe(); // Appeler cette fonction pour charger le préfixe
+            // Le reste de votre logique DOMContentLoaded ici
+        });
+
+        // Gestion du sélecteur de langue
+        const languageSelector = document.querySelector('.language-selector');
+        if (languageSelector) {
+            languageSelector.querySelectorAll('img').forEach(img => {
+                img.addEventListener('click', async () => {
+                    await loadLanguage(img.dataset.lang);
+                });
+            });
+        }
+
+        let countryPrefix = '+52'; // Valeur par défaut
+
+        // Charger le préfixe depuis Supabase
+        async function chargerPrefixe() {
+            const { data, error } = await supabase
+                .from('information1_fran')
+                .select('content')
+                .eq('id', 2)
+                .single();
+
+            if (error) {
+                // console.error("Erreur lors du chargement du préfixe : ", error);
+            } else if (data && data.content) {
+                countryPrefix = data.content; // Mettre à jour le préfixe depuis la base de données
+                // console.log("Préfixe chargé depuis la base de données : ", countryPrefix);
+            }
+            return countryPrefix;
+        }
+
+        // Appeler cette fonction au chargement de la page (déjà géré par DOMContentLoaded global)
+        // window.addEventListener('load', chargerPrefixe); // Commenté car déjà dans DOMContentLoaded
+
+        // --- Configuration et Éléments DOM pour le Widget Météo ---
+        const API_KEY = 'd8f9db65a75b4889b37165901251407'; // Votre clé API WeatherAPI.com
+        let WEATHER_LOCATION = ''; // Initialisée vide, sera chargée depuis Supabase
+
+        // ID de l'entrée Supabase pour la ville météo (doit correspondre à celui de configuration.js)
+        const METEO_CITY_SUPABASE_ID = 8;
+
+        const meteoDateElem = document.getElementById('meteo-date-short');
+        const meteoLocationElem = document.getElementById('meteo-location');
+        const meteoIconElem = document.getElementById('meteo-icon');
+        const meteoConditionElem = document.getElementById('meteo-condition');
+        const meteoMaxTempElem = document.getElementById('meteo-max-temp');
+        // const meteoMinTempElem = document.getElementById('meteo-min-temp');
+        const meteoChanceRainElem = document.getElementById('meteo-chance-rain');
+        const meteoErrorElem = document.getElementById('meteo-error');
+
+        // --- Nouvelle fonction pour charger la ville météo depuis Supabase ---
+        async function loadMeteoCityFromSupabaseForCalendar() {
+            // ATTENTION: Cette fonction suppose que 'supabase' est déjà défini et accessible.
+            // Si ce n'est pas le cas, vous obtiendrez une erreur "supabase is not defined".
+            try {
+                const { data, error } = await supabase
+                    .from('information1_fran')
+                    .select('content')
+                    .eq('id', METEO_CITY_SUPABASE_ID) // Utilise l'ID 8
+                    .single();
+
+                if (error && error.code === 'PGRST116') {
+                    console.warn('Aucune ville météo trouvée dans Supabase pour l\'ID', METEO_CITY_SUPABASE_ID, '. Utilisation de la localisation par défaut ou vide.');
+                    WEATHER_LOCATION = 'Jocotepec,Mexico'; // Définir une ville par défaut si rien n'est trouvé
+                } else if (error) {
+                    console.error("Erreur Supabase lors du chargement de la ville météo pour le calendrier:", error);
+                    WEATHER_LOCATION = 'Jocotepec,Mexico'; // Fallback en cas d'erreur
+                } else if (data && data.content) {
+                    WEATHER_LOCATION = data.content; // Mettre à jour la variable WEATHER_LOCATION
+                    console.log("Ville météo chargée depuis Supabase pour le calendrier:", WEATHER_LOCATION);
+                }
+            } catch (error) {
+                console.error("Erreur inattendue lors du chargement de la ville météo pour le calendrier:", error);
+                WEATHER_LOCATION = 'Jocotepec,Mexico'; // Fallback en cas d'erreur inattendue
+            }
+        }
+
+
+        // Fonction pour obtenir et afficher la météo pour une date donnée
+        async function getAndDisplayWeatherForDate(dateString) {
+            // Assurez-vous que WEATHER_LOCATION est bien défini avant d'appeler l'API
+            if (!WEATHER_LOCATION) {
+                // Si WEATHER_LOCATION n'a pas encore été chargé, essayez de le charger
+                // Ceci est une mesure de sécurité, normalement loadMeteoCityFromSupabaseForCalendar()
+                // devrait être appelée avant getAndDisplayWeatherForDate.
+                await loadMeteoCityFromSupabaseForCalendar();
+                if (!WEATHER_LOCATION) { // Si toujours vide, alors il y a un problème ou pas de config
+                    meteoErrorElem.textContent = getTranslation('meteo_location_not_set'); // "Localisation météo non configurée."
+                    console.error("WEATHER_LOCATION n'est pas défini. Impossible de récupérer la météo.");
+                    return;
+                }
+            }
+
+            meteoErrorElem.textContent = ''; // Effacer les erreurs précédentes
+
+            // Afficher un état de chargement dans le widget
+            meteoDateElem.textContent = '...';
+            meteoLocationElem.textContent = getTranslation('meteo_loading'); // Traduire "Cargando..."
+            meteoIconElem.src = '';
+            meteoIconElem.alt = '';
+            meteoConditionElem.textContent = '';
+            meteoMaxTempElem.textContent = '';
+            meteoChanceRainElem.textContent = '';
+
+            try {
+                // Utilise la langue actuelle pour l'API météo
+                const url = `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${WEATHER_LOCATION}&dt=${dateString}&lang=${currentLang}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.forecast && data.forecast.forecastday && data.forecast.forecastday.length > 0) {
+                        const forecastDay = data.forecast.forecastday[0].day;
+                        const locationName = data.location.name;
+                        const conditionText = forecastDay.condition.text; // Sera dans la langue de `lang`
+                        const conditionIcon = forecastDay.condition.icon;
+                        const maxTemp = forecastDay.maxtemp_c;
+                        const chanceOfRain = forecastDay.daily_chance_of_rain;
+
+                        // Mettre à jour les éléments HTML du widget avec les données
+                        const displayDate = new Date(`${dateString}T00:00:00`);
+                        meteoDateElem.textContent = displayDate.toLocaleDateString(currentLang === 'fr' ? 'fr-FR' : (currentLang === 'es' ? 'es-ES' : 'en-US'), { day: 'numeric', month: 'short' });
+
+                        meteoLocationElem.textContent = locationName;
+                        meteoIconElem.src = `https:${conditionIcon}`;
+                        meteoIconElem.alt = conditionText;
+
+                        meteoConditionElem.textContent = conditionText;
+                        meteoMaxTempElem.textContent = maxTemp;
+                        meteoChanceRainElem.textContent = chanceOfRain;
+                    } else {
+                        meteoErrorElem.textContent = getTranslation('meteo_forecast_not_found'); // Traduire
+                        console.warn('API Response Missing Forecast:', data);
+                    }
+
+                } else {
+                    // Gestion des erreurs de l'API (clé invalide, limite dépassée, date trop lointaine, etc.)
+                    let errorMessage = getTranslation('meteo_error_prefix'); // Traduire "Error del tiempo: "
+                    if (data && data.error && data.error.message) {
+                        errorMessage += `${data.error.message}`; // L'API peut renvoyer des messages en anglais
+                    } else if (response.status === 400) {
+                         errorMessage += getTranslation('meteo_error_date_range'); // Traduire
+                    } else if (response.status === 403) {
+                        errorMessage += getTranslation('meteo_error_api_key'); // Traduire
+                    }
+                    meteoErrorElem.textContent = errorMessage;
+                    console.error('API Error:', data);
+                }
+
+            } catch (error) {
+                // Gestion des erreurs réseau ou autres exceptions inattendues
+                meteoErrorElem.textContent = getTranslation('meteo_error_connection'); // Traduire
+                console.error('Fetch Error:', error);
+            }
+        }
+
+        // --- Appel de la fonction de chargement de la ville au démarrage ---
+        // Assurez-vous que cette fonction est appelée AVANT le premier appel à getAndDisplayWeatherForDate
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadMeteoCityFromSupabaseForCalendar();
+            // Après le chargement de la ville, vous pouvez appeler getAndDisplayWeatherForDate
+            // avec la date actuelle ou toute autre date pertinente pour votre calendrier.
+            // Exemple : Charger la météo pour la date actuelle au démarrage
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0]; // Format AAAA-MM-JJ
+            getAndDisplayWeatherForDate(todayString);
+        });
+
+
+
+        async function fetchEmployeeNames() {
+            const { data, error } = await supabase
+                .from('access_code1_fran')
+                .select('Nom'); // Sélectionnez uniquement la colonne 'Nom'
+
+            if (error) {
+                // console.error('Erreur lors de la récupération des noms des employés :', error);
+                return [];
+            }
+            // Extrait les noms dans un tableau simple
+            employeeNames = data.map(row => row.Nom);
+            // console.log('Noms des employés récupérés :', employeeNames);
+            return employeeNames;
+        }
+
+        // Appelez cette fonction au chargement de la page pour pré-charger les noms
+        document.addEventListener('DOMContentLoaded', fetchEmployeeNames);
+
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            generateCalendar(currentMonth, currentYear);
+        }
+
+        // Fonction pour afficher un message temporaire
+        function showTemporaryMessage(message) {
+            const messageElement = document.getElementById('temporaryMessage');
+            if (messageElement) {
+                messageElement.textContent = message;
+                messageElement.style.display = 'block';
+
+                // Masquer le message après 2 secondes
+                setTimeout(() => {
+                    messageElement.style.display = 'none';
+                }, 2000);
+            } else {
+                console.error("L'élément temporaryMessage est introuvable dans le DOM.");
+            }
+        }
+
+        async function generateCalendar(month, year) {
+            const today = new Date();
+            const calendarTable = document.getElementById('calendarTable');
+            const monthYearDisplay = document.getElementById('monthYear');
+            calendarTable.innerHTML = `
+                <tr>
+                    <th data-i18n="day_mon_short">Lu</th>
+                    <th data-i18n="day_tue_short">Ma</th>
+                    <th data-i18n="day_wed_short">Me</th>
+                    <th data-i18n="day_thu_short">Je</th>
+                    <th data-i18n="day_fri_short">Ve</th>
+                    <th data-i18n="day_sat_short">Sa</th>
+                    <th data-i18n="day_sun_short">Di</th>
+                </tr>
+            `;
+
+            // Appliquer traductions
+            calendarTable.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[key]) {
+                    element.textContent = translations[key];
+                }
+            });
+
+            // Affichage du mois/année
+            monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = (new Date(year, month).getDay() + 6) % 7;
+            const daysInMonth = 32 - new Date(year, month, 32).getDate();
+            let date = 1;
+
+            // ⚡ Récupérer les événements du mois, filtrés par téléphone invité
+            const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+            const monthEnd = `${year}-${String(month + 1).padStart(2, "0")}-${daysInMonth}`;
+            let daysWithEvents = new Set();
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const guestPhone = urlParams.get("phone");
+
+                let query = supabase
+                    .from("event_quot1_fran")
+                    .select("Date, Téléphone")
+                    .gte("Date", monthStart)
+                    .lte("Date", monthEnd);
+
+                if (guestPhone) {
+                    query = query.eq("Téléphone", guestPhone); // ✅ filtre par numéro invité
+                }
+
+                const { data, error } = await query;
+
+                if (error) {
+                    console.error("Erreur Supabase :", error);
+                } else {
+                    daysWithEvents = new Set(data.map(ev => ev.Date));
+                }
+            } catch (err) {
+                console.error("Erreur imprévue :", err);
+            }
+
+            // Générer les cases du calendrier
+            for (let i = 0; i < 6; i++) {
+                let row = document.createElement('tr');
+
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < firstDay) {
+                        row.appendChild(document.createElement('td'));
+                    } else if (date > daysInMonth) {
+                        break;
+                    } else {
+                        const cell = document.createElement('td');
+                        cell.classList.add('clickable');
+
+                        const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+                        cell.setAttribute('data-date', formattedDate);
+                        cell.textContent = date;
+
+                        // ✅ Colorer uniquement les jours où CE client a un événement
+                        if (daysWithEvents.has(formattedDate)) {
+                            cell.classList.add('has-event');
+                            cell.title = "Événement(s) ce jour-là";
+                        }
+
+                        if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                            cell.classList.add('today');
+                        }
+
+                        row.appendChild(cell);
+                        date++;
+                    }
+                }
+
+                calendarTable.appendChild(row);
+            }
+        }
+
+
+        // Obtenir la date et l'heure locales au format 'YYYY-MM-DD HH:mm:ss'
+        function getLocalDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // console.log('DOMContentLoaded déclenché');
+
+            window.successMessage = document.getElementById('successMessage');
+            // console.log('Élément successMessage:', window.successMessage);
+
+            var today = new Date();
+            var todayDate = today.getDate();
+            var todayMonth = today.getMonth();
+            var todayYear = today.getFullYear();
+            var todayFormatted = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDate).padStart(2, '0')}`;
+
+            if (!window.isCalendarGenerated) {
+                window.isCalendarGenerated = true;
+            }
+
+            if (!window.isTodaySelected) {
+                await selectToday();
+                window.isTodaySelected = true;
+            }
+
+            // Fonction pour obtenir la date et l'heure locales au format 'YYYY-MM-DD HH:mm:ss'
+            function getLocalDateTime() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                return { formattedDate: `${year}-${month}-${day}`, hours, minutes, seconds };
+            }
+
+            // Fonction pour convertir une heure avec "h" en format texte en heure 24h (e.g., "9h" -> "09:00")
+            function convertirHeureEn24h(heureTexte) {
+                // Supprime le "h" de l'heure
+                let heure = parseInt(heureTexte.replace('h', ''), 10);
+                return `${String(heure).padStart(2, '0')}:00`;
+            }
+
+
+        if (typeof handleDateClick === 'undefined') {
+            async function handleDateClick(event) {
+                const date = event.target.textContent;
+                const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+
+                // En mode invité → on affiche seulement les événements filtrés par téléphone
+                await fetchEventsByDate(formattedDate);
+            }
+        }
+
+        function safeValue(obj, key) {
+          return obj && obj[key] ? obj[key] : '';
+        }
+
+        // 🔹 Charger et afficher l'historique des pointages ONSS pour un employé
+        async function loadPointageHistory(row) {
+          const historyContainer = row.querySelector(".pointage-history");
+          if (!historyContainer) return;
+
+          // Récupérer le user_id depuis l'attribut data
+          const userId = historyContainer.dataset.userId;
+
+          historyContainer.innerHTML = "Chargement...";
+
+          // 🔹 Requête Supabase - FILTRER PAR ÉVÉNEMENT SPÉCIFIQUE
+          const { data, error } = await supabase
+            .from("pointage_onss_history_fran")
+            .select("*")
+            .eq("user_id", userId) // Filtrer par événement
+            .order("timestamp", { ascending: false });
+
+          if (error) {
+            console.error("Erreur chargement historique :", error);
+            historyContainer.textContent = "Erreur de chargement.";
+            return;
+          }
+
+          if (!data || data.length === 0) {
+            historyContainer.textContent = "Aucun pointage enregistré.";
+            return;
+          }
+
+          const LOCATIONIQ_TOKEN = "pk.6b42b2b6259674bc2018ddf950ae757a";
+
+          historyContainer.innerHTML = data
+            .map(
+              (entry) => `
+                <div class="pointage-entry">
+                  ${entry.type === "in" ? "🟢 <strong>Entrée</strong>" : "🔴 <strong>Sortie</strong>"}${entry.flag_anomalie ? " ⚠️" : ""}<br>
+                  ${new Date(entry.timestamp).toLocaleDateString()}<br>
+                  ${new Date(entry.timestamp).toLocaleTimeString()}<br>
+                  <a href="${entry.maps_url}" target="_blank">
+                    <img
+                      src="https://maps.locationiq.com/v3/staticmap?key=${LOCATIONIQ_TOKEN}&center=${entry.latitude},${entry.longitude}&zoom=18&size=200x200&markers=icon:small-red-cutout|${entry.latitude},${entry.longitude}"
+                      alt="Carte"
+                      style="width:2cm; height:2cm; border-radius:4px; border:1px solid #ccc;"
+                    >
+                  </a>
+                </div>
+              `
+            )
+            .join("");
+        }
+
+        // ------------------------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------------------------
+        // FETCHEVENTBYDATE
+        // ------------------------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------------------------
+
+
+        // Fonction lecture seule pour récupérer les événements par date ET par téléphone invité
+        async function fetchEventsByDate(date) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                console.error("Format de date incorrect");
+                return [];
+            }
+
+            // Récupérer le numéro de téléphone depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const guestPhone = urlParams.get("phone");
+
+            try {
+                let query = supabase
+                    .from('event_quot1_fran')
+                    .select('*')
+                    .eq('Date', date);
+
+                // Si un téléphone invité est fourni → on filtre
+                if (guestPhone) {
+                    query = query.eq('Téléphone', guestPhone);
+                }
+
+                const { data, error } = await query;
+
+                if (error) {
+                    console.error("Erreur lors de la récupération des événements :", error);
+                    return [];
+                }
+
+                // Tri par heure
+                const heureOrder = ['9h','10h','11h','12h','13h','14h','15h','16h','17h','18h','19h','20h','21h'];
+                data.sort((a, b) => heureOrder.indexOf(a.Heure) - heureOrder.indexOf(b.Heure));
+
+                // Remplissage du tableau
+                const tbody = document.querySelector('#editable-table tbody');
+                tbody.innerHTML = '';
+
+                data.forEach(event => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                      <td>${event.Téléphone || ''}</td>
+                      <td>${event.Date || ''}</td>
+                      <td>${event.Heure || ''}</td>
+                      <td>${event.Min !== null ? event.Min : ''}</td>
+                      <td>${event.Lieu || ''}</td>
+                      <td class="travail-cell" data-column="Travail">
+                        <div style="padding: 8px;">
+                            ${event.Travail || '--'}
+                        </div>
+                      </td>
+                      <td>${event.Prix !== null ? event.Prix : ''}</td>
+
+                      <td>
+                        <div>${event.Observations || ''}</div>
+                        <div class="photo-preview" style="display:flex; gap:15px; margin-top:5px;">
+                          ${event.photo_avant_url ? `
+                              <div style="text-align:center; cursor:pointer;">
+                                <img src="${event.photo_avant_url}"
+                                     alt="${getTranslation('label_before')}"
+                                     style="max-height:60px; display:block; margin:0 auto; cursor:pointer;"
+                                     class="zoomable-photo">
+                                <small data-i18n="label_before" style="display:block; color:#555;">Avant</small>
+                              </div>` : ''}
+
+                            ${event.photo_apres_url ? `
+                              <div style="text-align:center; cursor:pointer;">
+                                <img src="${event.photo_apres_url}"
+                                     alt="${getTranslation('label_after')}"
+                                     style="max-height:60px; display:block; margin:0 auto; cursor:pointer;"
+                                     class="zoomable-photo">
+                                <small data-i18n="label_after" style="display:block; color:#555;">Après</small>
+                              </div>` : ''}
+                        </div>
+                      </td>
+                      <td>${event.Ajouté_pour || ''}</td>
+                      <td class="pointage-cell">
+                            <div class="pointage-container">
+                                <div class="pointage-history" data-user-id="${event.user_id}"></div>
+                            </div>
+                        </td>
+                      <td>
+                        <div class="checkbox-container" style="font-size: smaller;">
+                            <label>
+                                <input type="checkbox" disabled ${event.env_données ? 'checked' : ''}> ${getTranslation('checkbox_sent_data')}
+                            </label>
+                            <br>
+                            <span class="paiement-link" style="cursor: ${event.paiement && event.paiement !== 'null' && event.paiement !== '' ? 'pointer' : 'default'}; color: ${event.paiement && event.paiement !== 'null' && event.paiement !== '' ? 'blue' : 'gray'}; text-decoration: ${event.paiement && event.paiement !== 'null' && event.paiement !== '' ? 'underline' : 'none'};"
+                                  data-paiement="${event.paiement ? event.paiement : ''}"
+                                  onclick="${event.paiement && event.paiement !== 'null' && event.paiement !== '' ? 'window.open(this.dataset.paiement, \'_blank\'); return false;' : 'return false;'}">
+                                ${getTranslation('link_view_payment')}
+                            </span>
+                            <br>
+                            <label>
+                                <input type="checkbox" disabled ${event.payé ? 'checked' : ''}> ${getTranslation('checkbox_paid')}
+                            </label>
+                        </div>
+                    </td>
+                    `;
+                    // ✅ Charger l'historique de pointage ONSS pour cette ligne
+                    loadPointageHistory(row);
+                });
+
+                return data;
+            } catch (error) {
+                console.error("Erreur fetchEventsByDate :", error);
+                return [];
+            }
+        }
+
+
+        // --- Navigation dans les mois ---
+        document.getElementById("prevButton").addEventListener("click", () => {
+          currentMonth--;
+          if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+          }
+          generateCalendar(currentMonth, currentYear);
+        });
+
+        document.getElementById("nextButton").addEventListener("click", () => {
+          currentMonth++;
+          if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+          }
+          generateCalendar(currentMonth, currentYear);
+        });
+
+        // --- Clic sur une date pour charger les événements ---
+        document.addEventListener("click", (e) => {
+          if (e.target.classList.contains("clickable")) {
+            const dateClicked = e.target.dataset.date;
+
+            if (dateClicked && /^\d{4}-\d{2}-\d{2}$/.test(dateClicked)) {
+              localStorage.setItem("selectedDate", dateClicked);
+              console.log("Date cliquée :", dateClicked);
+
+              // Charger uniquement les événements de cette date
+              fetchEventsByDate(dateClicked);
+
+              // Mettre en surbrillance la case cliquée
+              document.querySelectorAll(".clickable").forEach(c => c.classList.remove("selected"));
+              e.target.classList.add("selected");
+            } else {
+              console.error("Format de date cliquée incorrect :", dateClicked);
+            }
+          }
+        });
+
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const guestPhone = urlParams.get("phone");
+
+            if (guestPhone) {
+                console.log("Accès invité pour le téléphone :", guestPhone);
+
+                // 👉 Au lieu d'appeler loadGuestEvents (qui n'existe pas),
+                // on lance l'affichage des événements du jour.
+                const today = new Date().toISOString().split('T')[0];
+                fetchEventsByDate(today);
+
+            } else {
+                document.body.innerHTML = "<h2>Accès non autorisé : aucun numéro fourni.</h2>";
+            }
+        });
+
+        // --- OUVERTURE ---
+        document.addEventListener("click", (e) => {
+          if (e.target.classList.contains("zoomable-photo")) {
+            const lightbox = document.getElementById("lightbox");
+            const lightboxImg = document.getElementById("lightbox-img");
+            const lightboxCaption = document.getElementById("lightbox-caption");
+
+            lightboxImg.src = e.target.src;
+            lightboxCaption.textContent = e.target.alt || ""; // "Avant" ou "Après"
+
+            lightbox.style.display = "block";
+          }
+        });
+
+        // --- FERMETURE ---
+        const lightbox = document.getElementById("lightbox");
+        const lightboxClose = document.querySelector(".lightbox-close");
+
+        // Fermer avec la croix
+        lightboxClose.addEventListener("click", () => {
+          lightbox.style.display = "none";
+        });
+
+        // Fermer en cliquant à côté de l’image
+        lightbox.addEventListener("click", (e) => {
+          if (e.target === lightbox) {
+            lightbox.style.display = "none";
+          }
+        });
+
+        async function selectToday() {
+            // console.log('--- Appel de la fonction selectToday() ---');
+            if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+                localStorage.removeItem('selectedDate');
+            }
+            const storedDate = localStorage.getItem('selectedDate');
+            const today = new Date();
+            const defaultDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const selectedDate = storedDate || defaultDate;
+
+            // Mettre à jour le champ Date (si tu veux le garder visible en lecture seule)
+            const dateField = document.getElementById('Date');
+            if (dateField) dateField.value = selectedDate;
+
+            // console.log('Date sélectionnée :', selectedDate);
+
+            // Charger uniquement les événements pour la date
+            fetchEventsByDate(selectedDate);
+
+            // Mettre en surbrillance la date sélectionnée dans le calendrier
+            document.querySelectorAll('.clickable').forEach(cell => {
+                cell.classList.remove('selected');
+                if (cell.dataset.date === selectedDate) {
+                    cell.classList.add('selected');
+                }
+            });
+
+            // console.log('--- Fin de la fonction selectToday() ---');
+        }
+
+
+         document.addEventListener('DOMContentLoaded', () => {
+             const today = new Date();
+             // Construisez la date du jour au format AAAA-MM-JJ manuellement pour éviter le décalage
+             const year = today.getFullYear();
+             const month = String(today.getMonth() + 1).padStart(2, '0');
+             const day = String(today.getDate()).padStart(2, '0');
+             const initialDateString = `${year}-${month}-${day}`; // <-- MODIFIÉ ICI
+             getAndDisplayWeatherForDate(initialDateString);
+         });
+
+    });
+    </script>
+</head>
+
+<body>
+    <div id="temporaryMessage" style="display: none; position: fixed; top: 10px; right: 10px; background: #66D19E; color: white; padding: 10px; border-radius: 5px; z-index: 1000;"></div>
+    <div class="main-container">
+        <h1 data-i18n="calendar_agenda_heading">Calendrier et Agenda</h1>
+        <div class="navigation-container">
+            <button id="prevButton" class="button" data-i18n="button_previous">Précédent</button>
+            <span id="monthYear"></span>
+            <button id="nextButton" class="button" data-i18n="button_next">Suivant</button>
+        </div>
+        <div id="meteo-widget">
+            <div class="meteo-top-section">
+                <h2 data-i18n="meteo_conditions_heading">Conditions météo (<span id="meteo-date-short"></span>)</h2>
+                <p id="meteo-location"></p>
+            </div>
+
+            <div class="meteo-main-columns">
+                <div class="meteo-text-column">
+                    <p><strong data-i18n="meteo_conditions_label">Conditions</strong> : <span id="meteo-condition"></span></p>
+                    <p><strong data-i18n="meteo_max_temp_label">Temp. Max</strong> : <span id="meteo-max-temp"></span>°C</p>
+                    <p><strong data-i18n="meteo_rain_chance_label">Probabilité de pluie</strong> : <span id="meteo-chance-rain"></span>%</p>
+                </div>
+                <div class="meteo-image-column">
+                    <img id="meteo-icon" src="" alt="Icône météo">
+                </div>
+            </div>
+
+            <p id="meteo-error" style="color: red;"></p>
+        </div>
+        <div class="calendar-container">
+            <table id="calendarTable">
+                <tr>
+                    <th data-i18n="day_mon_short">Lu</th>
+                    <th data-i18n="day_tue_short">Ma</th>
+                    <th data-i18n="day_wed_short">Me</th>
+                    <th data-i18n="day_thu_short">Je</th>
+                    <th data-i18n="day_fri_short">Ve</th>
+                    <th data-i18n="day_sat_short">Sa</th>
+                    <th data-i18n="day_sun_short">Di</th>
+                </tr>
+            </table>
+        </div>
+
+        <div class="editable-container">
+            <table id="editable-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="table_header_phone">Téléphone</th>
+                        <th data-i18n="table_header_date">Date</th>
+                        <th data-i18n="table_header_time">Heure</th>
+                        <th data-i18n="table_header_min">Min</th>
+                        <th data-i18n="table_header_location">Lieu</th>
+                        <th data-i18n="table_header_work">Travail</th>
+                        <th data-i18n="table_header_price">Prix</th>
+                        <th data-i18n="table_header_observations">Observations</th>
+                        <th data-i18n="table_header_added_for">Ajouté_pour</th>
+                        <th data-i18n="table_header_pointed">Pointage</th>
+                        <th data-i18n="table_header_facturation">Facturation</th>
+                    </tr>
+                </thead>
+                <tbody id="eventRows">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="successMessage" class="hidden" data-i18n="message_saved">Sauvegardé</div>
+        <div id="confirmationPopup" class="popup">
+            <div class="popup-content">
+                <p data-i18n="popup_are_you_sure">Es-tu sûr?</p>
+                <button id="confirmYes" class="button" data-i18n="button_yes">Oui</button>
+                <button id="confirmNo" class="button" data-i18n="button_no">Non</button>
+            </div>
+        </div>
+    </div>
+    <div id="lightbox" class="lightbox">
+      <span class="lightbox-close">&times;</span>
+      <img class="lightbox-content" id="lightbox-img">
+      <div id="lightbox-caption" style="text-align:center; color:white; margin-top:10px;"></div>
+    </div>
+
+</body>
+</html>

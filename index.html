@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <style>
+        :root {
+            --contrast: #222222;
+            --contrast-2: #575760;
+            --contrast-3: #b2b2be;
+            --base: #f0f0f0;
+            --base-2: #f7f8f9;
+            --base-3: #ffffff;
+            --accent: #1e73be;
+            --003: #00AAA3;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--base); /* Utilisation de la couleur de fond principale */
+            color: var(--contrast);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 100vh; /* 100% de la hauteur de l'écran */
+            overflow: hidden;
+        }
+
+        .image-container img {
+            width: auto; /* Garde les proportions originales */
+            height: 100%; /* Ajuste la hauteur à 100% de l'écran */
+            object-fit: contain; /* Garde l'image entière sans la couper */
+            position: absolute;
+            top: 0;
+            left: 50%; /* Centre l'image horizontalement */
+            transform: translateX(-50%); /* Centre l'image horizontalement */
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .image-container img.active {
+            opacity: 1;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent pour améliorer la lisibilité */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            color: var(--base-3); /* Texte blanc */
+            text-align: center;
+            padding-top: 20vh; /* Espace en haut pour le titre et les boutons */
+        }
+
+        .button {
+            font-family: 'Lobster', cursive;
+            border: 4px solid var(--003);
+            background-color: var(--003); /* Vert de base */
+            color: var(--base-3);
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .button:hover {
+            transform: scale(1.1); /* Agrandissement au passage de la souris */
+            background-color: var(--003); /* Même couleur au survol */
+        }
+
+        .contact-info {
+            margin: 20px 0;
+            font-size: 20px;
+        }
+
+        .popup {
+            display: none; /* Masqué par défaut */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background-color: var(--base-3);
+            margin: auto;
+            padding: 20px;
+            border: 1px solid var(--contrast-2);
+            width: 300px;
+            max-width: 90%;
+            text-align: center;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        /* Styles pour le pied de page */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: var(--contrast);
+            color: var(--base-3);
+            padding: 20px 0;
+            font-size: 18px;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .footer-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .footer .logo-footer {
+            cursor: pointer;
+            height: 40px;
+            margin-right: 20px;
+            vertical-align: middle;
+            transition: transform 0.3s ease;
+        }
+
+        .footer .logo-footer:hover {
+            transform: scale(1.05);
+        }
+
+        .footer a {
+            color: var(--base-3);
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 18px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Nouvelle popup pour les options de contact */
+        #contactOptionsPopup {
+            display: none;
+            position: fixed;
+            z-index: 2;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #contactOptionsPopup .popup-content {
+            background-color: var(--base-3);
+            margin: auto;
+            padding: 20px;
+            border: 1px solid var(--contrast-2);
+            width: 250px;
+            max-width: 90%;
+            text-align: center;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        #contactOptionsPopup .popup-content h3 {
+            color: var(--contrast);
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        #contactOptionsPopup .popup-content .contact-button {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+            padding: 10px;
+            background-color: var(--003);
+            color: var(--base-3);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #contactOptionsPopup .popup-content .contact-button:hover {
+            background-color: #00807b;
+            transform: translateY(-1px);
+        }
+
+        #contactOptionsPopup .close-button {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--contrast-2);
+            cursor: pointer;
+        }
+
+        #contactOptionsPopup .close-button:hover {
+            color: var(--contrast);
+        }
+
+        /* Styles pour le sélecteur de langue */
+        .language-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            gap: 10px; /* Espace entre les drapeaux */
+        }
+
+        .language-selector img {
+            width: 40px; /* Taille des drapeaux */
+            height: 40px;
+            border-radius: 50%; /* Rendre les drapeaux circulaires */
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .language-selector img:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        .language-selector img.active-lang {
+            transform: scale(1.2); /* Agrandit le drapeau sélectionné */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6); /* Ombre plus prononcée */
+            border: 2px solid var(--003); /* Petite bordure pour le démarquer encore plus */
+        }
+        .guest-login {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .guest-login input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--contrast-3);
+            width: 260px;
+            margin-bottom: 10px;
+        }
+
+        .guest-fixed-image {
+          margin-top: 10px;
+          text-align: center;
+        }
+
+        .guest-fixed-image img {
+          width: 300px;
+            height: auto;
+            background: transparent;   /* au lieu de rgba(...) */
+            border-radius: 8px;
+            padding: 4px;
+
+        }
+
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue</title>
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+    <div class="image-container" id="image-container">
+        <img src="images/1000.jpg" alt="Image de bienvenida" class="active">
+        <img src="images/2000.jpg" alt="2000">
+        <img src="images/3000.jpg" alt="3000">
+        <img src="images/4000.jpg" alt="4000">
+        <img src="images/5000.jpg" alt="5000">
+        <img src="images/6000.jpg" alt="6000">
+        <img src="images/7000.jpg" alt="7000">
+        <img src="images/8000.jpg" alt="8000">
+        <img src="images/9000.jpg" alt="9000">
+        <img src="images/10000.jpg" alt="10000">
+
+    </div>
+
+    <!-- 👉 Zone overlay (fixe) -->
+    <div class="overlay">
+        <h1 style="color: white;">Bienvenue</h1>
+        <div class="buttons">
+            <button class="button" onclick="showCodePrompt('calendrier.html')">Calendrier</button>
+            <button class="button" onclick="showCodePrompt('statistiques.html')">Statistiques</button>
+            <button class="button" onclick="showCodePrompt('journalier.html')">Journalier</button>
+            <button class="button" onclick="showCodePrompt('configuration.html')">Configuration</button>
+            <button class="button" onclick="showCodePrompt('historique.html')">Historique</button>
+        </div>
+
+
+        <div class="contact-info">Contact : 085512302</div>
+
+        <div class="guest-login">
+            <h2>Accès invité</h2>
+            <input
+              type="text"
+              id="guestPhone"
+              placeholder="Entrez votre numéro de téléphone"
+              data-i18n-placeholder="placeholder_enter_phone">
+            <button class="button" onclick="enterAsGuest()" data-i18n="button_guest_enter">Entrer</button>
+        </div>
+
+        <!-- ✅ Petite image FIXE (hors carrousel, visible en permanence) -->
+        <div class="guest-fixed-image">
+            <img src="images/cedunet.png" alt="Invité">
+        </div>
+    </div>
+
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <input type="password" id="code" placeholder="Entrez le code">
+            <button class="button" onclick="checkCode()">Entrer</button>
+            <p id="message"></p>
+            <button class="button" onclick="closePopup()">Fermer</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <img src="images/Logo KM.png" alt="Logo KM" class="logo-footer" onclick="showContactOptions()">
+            <span class="copyright-text" id="footerCopyright">© 2025 — Tous droits réservés</span>
+        </div>
+    </footer>
+
+    <div id="contactOptionsPopup" class="popup" onclick="closeContactOptionsPopup()">
+        <div class="popup-content" onclick="event.stopPropagation()">
+            <span class="close-button" onclick="closeContactOptionsPopup()">&times;</span>
+            <h3>Contactez-nous</h3>
+            <a href="https://wa.me/528118594482" target="_blank" class="contact-button">
+                WhatsApp : +52 811 859 44 82
+            </a>
+            <button class="contact-button" onclick="copyEmailToClipboard('muhlemannk@gmail.com')">
+                Email : muhlemannk@gmail.com
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let index = 0;
+            const images = document.querySelectorAll('.image-container img');
+            let interval = setInterval(nextImage, 5000);
+
+            function nextImage() {
+                images[index].classList.remove('active');
+                index = (index + 1) % images.length;
+                images[index].classList.add('active');
+            }
+
+            function stopCarousel() {
+                clearInterval(interval);
+            }
+
+            function startCarousel() {
+                interval = setInterval(nextImage, 4000);
+            }
+
+            const imageContainer = document.getElementById('image-container');
+            imageContainer.addEventListener('pointerdown', stopCarousel);
+            imageContainer.addEventListener('pointerup', startCarousel);
+        });
+
+        // Fonction pour copier l'e-mail dans le presse-papiers
+        function copyEmailToClipboard(email) {
+            navigator.clipboard.writeText(email).then(() => {
+                // Utilisation d'une chaîne de caractères (string)
+                alert("E-mail copié : " + email);
+                closeContactOptionsPopup();
+            }).catch(err => {
+                // Utilisation d'une chaîne de caractères (string)
+                const errorMessage = "Erreur lors de la copie de l'e-mail.";
+                console.error(errorMessage, err);
+                alert(errorMessage);
+            });
+        }
+
+        // Fonctions pour gérer la nouvelle popup de contact
+        function showContactOptions() {
+            document.getElementById('contactOptionsPopup').style.display = 'flex';
+        }
+
+        function closeContactOptionsPopup() {
+            document.getElementById('contactOptionsPopup').style.display = 'none';
+        }
+
+        // Assurez-vous que les popups sont centrées même si la fenêtre change de taille
+        window.addEventListener('resize', () => {
+            const popup = document.getElementById('popup');
+            if (popup.style.display === 'flex') {
+                popup.style.display = 'flex';
+            }
+            const contactPopup = document.getElementById('contactOptionsPopup');
+            if (contactPopup.style.display === 'flex') {
+                contactPopup.style.display = 'flex';
+            }
+        });
+
+        function enterAsGuest() {
+            const phone = document.getElementById('guestPhone').value.trim();
+            if (phone === "") {
+                alert("Veuillez entrer un numéro de téléphone.");
+                return;
+            }
+            // Redirige vers la page calendrier avec le numéro en paramètre
+            window.location.href = `calendrier_invite.html?phone=${encodeURIComponent(phone)}`;
+        }
+
+    </script>
+</body>
+</html>

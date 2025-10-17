@@ -1,0 +1,138 @@
+/* Conteneur principal */
+.container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Titre */
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Compteurs */
+.total-events,
+.results-count {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Filtres */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.filters input,
+.filters button {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.filters button {
+  cursor: pointer;
+  background: #007BFF;
+  color: #fff;
+  border: none;
+}
+
+.filters button:hover {
+  background: #0056b3;
+}
+
+/* 📋 Tables (Résultats et Récent) */
+#resultsTable,
+#recentTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+#resultsTable th,
+#resultsTable td,
+#recentTable th,
+#recentTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+#resultsTable th,
+#recentTable th {
+  background: #f4f4f4;
+}
+
+/* Bouton Voir */
+.detailBtn {
+  padding: 4px 8px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.detailBtn:hover {
+  background: #218838;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 80%;
+  overflow-y: auto;
+  text-align: center;
+}
+
+/* Bouton fermer */
+.modal .close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Centrer le tableau des détails dans la modal */
+.detail-table {
+  margin: 20px auto;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.detail-table th,
+.detail-table td {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.detail-table th {
+  background: #f8f8f8;
+}

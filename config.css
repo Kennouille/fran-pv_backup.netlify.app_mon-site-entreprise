@@ -1,0 +1,86 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    display: flex;
+    justify-content: left;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    width: 500px; /* Largeur légèrement augmentée */
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+h2 {
+    margin-bottom: 15px;
+    font-size: 1.4em;
+    color: #333;
+    text-align: left;
+}
+
+.config-list {
+    margin-bottom: 20px;
+}
+
+.person-entry {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px; /* Plus d’espace entre les entrées */
+}
+
+.person-entry label {
+    flex: 0 0 60px; /* Fixe la largeur des labels */
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.person-entry input[type="text"] {
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9em;
+    margin-right: 10px; /* Ajoute de l’espace entre les champs de texte et le bouton */
+    width: 80%; /* Ajustez ce pourcentage selon vos besoins */
+}
+
+.person-entry .delete-button {
+    background-color: #d9534f;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    font-size: 0.9em;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.person-entry .delete-button:hover {
+    background-color: #e60000;
+}
+
+.save-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1em;
+    font-weight: bold;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.save-button:hover {
+    background-color: #0056b3;
+}

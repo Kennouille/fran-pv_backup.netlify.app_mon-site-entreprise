@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda total</title>
+    <link rel="stylesheet" href="styles1.css">
+    <link rel="stylesheet" href="journalier.css">
+    <script type="module" src="supabaseClientAgendaJour.js"></script>
+</head>
+<body>
+    <div class="welcome-message" id="welcome-message"></div>
+    <div class="agenda">
+        <h1>Agenda Total</h1>
+        <table id="journalierTable">
+            <thead>
+                <tr>
+                    <tr>
+                    <th>Téléphone</th>
+                    <th>Nom</th>
+                    <th>Date</th>
+                    <th>Heure</th>
+                    <th>Min</th>
+                    <th>Lieu</th>
+                    <th>Prix</th>
+                    <th>Travail</th>
+                    <th>Ajouté_par</th>
+                    <th>user_id</th>
+                    <th>paiement</th> <!-- Colonne combinée -->
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Les lignes seront ajoutées ici par JavaScript -->
+            </tbody>
+        </table>
+        
+    </div>
+    <script type="module">
+        import { supabase } from './supabaseClientAgendaJour.js';
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            loadTableData();
+        });
+
+        async function loadTableData() {
+            const { data, error } = await supabase
+                .from('event_quot1_fran')
+                .select('*');
+
+            if (error) {
+                console.error('Erreur lors de la récupération des données :', error);
+                return;
+            }
+
+            const tbody = document.querySelector('#journalierTable tbody');
+            tbody.innerHTML = ''; // Effacer les anciennes lignes
+
+            data.forEach(event => {
+                const row = tbody.insertRow();
+                row.dataset.userId = event.user_id; // Ajouter l'attribut data-user-id
+
+                row.innerHTML = `
+                    <td contenteditable="true" data-column="Téléphone">${event.Téléphone}</td>
+                    <td contenteditable="true" data-column="Nom">${event.Nom}</td>
+                    <td contenteditable="true" data-column="Date">${event.Date}</td>
+                    <td contenteditable="true" data-column="Heure">${event.Heure}</td>
+                    <td contenteditable="true" data-column="Min">${event.Min !== null ? event.Min : ''}</td>
+                    <td contenteditable="true" data-column="Lieu">${event.Lieu !== null ? event.Lieu : ''}</td>
+                    <td contenteditable="true" data-column="Prix">${event.Prix !== null ? event.Prix : ''}</td>
+                    <td contenteditable="true" data-column="Travail">${event.Travail !== null ? event.Travail : ''}</td>
+                    <td contenteditable="true" data-column="Ajouté_par">${event.Ajouté_par !== null ? event.Ajouté_par : ''}</td>
+                    <td contenteditable="true" data-column="user_id">${event.user_id}</td>
+                    <td>
+                        <div class="checkbox-container" style="font-size: smaller;">
+                            <label>
+                                <input type="checkbox" data-column="env_données" ${event.env_données ? 'checked' : ''}> - Envié datos
+                            </label>
+                            <br>
+                            <span class="paiement-link" style="cursor: pointer; color: blue; text-decoration: underline;" data-paiement="${event.Factura}">${event.Factura ? 'Voir la Facture' : 'Adjuntar Factura'}</span>
+                            <br>
+                            <label>
+                                <input type="checkbox" data-column="payé" ${event.payé ? 'checked' : ''}> - Pagado
+                            </label>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+
+                // Ajouter les écouteurs pour les cases à cocher et les liens de facture
+                row.querySelector('[data-column="env_données"]').addEventListener('change', updateCheckbox);
+                row.querySelector('[data-column="payé"]').addEventListener('change', updateCheckbox);
+                row.querySelector('.paiement-link').addEventListener('click', openFacturaDialog);
+
+                // Ajouter le bouton "Aplicar"
+                const applyCell = row.insertCell();
+                const applyButton = document.createElement('button');
+                applyButton.textContent = 'Aplicar';
+                applyButton.classList.add('apply-button');
+                applyCell.appendChild(applyButton);
+            });
+
+            // Ajouter des écouteurs d'événements aux boutons "Aplicar"
+            document.querySelectorAll('.apply-button').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const row = button.closest('tr');
+                    const updatedEvent = {};
+                    Array.from(row.cells).forEach(cell => {
+                        if (cell.dataset.column) {
+                            updatedEvent[cell.dataset.column] = cell.textContent.trim();
+                        }
+                    });
+
+                    const userId = row.dataset.userId;
+                    const { error } = await supabase
+                        .from('event_quot1_fran')
+                        .update(updatedEvent)
+                        .eq('user_id', userId);
+
+                    if (error) {
+                        console.error('Erreur lors de la mise à jour des données :', error);
+                    } else {
+                        console.log('Données mises à jour avec succès');
+                    }
+                });
+            });
+        }
+
+
+        async function updateCheckbox(event) {
+            const row = event.target.closest('tr');
+            const column = event.target.dataset.column;
+            const value = event.target.checked;
+            const userId = row.dataset.userId;
+
+            // Vérifier et mettre à jour uniquement les colonnes existantes
+            const { error } = await supabase
+                .from('event_quot1_fran')
+                .update({ [column]: value })
+                .eq('user_id', userId);
+
+            if (error) {
+                console.error(`Erreur lors de la mise à jour de la colonne ${column} :`, error);
+            } else {
+                console.log(`Colonne ${column} mise à jour avec succès`);
+            }
+        }
+
+
+        async function openFacturaDialog(event) {
+            const facturaLink = event.target;
+            const userId = facturaLink.closest('tr').dataset.userId;
+
+            if (facturaLink.textContent === 'Adjuntar Factura') {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.addEventListener('change', async function() {
+                    const file = input.files[0];
+                    if (file) {
+                        const { data, error } = await supabase
+                            .storage
+                            .from('facturas_fran')
+                            .upload(`${userId}/${file.name}`, file);
+
+                        if (error) {
+                            console.error('Erreur lors du téléchargement de la facture :', error);
+                        } else {
+                            console.log('Facture téléchargée avec succès');
+                            facturaLink.textContent = 'Voir la Facture';
+                            facturaLink.dataset.paiement = data.Key;
+
+                            // Mettre à jour la base de données
+                            const { error: updateError } = await supabase
+                                .from('event_quot1_fran')
+                                .update({ Factura: data.Key })
+                                .eq('user_id', userId);
+
+                            if (updateError) {
+                                console.error('Erreur lors de la mise à jour de la colonne Factura :', updateError);
+                            } else {
+                                console.log('Colonne Factura mise à jour avec succès');
+                            }
+                        }
+                    }
+                });
+                input.click();
+            } else {
+                const { publicURL, error } = supabase.storage.from('facturas_fran').getPublicUrl(facturaLink.dataset.paiement);
+                if (error) {
+                    console.error('Erreur lors de la récupération de l\'URL publique de la facture :', error);
+                } else {
+                    window.open(publicURL, '_blank');
+                }
+            }
+        }
+    </script>
+    <script>
+        // Récupère le nom depuis le localStorage et affiche le message de bienvenue
+        const welcomeName = localStorage.getItem('welcomeName');
+        if (welcomeName) {
+            const welcomeMessage = document.getElementById('welcome-message');
+            welcomeMessage.innerText = `Bienvenue, ${welcomeName}!`;
+            welcomeMessage.style.fontSize = "24px";  // Style du message
+            welcomeMessage.style.color = "#333";
+            welcomeMessage.style.padding = "10px";
+            welcomeMessage.style.textAlign = "center";
+        }
+    </script>
+</body>
+</html>

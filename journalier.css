@@ -1,0 +1,37 @@
+/* journalier.css */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.agenda {
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    word-wrap: break-word; /* Permet de couper les mots pour éviter les débordements */
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+td {
+    max-width: 200px; /* Ajustez cette valeur selon vos besoins */
+    white-space: normal; /* Permet aux cellules de s'étendre sur plusieurs lignes */
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}

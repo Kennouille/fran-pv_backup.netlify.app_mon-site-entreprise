@@ -1,0 +1,1440 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster&display=swap');
+
+:root {
+    --contrast: #222222;
+    --contrast-2: #575760;
+    --contrast-3: #b2b2be;
+    --base: #f0f0f0;
+    --base-2: #f7f8f9;
+    --base-3: #ffffff;
+    --accent: #1e73be;
+    --003: #00AAA3;
+}
+
+.background-image {
+    position: fixed; /* L'élément est fixé dans le viewport */
+    top: 50%;
+    left: 50%;
+    width: 1000px;
+    height: 800px;
+    background-image: url('./images/cedunet.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.4;
+    z-index: -1;
+    pointer-events: none;
+    transform: translate(-50%, -50%); /* Pour un centrage parfait */
+}
+
+/* 📱 Petits écrans : ajustements pour les médias queries */
+@media (max-width: 1024px) {
+    .background-image {
+        width: 1200px;
+        height: 960px;
+        /* Le positionnement fixed ci-dessus gère le comportement de zoom */
+        position: fixed
+    }
+}
+
+/* Style global du corps */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--base-2); /* Couleur de fond de base */
+    color: var(--contrast); /* Couleur du texte */
+}
+
+/* Styles généraux */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    align-items: flex-start;
+    padding: 20px;
+    position: relative;
+}
+
+.navigation-container {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* espace entre chaque élément */
+    background-color: rgba(255, 255, 255, 0.2); /* Fond blanc semi-transparent */
+    padding: 10px;
+    border-radius: 8px; /* Coins arrondis */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Légère ombre */
+}
+
+.calendar-container, .editable-container {
+    background-color: rgba(255, 255, 255, 0.2); /* Fond blanc avec opacité */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Légère ombre */
+    width: 100%;
+    max-width: 600px; /* Limite la largeur pour une meilleure lisibilité sur les grands écrans */
+    margin-bottom: 20px;
+}
+
+#selectedDateDisplay {
+    font-size: 1.5em; /* Ajustez la taille selon vos besoins */
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+#successMessage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none; /* Caché par défaut */
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+
+.editable-container table, .form-container {
+    width: 100%;
+}
+
+.form-container input, .form-container select, .form-container button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Styles pour le message de bienvenue permanent */
+.welcome-message {
+    position: fixed;
+    top: 80px;
+    right: 10px;
+    padding: 10px;
+    background-color: #00AAA3; /* Votre couleur --003 */
+    color: white;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+
+/* Styles pour les écrans plus petits */
+@media (max-width: 768px) {
+    .main-container {
+        padding: 10px;
+    }
+
+    .navigation-container, .calendar-container, .editable-container, .form-container {
+        max-width: 100%;
+    }
+
+    .form-container input, .form-container select, .form-container button {
+        padding: 8px;
+    }
+
+    #meteo-widget,
+    .daily-note-modal {
+        left: 450px !important;       /* Colle un peu plus à gauche */
+        right: auto !important;
+        max-width: 95vw !important;  /* Réduit largeur pour petit écran */
+    }
+
+    .daily-note-modal {
+        top: 300px !important; /* ajustement léger pour s’aligner */
+    }
+
+    /* Styles pour le message de bienvenue permanent */
+    .welcome-message {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        background-color: #00AAA3; /* Votre couleur --003 */
+        color: white;
+        border-radius: 5px;
+        z-index: 1000;
+    }
+}
+
+
+/* Style des boutons de navigation */
+.navigation-container .button {
+    margin: 0 10px; /* Ajoute un espace entre les boutons et le titre */
+    font-family: 'Lobster', cursive; /* Police de caractères */
+    border: 4px solid blue; /* Bordure */
+    background-color: #5DADE2; /* Couleur de fond */
+    color: white; /* Couleur du texte */
+    padding: 6px 10px; /* Ajoute un espace intérieur */
+    text-align: center; /* Centre le texte */
+    text-decoration: none; /* Supprime la décoration du texte */
+    display: inline-block; /* Affiche en ligne */
+    font-size: 11px; /* Taille de la police */
+    cursor: pointer; /* Change le curseur au survol */
+    border-radius: 12px; /* Bordure arrondie */
+}
+
+/* Style des boutons de navigation au survol */
+.navigation-container .button:hover {
+    background-color: #5DADE2; /* Change la couleur de fond au survol */
+}
+
+/* Style du titre du mois et de l'année */
+#monthYear {
+    flex-grow: 1; /* Permet au titre de prendre tout l'espace disponible */
+    text-align: center; /* Centre le texte */
+    font-weight: bold; /* Met le texte en gras */
+}
+
+/* Style de la table du calendrier */
+#calendarTable {
+    width: 100%; /* Prend toute la largeur disponible */
+    border-collapse: separate; /* Sépare les bordures des cellules */
+    border-radius: 12px; /* Bordure arrondie */
+    overflow: hidden; /* Masque le débordement */
+}
+
+/* Style des en-têtes de la table */
+#calendarTable th {
+    background-color: #f2f2f2; /* Couleur de fond des en-têtes */
+    padding: 10px; /* Ajoute un espace intérieur */
+    text-align: center; /* Centre le texte */
+    border: 1px solid blue; /* Bordure */
+}
+
+/* Style des cellules de la table */
+#calendarTable td {
+    padding: 10px; /* Ajoute un espace intérieur */
+    text-align: center; /* Centre le texte */
+    border: 1px solid blue; /* Bordure */
+}
+
+
+/* Style de la table du editable */
+#editable-table {
+    width: 100%; /* Prend toute la largeur disponible */
+    border-collapse: separate; /* Sépare les bordures des cellules */
+    border-radius: 12px; /* Bordure arrondie */
+    overflow: hidden; /* Masque le débordement */
+}
+
+/* Style des en-têtes du editable */
+#editable-table th {
+    background-color: #f2f2f2; /* Couleur de fond des en-têtes */
+    padding: 10px; /* Ajoute un espace intérieur */
+    text-align: center; /* Centre le texte */
+    border: 1px solid blue; /* Bordure */
+    border-radius: 8px;
+}
+
+/* Style des cellules du editable */
+#editable-table td {
+    padding: 10px; /* Ajoute un espace intérieur */
+    text-align: center; /* Centre le texte */
+    border: 1px solid blue; /* Bordure */
+    border-radius: 8px;
+}
+
+/* Style pour la date du jour */
+.today {
+    background-color: #d3d3d3; /* Couleur gris clair pour la date du jour */
+}
+
+/* Style pour les cellules cliquables */
+.clickable {
+    cursor: pointer; /* Change le curseur au survol */
+}
+
+/* Style pour la cellule sélectionnée */
+.selected {
+    background-color: #add8e6; /* Couleur bleu clair pour la sélection */
+}
+
+/* Style des champs de formulaire */
+.form-container input {
+    margin-bottom: 8px; /* Ajoute un espace en bas */
+    padding: 4px; /* Ajoute un espace intérieur */
+    width: 100%; /* Prend toute la largeur disponible */
+    border-radius: 8px;
+}
+
+/* Style du bouton d'ajout d'événement */
+.form-container .button {
+    padding: 10px 20px; /* Ajoute un espace intérieur */
+    background-color: #4CAF50; /* Couleur de fond */
+    color: white; /* Couleur du texte */
+    border: none; /* Supprime la bordure */
+    cursor: pointer; /* Change le curseur au survol */
+}
+
+/* Style du bouton d'ajout d'événement au survol */
+.form-container .button:hover {
+    background-color: #45a049; /* Change la couleur de fond au survol */
+}
+
+/* Style des coins arrondis pour les en-têtes de la table */
+th:first-child {
+    border-top-left-radius: 12px; /* Bordure arrondie en haut à gauche */
+}
+
+th:last-child {
+    border-top-right-radius: 12px; /* Bordure arrondie en haut à droite */
+}
+
+/* Style des coins arrondis pour les cellules de la table */
+td:first-child:last-child {
+    border-bottom-left-radius: 12px; /* Bordure arrondie en bas à gauche */
+    border-bottom-right-radius: 12px; /* Bordure arrondie en bas à droite */
+}
+
+/* Style global pour les marges des div */
+div {
+    margin-bottom: 10px; /* Ajoute un espace en bas */
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+
+.button {
+    margin: 5px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.apply-button {
+    background-color: #4CAF50; /* Vert */
+    color: white;
+}
+
+.cancel-button {
+    background-color: #f44336; /* Rouge */
+    color: white;
+}
+
+.whatsapp-button {
+    background-color: #25D366; /* Vert WhatsApp */
+    color: white;
+}
+
+.checkbox-container {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8em; /* Réduire la taille de la police */
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.factura-link {
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Lobster&display=swap');
+
+/* Style global du corps */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--base-2); /* Couleur de fond de base */
+    color: var(--contrast); /* Couleur du texte */
+    border-radius: 8px;
+}
+
+/* Style du titre principal */
+h1 {
+    text-align: center; /* Centre le texte */
+    margin-bottom: 100px; /* Ajoute un espace en bas */
+    color: var(--contrast); /* Couleur du texte */
+    border-radius: 8px;
+    padding-left: 100px;
+    font-family: 'Lobster', cursive;
+    font-size: 3em;
+}
+
+/* Styles généraux */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    align-items: flex-start;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.calendar-container, .form-container {
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 20px;
+    background-color: var(--base); /* Fond */
+    border-radius: 8px;
+}
+
+.editable-container {
+    width: 100%;
+    max-width: 790px;
+    margin-bottom: 20px;
+    background-color: var(--base); /* Fond */
+    border-radius: 8px;
+}
+
+#selectedDateDisplay {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: var(--contrast); /* Couleur du texte */
+}
+
+#successMessage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--003); /* Vert */
+    color: var(--base-3); /* Blanc */
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+
+.editable-container table, .form-container {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.form-container input, .form-container select, .form-container button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: var(--base-3); /* Blanc */
+    border-radius: 8px;
+}
+
+
+/* Style des boutons de navigation */
+.navigation-container .button {
+    margin: 0 10px;
+    font-family: 'Lobster', cursive;
+    border: 4px solid var(--003); /* Vert */
+    background-color: var(--003); /* Vert */
+    color: var(--base-3); /* Blanc */
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 11px;
+    cursor: pointer;
+    border-radius: 12px;
+}
+
+/* Style des boutons de navigation au survol */
+.navigation-container .button:hover {
+    background-color: var(--accent); /* Bleu au survol */
+}
+
+/* Style du titre du mois et de l'année */
+#monthYear {
+    flex-grow: 1;
+    text-align: center;
+    font-weight: bold;
+    color: var(--contrast); /* Couleur du texte */
+}
+
+/* Style de la table du calendrier */
+#calendarTable {
+    width: 100%;
+    border-collapse: separate;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Style des en-têtes de la table */
+#calendarTable th {
+    background-color: var(--base); /* Fond des en-têtes */
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--003); /* Vert */
+    color: var(--contrast);
+}
+
+/* Style des cellules de la table */
+#calendarTable td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--003); /* Vert */
+    color: var(--contrast-2); /* Texte */
+}
+
+/* Style de la table du editable */
+#editable-table {
+    width: 100%;
+    border-collapse: separate;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#editable-table th {
+    background-color: var(--base);
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--003);
+    color: var(--contrast);
+}
+
+#editable-table td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--003);
+    color: var(--contrast-2);
+}
+
+/* Style pour la date du jour */
+.today {
+    background-color: var(--accent); /* Bleu */
+}
+
+/* Style pour les cellules cliquables */
+.clickable {
+    cursor: pointer; /* Change le curseur au survol */
+}
+
+/* Style pour la cellule sélectionnée */
+.selected {
+    background-color: var(--003); /* Vert */
+    color: var(--base-3); /* Blanc */
+}
+
+/* Style des boutons */
+.apply-button {
+    background-color: var(--003); /* Vert */
+    color: var(--base-3); /* Blanc */
+}
+
+.cancel-button {
+    background-color: var(--contrast); /* Couleur sombre */
+    color: var(--base-3); /* Blanc */
+}
+
+.whatsapp-button {
+    background-color: var(--003); /* Vert WhatsApp */
+    color: var(--base-3); /* Blanc */
+}
+
+/* Liens et texte supplémentaires */
+.factura-link {
+    color: var(--accent); /* Bleu */
+    text-decoration: underline;
+}
+
+/* Style pour les cases à cocher */
+.checkbox-container {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8em;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.checkbox-container label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+/* Style pour la modale */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: relative;
+    margin: 5% auto;
+    padding: 0;
+    width: 80%;
+    height: 80%;
+    background-color: white;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/*
+Permet de cacher une colonne
+table#editable-table th:nth-child(10),
+table#editable-table td:nth-child(10) {
+    display: none;
+}
+*/
+
+/* Styles pour les carrés du calendrier pour les notes journalières */
+.calendar-day-note {
+    cursor: pointer;
+    background-color: #e6f7ff;
+    padding: 5px;
+    border-radius: 8px;
+}
+
+#editNoteModal {
+    background-color: rgba(255, 255, 255, 0.2); /* Fond blanc semi-transparent */
+    padding: 20px;
+    border-radius: 10px; /* Coins arrondis */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Légère ombre */
+}
+
+.calendar-day-note:hover {
+    background-color: #b3e5fc;
+}
+
+/* Styles pour le rectangle de notes */
+.daily-note-modal {
+    display: block; /* Toujours visible */
+    position: absolute;
+    top: 240px; /* Ajustez en fonction de l'espacement vertical souhaité */
+    left: 650px; /* Ajustez pour placer le rectangle à droite du calendrier */
+    width: 430px; /* Largeur du rectangle */
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.daily-note-modal-content {
+    background-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.daily-note-close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Conteneur pour aligner les deux cadres côte à côte */
+.form-wrapper {
+    display: flex;
+    align-items: flex-start; /* Aligne le contenu au début verticalement */
+    gap: 30px; /* Espace entre les deux sections */
+}
+
+/* Style pour le formulaire "Nuevo evento" */
+.form-container {
+    width: 600px; /* Largeur fixe pour le formulaire, ajustable */
+    background-color: rgba(255, 255, 255, 0.2); /* Fond blanc semi-transparent */
+    padding: 15px;
+    border-radius: 10px; /* Coins arrondis */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Légère ombre */
+}
+
+/* Style pour le conteneur "Informations permanentes" */
+#permanentNotesContainer {
+    width: 450px; /* Largeur fixe indépendante, ajustable */
+    max-height: 370px; /* Hauteur maximale du cadre */
+    overflow-y: hidden; /* Affiche l'ascenseur vertical uniquement si nécessaire */
+    overflow-x: hidden; /* Masque l'ascenseur horizontal */
+    border: 1px solid #ccc; /* Bordure pour correspondre à l'esthétique */
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.2); /* Fond blanc semi-transparent */
+    padding: 15px;
+    border-radius: 10px; /* Coins arrondis */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Légère ombre */
+    box-sizing: border-box;
+}
+
+/* Style pour le champ de texte */
+#permanentNotes {
+    width: 100%; /* S'adapte à la largeur du conteneur */
+    height: 230px; /* Hauteur initiale du champ texte */
+    border-radius: 5px;
+    font-size: 1.4em;
+    resize: vertical; /* Autorise uniquement le redimensionnement vertical */
+    overflow-y: auto; /* Affiche l'ascenseur vertical uniquement si nécessaire */
+    overflow-x: hidden; /* Masque l'ascenseur horizontal */
+}
+
+#savePermanentNotesButton {
+    background-color: #28a745; /* Couleur verte */
+    color: white;              /* Texte en blanc */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#savePermanentNotesButton:hover {
+    background-color: #218838; /* Couleur un peu plus foncée pour le survol */
+}
+
+#saveNoteButton {
+background-color: #28a745; /* Couleur verte */
+    color: white;              /* Texte en blanc */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#saveNoteButton:hover {
+    background-color: #218838; /* Couleur un peu plus foncée pour le survol */
+}
+
+#meteo-widget {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 2px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center; /* Centrer le texte pour l'ensemble du widget, surtout le header */
+    width: 465px; /* Garder la largeur actuelle */
+
+    position: absolute;
+    top: 55px;
+    left: 648px;
+
+    float: none;
+    margin-top: 0;
+    margin-left: 0;
+
+    z-index: 100;
+}
+
+/* Styles pour la section du haut du widget */
+.meteo-top-section {
+    margin-bottom: 5px; /* Espace sous le titre et le lieu */
+}
+
+#meteo-widget h2 {
+    font-size: 1.3em;
+    margin-bottom: 5px;
+    margin-top: 7px; /* Ajoute un peu de marge en haut du titre */
+}
+
+/* NOUVEAUX STYLES POUR LA STRUCTURE À DEUX COLONNES */
+.meteo-main-columns {
+    display: flex; /* Active Flexbox pour les deux colonnes */
+    align-items: center; /* Centre verticalement le texte et l'image */
+    justify-content: space-around; /* Distribue l'espace entre les colonnes */
+    padding: 0 5px; /* Petit padding horizontal pour ne pas coller les bords */
+}
+
+.meteo-text-column {
+    flex: 1; /* Permet à cette colonne de prendre l'espace disponible */
+    text-align: left; /* Aligne le texte à gauche dans cette colonne */
+    padding-right: 10px; /* Ajoute un petit espace entre le texte et l'image */
+}
+
+/* Style pour tous les paragraphes à l'intérieur du widget (y compris ceux de la colonne de texte) */
+#meteo-widget p {
+    font-size: 1.1em;
+    margin: 2px 0; /* Réduit l'espace vertical entre les lignes */
+}
+
+.meteo-image-column {
+    flex-shrink: 0; /* Empêche l'image de rétrécir */
+    text-align: center; /* Centre l'image dans sa colonne */
+}
+
+#meteo-widget img {
+    width: 80px; /* AGRANDIT L'IMAGE COMME DEMANDÉ */
+    height: 80px; /* AGRANDIT L'IMAGE COMME DEMANDÉ */
+    margin: 5px auto; /* Centre l'image si elle est seule dans sa colonne */
+    display: block; /* Nécessaire pour que margin auto fonctionne */
+}
+
+/* Style pour le message d'erreur */
+#meteo-error {
+    color: red;
+    font-size: 0.8em;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.language-selector img {
+    width: 40px; /* Taille des drapeaux */
+    height: 40px;
+    border-radius: 50%; /* Rendre les drapeaux circulaires */
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.language-selector img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+.language-selector img.active-lang {
+    transform: scale(1.2); /* Agrandit le drapeau sélectionné */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6); /* Ombre plus prononcée */
+    border: 2px solid var(--003); /* Petite bordure pour le démarquer encore plus */
+}
+
+.note-type-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    font-size: 0.8em;
+}
+
+.note-type-btn {
+    padding: 10px 20px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    transition: background-color 0.3s;
+}
+
+.note-type-btn.active {
+    background-color: #4CAF50; /* Vert pour le bouton actif */
+    color: white;
+}
+
+.note-type-btn:hover {
+    background-color: #ddd;
+}
+
+/* Style du modal de dessin */
+.drawing-modal-background {
+    display: flex;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+.drawing-modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Barre d'outils */
+.drawing-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background-color: #ccc;
+}
+
+/* Boutons d'outils */
+.tool-btn, .color-btn {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.tool-btn.active, .color-btn.active {
+    background-color: #e0e0e0;
+    border-color: #666;
+    width: 40px; /* Taille des boutons d'outils */
+    height: 40px;
+    font-size: 20px; /* Taille de l'icône */
+}
+
+/* Palette de couleurs */
+#colorPalette {
+    display: flex;
+    gap: 5px;
+}
+
+.color-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+}
+
+.color-btn.active {
+    box-shadow: 0 0 0 2px #333;
+}
+
+/* Pied de page du modal */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Style pour les petits écrans (smartphones et tablettes) */
+@media (max-width: 768px) {
+    .drawing-modal-content {
+        width: 95vw; /* Le modal prendra 95% de la largeur du viewport */
+        max-width: 95vw;
+        max-height: 95vh;
+        overflow-y: auto; /* Ajoute une barre de défilement si le contenu dépasse */
+    }
+
+    #noteCanvas {
+        width: 100%;
+        height: auto;
+    }
+
+    .drawing-toolbar {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    #colorPalette {
+        flex-wrap: wrap;
+    }
+}
+
+td[data-column="Observations"] {
+  vertical-align: top;
+  overflow: visible !important;
+}
+
+.photo-preview img {
+  display: inline-block;
+  max-height: 50px;
+  max-width: 80px;
+  margin: 2px;
+  object-fit: cover;
+}
+
+.photo-wrapper {
+  position: relative !important;
+  display: inline-block;
+}
+.photo-wrapper img {
+  display: block;
+}
+
+
+.delete-photo {
+  position: absolute !important;
+  top: 0;
+  right: 0;
+  z-index: 9999 !important;
+  background: red;
+  color: white !important;
+  font-size: 16px !important;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 5px;
+  cursor: pointer;
+}
+
+.delete-photo:hover {
+    background: red;
+}
+
+.lightbox {
+  display: none; /* caché par défaut */
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+}
+
+.lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  color: white;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.duplicate-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;   /* ✅ Toujours au-dessus */
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+
+.duplicate-modal-content {
+  background: #fff;
+  padding: 20px 25px;
+  border-radius: 10px;
+  width: 320px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  font-family: system-ui, sans-serif;
+}
+
+.duplicate-modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  text-align: center;
+  color: #333;
+}
+
+.duplicate-modal-content label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+.duplicate-modal-content input,
+.duplicate-modal-content select {
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.duplicate-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background: #2e7d32;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1b5e20;
+}
+
+.btn-cancel {
+  background: #c6282
+}
+
+.weekly-grid {
+  display: flex;
+  justify-content: center; /* centrer l’ensemble */
+  gap: 50px;              /* espace entre les colonnes */
+  margin-top: 10px;
+}
+
+.weekly-grid .column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* espace entre chaque jour */
+}
+
+.weekly-grid label {
+  display: flex;
+  align-items: center; /* aligne verticalement texte + coche */
+  gap: 10px;           /* espace fixe entre jour et coche */
+  font-size: 14px;
+}
+
+.popup {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+}
+.popup-content {
+  background: #fff; padding: 20px; border-radius: 8px;
+  width: 300px; max-width: 90%;
+  margin: 10% auto; text-align: center;
+}
+.popup-content button {
+  margin: 8px; padding: 10px 16px;
+}
+
+/* Cellule Travail */
+.travail-cell {
+  min-width: 300px;       /* un peu plus large que du texte normal */
+  vertical-align: top;
+}
+
+/* Grille normale (2 colonnes) */
+.travail-grid.normal-role {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;          /* espace vertical et horizontal */
+  align-items: center;
+}
+
+/* Grille admin (3 colonnes) */
+.travail-grid.admin-role {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+/* Label + input alignés verticalement */
+.travail-grid label {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  background: #f8f9fa;
+  padding: 3px 5px;
+  border-radius: 4px;
+}
+
+/* Inputs et checkboxes */
+.travail-grid input[type="text"],
+.travail-grid textarea {
+  width: 60px;
+  max-width: 70px;
+  font-size: 0.7rem;
+  padding: 2px 4px;
+}
+
+.travail-grid input[type="checkbox"] {
+  margin-left: 6px;
+  transform: scale(1.1); /* checkboxes un peu plus visibles */
+}
+
+.calendar-day.highlight {
+    background-color: #ffd966; /* jaune clair */
+    border: 2px solid #f1c232;
+}
+
+.highlight {
+    background-color: red !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+#searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* espace entre label et input */
+}
+
+#searchContainer label {
+  white-space: nowrap; /* évite que "Recherche :" passe à la ligne */
+}
+
+.alert-button {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-weight: bold;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+/* état none */
+.alert-none {
+  background-color: #cccccc;  /* gris clair */
+  color: black;              /* texte visible */
+}
+
+/* état active */
+.alert-active {
+  background-color: #d9534f; /* rouge */
+  color: white;
+}
+
+/* état resolved */
+.alert-resolved {
+  background-color: #5cb85c; /* vert */
+  color: white;
+}
+
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2196f3;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.toggle-btn {
+  position: relative;
+  width: 50px;       /* diamètre du cercle */
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  font-size: 34px;   /* taille du + / - (agrandi) */
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  line-height: 50px; /* centre verticalement */
+  text-align: center;
+  text-shadow: 0 2px 3px rgba(0,0,0,0.5);
+  box-shadow:
+    inset 0 -3px 6px rgba(0,0,0,0.5),
+    0 5px 10px rgba(0,0,0,0.4);
+  transition: transform 0.15s;
+  overflow: hidden;
+}
+
+/* Reflet glossy */
+.toggle-btn::before {
+  content: "";
+  position: absolute;
+  top: 5%;
+  left: 10%;
+  width: 80%;
+  height: 40%;
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.8), rgba(255,255,255,0.1));
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Vert (+) */
+.toggle-btn.plus {
+  background: linear-gradient(to bottom, #66ff66, #009900);
+}
+
+/* Rouge (−) */
+.toggle-btn.minus {
+  background: linear-gradient(to bottom, #ff6666, #990000);
+}
+
+/* Effet zoom au survol */
+.toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Overlay sombre */
+#popup6 {
+  display: none; /* caché par défaut */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* fond semi-transparent */
+  z-index: 10000; /* au-dessus de tout */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Boîte blanche centrée */
+#popup6 .popup-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 2px solid black;
+}
+
+/* Options */
+#popup6-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.popup-option {
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.popup-option:hover {
+  background: #f0f0f0;
+}
+
+.popup-option.selected {
+  border: 2px solid black; /* cadre noir */
+  background: #e0ffe0;     /* vert clair pour indiquer sélection */
+  color: black !important;
+}
+
+#confirmationPopup .button {
+  color: black;
+  background: white;
+  border: 1px solid #aaa;
+  padding: 8px 16px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 15px;
+}
+
+#confirmationPopup .button.selected {
+  border: 2px solid black;
+  background: #e0e0e0;
+}
+
+/* --- CONTAINER --- */
+.pointage-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 6px;
+}
+
+/* --- BOUTON RELIEF TYPE WHATSAPP --- */
+.btn-toggle-onss {
+  border: none;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-toggle-onss:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Couleurs dynamiques */
+.btn-toggle-onss[data-state="in"] {
+  background-color: #28a745; /* vert */
+}
+
+.btn-toggle-onss[data-state="out"] {
+  background-color: #dc3545; /* rouge */
+}
+
+/* --- HISTORIQUE --- */
+.pointage-history {
+  font-size: 12px;
+  color: #333;
+  line-height: 1.4;
+  width: 100%;
+}
+
+.pointage-entry {
+  border-top: 1px solid #ddd;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.pointage-entry:first-child {
+  border-top: none;
+}
+
+.pointage-entry a {
+  color: #007bff;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+.has-note {
+    position: relative;
+    font-weight: bold;
+}
+
+.has-note::after {
+    content: "●";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: #f44336;
+    font-size: 12px;
+}

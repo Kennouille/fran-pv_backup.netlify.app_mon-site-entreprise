@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate="config_page_title">Configuration des Accès</title>
+    <script type="module" src="configuration.js" defer></script>
+    <style>
+        /* Styles CSS inchangés pour cet objectif */
+        h1, .section-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        h3 {
+            margin-top: 50px;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        h4 {
+            margin-top: 50px;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        .background-image {
+            position: fixed; /* L'élément est fixé dans le viewport */
+            top: 50%;
+            left: 50%;
+            width: 1500px;
+            height: 1200px;
+            background-image: url('./images/cedunet.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
+            transform: translate(-50%, -50%); /* Pour un centrage parfait */
+        }
+
+        /* 📱 Petits écrans : ajustements pour les médias queries */
+        @media (max-width: 1024px) {
+            .background-image {
+                width: 1200px;
+                height: 960px;
+                /* Le positionnement fixed ci-dessus gère le comportement de zoom */
+                position: fixed
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+    <h1 class="section-title" data-translate="access_management_title">Gestion des Accès aux Pages</h1>
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th data-translate="th_name">Nom</th>
+                <th data-translate="th_code">Code</th>
+                <th data-translate="th_calendar">Calendrier</th>
+                <th data-translate="th_statistics">Statistiques</th>
+                <th data-translate="th_daily">Quotidien</th>
+                <th data-translate="th_configuration">Configuration</th>
+                <th data-translate="th_history">Historique</th> <!-- ✅ Nouveau -->
+                <th>ID Geodynamics</th>
+                <th>Sync</th>
+                <th data-translate="th_actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2 data-translate="add_new_user_title">Ajouter un nouvel utilisateur</h2>
+    <input type="text" id="newUserName" data-translate-placeholder="placeholder_name" placeholder="Nom">
+    <input type="text" id="newUserCode" data-translate-placeholder="placeholder_code" placeholder="Code">
+    <input type="checkbox" id="newUserCalendrier"> <span data-translate="th_calendar">Calendrier</span>
+    <input type="checkbox" id="newUserStatistiques"> <span data-translate="th_statistics">Statistiques</span>
+    <input type="checkbox" id="newUserQuotidien"> <span data-translate="th_daily">Quotidien</span>
+    <input type="checkbox" id="newUserConfiguration"> <span data-translate="th_configuration">Configuration</span>
+    <input type="checkbox" id="newUserHistorique"> <span data-translate="th_history">Historique</span> <!-- ✅ Nouveau -->
+    <button onclick="addUser()" data-translate="add_user_button">Ajouter Utilisateur</button>
+
+
+    <div id="messageContainer"></div>
+
+    <div>
+        <h3 data-translate="whatsapp_prefix_management_title">Gestion du préfixe pour Whatsapp</h3>
+        <label for="countryPrefixInput" data-translate="regional_prefix_label">Préfixe régional :</label>
+        <input type="text" id="countryPrefixInput" placeholder="+52">
+        <button id="savePrefixButton" data-translate="save_prefix_button">Enregistrer le préfixe</button>
+    </div>
+    <div id="sectionsContainer">
+        <div> <h4 data-translate="bank_coordinates_management_title">Gestion coordonnées bancaires</h4>
+            <div id="gestionCoordonneesBancaires">
+                <label for="sucursalInput" data-translate="sucursal_label">Sucursal:</label>
+                <input type="text" id="sucursalInput" data-translate-placeholder="placeholder_sucursal" placeholder="Sucursal 00000">
+                <br>
+                <br>
+                <label for="accountInput" data-translate="account_label">Compte:</label>
+                <input type="text" id="accountInput" data-translate-placeholder="placeholder_account" placeholder="Compte 00000000">
+                <br>
+                <br>
+                <label for="bankInput" data-translate="bank_label">Banque:</label>
+                <input type="text" id="bankInput" data-translate-placeholder="placeholder_bank" placeholder="Banque 1234 5678 9123 4567">
+                <br>
+                <br>
+                <label for="ibanInput" data-translate="iban_label">IBAN:</label>
+                <input type="text" id="ibanInput" data-translate-placeholder="placeholder_iban" placeholder="IBAN 1234 4567 56778 34566">
+                <br>
+                <br>
+                <label for="recipientNameInput" data-translate="recipient_name_label">Nom du destinataire:</label>
+                <input type="text" id="recipientNameInput" data-translate-placeholder="placeholder_recipient_name" placeholder="Nom du destinataire">
+                <br><br>
+
+                <button id="enregistrerCoordonneesButton" data-translate="save_button">Enregistrer</button>
+            </div>
+        </div>
+
+        <div> <h3 data-translate="weather_city_management_title">Gestion de la Ville Météo</h3>
+            <div class="setting-item" id="gestionCiudadDelTiempo">
+                <label for="meteoCityInput" data-translate="weather_city_label">Ville Météo :</label>
+                <input type="text" id="meteoCityInput" data-translate-placeholder="placeholder_weather_city" placeholder="Ville,Pays (ex: London,GB)">
+                <ul id="citySuggestions" style="border: 1px solid #ccc; max-height: 150px; overflow-y: auto; list-style: none; padding: 0; margin: 0; display: none; position: absolute; background-color: white; z-index: 1000; width: calc(100% - 22px);"></ul>
+                <button id="saveMeteoCityButton" data-translate="save_weather_city_button">Enregistrer la ville météo</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

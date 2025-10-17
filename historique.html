@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="page_title1">Historique des Modifications</title>
+  <link rel="stylesheet" href="historique.css">
+  <script src="guard.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- 🔹 En-tête -->
+    <h1 data-i18n="header_title">Historique des Modifications</h1>
+    <p id="totalEvents" class="total-events"></p>
+
+    <!-- 🔍 Barre de recherche simplifiée -->
+    <div class="filters">
+      <input
+        type="text"
+        id="searchGlobal"
+        placeholder="Rechercher par Nom, Téléphone ou Lieu"
+        data-i18n-placeholder="placeholder_search_global">
+
+      <input
+        type="date"
+        id="searchDate"
+        data-i18n-placeholder="placeholder_search_date">
+
+      <button id="applySearch" data-i18n="button_apply">Appliquer</button>
+    </div>
+
+    <!-- 📊 Résultats de recherche -->
+    <div id="resultsSection" style="margin-top:20px;">
+      <p id="resultsCount" class="results-count"></p>
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th data-i18n="col_phone">Téléphone</th>
+            <th data-i18n="col_name">Nom</th>
+            <th data-i18n="col_event_date">Date de l'événement</th>
+            <th data-i18n="col_userid">Identifiant</th>
+            <th data-i18n="col_location">Lieu</th>
+            <th data-i18n="col_details">Détails</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p id="noResultsMessage" data-i18n="no_results" style="display:none;">Aucun résultat trouvé</p>
+    </div>
+
+    <!-- 📊 Historique récent -->
+    <div id="recentSection" style="margin-top:40px;">
+      <h2 data-i18n="recent_changes">10 dernières modifications</h2>
+      <table id="recentTable">
+        <thead>
+          <tr>
+            <th data-i18n="col_phone">Téléphone</th>
+            <th data-i18n="col_name">Nom</th>
+            <th data-i18n="col_event_date">Date de l'événement</th>
+            <th data-i18n="col_userid">Identifiant</th>
+            <th data-i18n="col_location">Lieu</th>
+            <th data-i18n="col_details">Détails</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- 📌 Modal pour les détails -->
+  <div id="detailModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 data-i18n="details_header">Détails des changements</h2>
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th data-i18n="col_change_date">Date du changement</th>
+            <th data-i18n="col_modified_by">Modifié par</th>
+            <th data-i18n="col_action">Action</th>
+            <th data-i18n="col_field">Champ</th>
+            <th data-i18n="col_old_value">Valeur ancienne</th>
+            <th data-i18n="col_new_value">Valeur nouvelle</th>
+          </tr>
+        </thead>
+        <tbody id="detailTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <script type="module">
+  import { supabase } from './supabaseClientAgendaJour.js';
+
+  const resultsBody = document.querySelector("#resultsTable tbody");
+  const recentBody = document.querySelector("#recentTable tbody");
+  const resultsCount = document.getElementById("resultsCount");
+  const noResultsMessage = document.getElementById("noResultsMessage");
+
+  const modal = document.getElementById("detailModal");
+  const closeBtn = modal.querySelector(".close");
+  const detailTableBody = document.getElementById("detailTableBody");
+
+  // 🔹 Traduction
+  let translations = {};
+  let currentLang = localStorage.getItem("lang") || "fr";
+
+  async function loadTranslations(lang) {
+    const response = await fetch(`./lang/${lang}.json`);
+    translations = await response.json();
+    applyTranslations();
+  }
+
+  function applyTranslations() {
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      if (translations[key]) el.textContent = translations[key];
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+      const key = el.getAttribute("data-i18n-placeholder");
+      if (translations[key]) el.placeholder = translations[key];
+    });
+  }
+
+  // 🔹 Compteur global (Ajout = total événements)
+  async function loadTotalEvents() {
+    const { count, error } = await supabase
+      .from("historique_modif_fran")
+      .select("*", { count: "exact", head: true })
+      .eq("action", "Ajout");
+
+    if (error) {
+      console.error("Erreur récupération du nombre d'événements :", error);
+      return;
+    }
+
+    document.getElementById("totalEvents").textContent = translations["total_events"]
+      ? translations["total_events"].replace("{count}", count || 0)
+      : `Nombre total d'événements : ${count || 0}`;
+  }
+
+
+  // 🔹 Formatage
+  function formatValue(value) {
+    if (value === null || value === undefined || value === "") return "-";
+
+    // ✅ Si c’est du JSON → on n’affiche pas le blob complet
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+        if (typeof parsed === "object") {
+          return "[données multiples]"; // ou Object.keys(parsed).join(", ")
+        }
+      } catch (e) {}
+    }
+
+    if (typeof value === "string" && value.startsWith("http")) {
+      return `<img src="${value}" style="max-height:40px;">`;
+    }
+    if (value === true || value === "true" || value === "TRUE") return "✅";
+    if (value === false || value === "false" || value === "FALSE") return "";
+    return value;
+  }
+
+
+  // 🔹 Rendu tableau (réutilisable avec traductions)
+  async function renderTable(rows, targetBody) {
+      targetBody.innerHTML = "";
+
+      for (const [userId, group] of Object.entries(rows)) {
+        const { data: eventData, error: eventError } = await supabase
+          .from("event_quot1_fran")
+          .select("Nom,Date,Heure,Min,Lieu,Téléphone")
+          .eq("user_id", userId);
+
+        if (eventError) {
+          console.error("Erreur récupération données événement:", eventError);
+          continue;
+        }
+
+        const event = eventData?.[0] || null;
+
+        // ✅ On traduit la dernière action et champ de l'historique (si dispo)
+        let lastAction = "-";
+        let lastField = "-";
+        if (group.length > 0) {
+          const last = group[0]; // la plus récente (car déjà trié DESC)
+          lastAction = translateAction(last.action);
+          lastField = translateField(last.champ_modifié);
+        }
+
+        // 🔹 CORRECTION : Utiliser le vrai compte stocké ou group.length
+        const modificationCount = group[0]?._modificationCount || group.length;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${event?.Téléphone || "-"}</td>
+          <td>${event?.Nom || "-"}</td>
+          <td>${event ? `${event.Date || ""} ${event.Heure || ""}:${event.Min || ""}` : "-"}</td>
+          <td>${userId}</td>
+          <td>${event?.Lieu || "-"}</td>
+          <td>
+            <button class="detailBtn">
+              ${translations["button_view"] || "Voir"} (${modificationCount})
+            </button>
+          </td>
+        `;
+
+        tr.querySelector(".detailBtn").addEventListener("click", () => {
+          // 🔹 CORRECTION : Charger TOUTES les modifications pour cet user_id
+          loadAllModificationsForUser(userId, group);
+        });
+
+        targetBody.appendChild(tr);
+      }
+  }
+
+  // 🔹 NOUVELLE FONCTION : Charger toutes les modifications d'un user_id
+  async function loadAllModificationsForUser(userId, currentGroup) {
+      const { data: allModifications, error } = await supabase
+        .from("historique_modif_fran")
+        .select("*")
+        .eq("user_id", userId)
+        .order("date_modification", { ascending: false });
+
+      if (error) {
+          console.error("Erreur chargement modifications complètes:", error);
+          // Fallback : utiliser les données actuelles
+          showDetails(currentGroup);
+          return;
+      }
+
+      showDetails(allModifications);
+  }
+
+
+  // 🔹 Recherche
+  async function searchHistorique() {
+    const searchText = document.getElementById("searchGlobal").value.trim();
+    const searchDate = document.getElementById("searchDate").value;
+
+    let query = supabase
+      .from("historique_modif_fran")
+      .select("*")
+      .order("date_modification", { ascending: false });
+
+    // Filtre par date (événement)
+    if (searchDate) {
+      const { data: eventIds, error: eventError } = await supabase
+        .from("event_quot1_fran")
+        .select("user_id")
+        .eq("Date", searchDate);
+
+      if (eventError) {
+        console.error("Erreur recherche par date:", eventError);
+        return;
+      }
+      const ids = eventIds.map(e => e.user_id);
+      if (ids.length > 0) {
+        query = query.in("user_id", ids);
+      } else {
+        resultsBody.innerHTML = "";
+        resultsCount.textContent = translations["results_count"]
+          ? translations["results_count"].replace("{count}", 0)
+          : "Nombre de résultats trouvés : 0";
+        noResultsMessage.textContent = translations["no_results"] || "Aucun résultat trouvé";
+        noResultsMessage.style.display = "block";
+        return;
+      }
+    }
+
+    // Filtre global (Nom / Téléphone / Lieu)
+    if (searchText) {
+      const { data: eventIds, error: eventError } = await supabase
+        .from("event_quot1_fran")
+        .select("user_id")
+        .or(`Nom.ilike.%${searchText}%,Téléphone.ilike.%${searchText}%,Lieu.ilike.%${searchText}%`);
+
+      if (eventError) {
+        console.error("Erreur recherche globale:", eventError);
+        return;
+      }
+      const ids = eventIds.map(e => e.user_id);
+      if (ids.length > 0) {
+        query = query.in("user_id", ids);
+      } else {
+        resultsBody.innerHTML = "";
+        resultsCount.textContent = translations["results_count"]
+          ? translations["results_count"].replace("{count}", 0)
+          : "Nombre de résultats trouvés : 0";
+        noResultsMessage.textContent = translations["no_results"] || "Aucun résultat trouvé";
+        noResultsMessage.style.display = "block";
+        return;
+      }
+    }
+
+    const { data: histoData, error } = await query;
+    if (error) {
+      console.error("Erreur chargement historique:", error);
+      return;
+    }
+
+    if (!histoData || histoData.length === 0) {
+      resultsBody.innerHTML = "";
+      resultsCount.textContent = translations["results_count"]
+        ? translations["results_count"].replace("{count}", 0)
+        : "Nombre de résultats trouvés : 0";
+      noResultsMessage.textContent = translations["no_results"] || "Aucun résultat trouvé";
+      noResultsMessage.style.display = "block";
+      return;
+    }
+
+    noResultsMessage.style.display = "none";
+
+    // Grouper par user_id
+    const grouped = {};
+    histoData.forEach(r => {
+      if (!grouped[r.user_id]) grouped[r.user_id] = [];
+      grouped[r.user_id].push(r);
+    });
+
+    resultsCount.textContent = translations["results_count"]
+      ? translations["results_count"].replace("{count}", Object.keys(grouped).length)
+      : `Nombre de résultats trouvés : ${Object.keys(grouped).length}`;
+    renderTable(grouped, resultsBody);
+  }
+
+
+  // 🔹 Historique récent (10 derniers user_id modifiés)
+async function loadRecent() {
+    // On récupère les 100 derniers changements (pour avoir assez de matière)
+    const { data: histoData, error } = await supabase
+      .from("historique_modif_fran")
+      .select("*")
+      .order("date_modification", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error("Erreur chargement des 10 derniers événements:", error);
+      return;
+    }
+
+    if (!histoData || histoData.length === 0) {
+      recentBody.innerHTML = "";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="6">${translations["no_recent"] || "Aucun événement récent"}</td>`;
+      recentBody.appendChild(tr);
+      return;
+    }
+
+    // Grouper par user_id et garder la date la plus récente
+    const userMap = new Map();
+    histoData.forEach(r => {
+      if (!userMap.has(r.user_id) || new Date(r.date_modification) > new Date(userMap.get(r.user_id).latestDate)) {
+        userMap.set(r.user_id, {
+          latestDate: r.date_modification,
+          sampleRow: r // On garde une ligne pour les infos de base
+        });
+      }
+    });
+
+    // Prendre les 10 user_id les plus récents
+    const last10Users = Array.from(userMap.entries())
+      .sort((a, b) => new Date(b[1].latestDate) - new Date(a[1].latestDate))
+      .slice(0, 10);
+
+    // 🔹 CORRECTION : Récupérer le VRAI nombre de modifications pour chaque user_id
+    const userDataWithCounts = await Promise.all(
+      last10Users.map(async ([userId, data]) => {
+        // Requête séparée pour avoir le compte exact
+        const { count, error: countError } = await supabase
+          .from("historique_modif_fran")
+          .select("*", { count: 'exact', head: true })
+          .eq("user_id", userId);
+
+        if (countError) {
+          console.error("Erreur comptage pour", userId, countError);
+          return { ...data, userId, modificationCount: 1 }; // Fallback
+        }
+
+        return {
+          ...data,
+          userId,
+          modificationCount: count || 1
+        };
+      })
+    );
+
+    // Préparer les données pour renderTable
+    const recentData = {};
+    userDataWithCounts.forEach(user => {
+      // On crée un tableau avec une seule ligne (pour l'affichage) mais avec le vrai compte
+      recentData[user.userId] = [{
+        ...user.sampleRow,
+        _modificationCount: user.modificationCount // On stocke le vrai compte
+      }];
+    });
+
+    renderTable(recentData, recentBody);
+  }
+
+  // --------------------------------------------------------------------------
+
+  function translateValue(field, value) {
+    if (!value || value === "EMPTY" || value === "-") return "-";
+
+    // ✅ Gestion des valeurs booléennes
+    if (value === true || value === "true") return "✅";
+    if (value === false || value === "false") return "-";
+
+    // ✅ CORRECTION : Si c'est un objet JSON, retourner "-" ou une valeur simplifiée
+    if (typeof value === "object" || (typeof value === "string" && value.includes("{"))) {
+        return "-"; // ou return "Données Travail" si vous préférez
+    }
+
+    const f = field.toLowerCase();
+
+    // Champ Heure → garder le format tel quel
+    if (["heure", "time", "hora"].includes(f)) {
+      return value.toString();
+    }
+
+    // Champ Min
+    if (["min"].includes(f)) {
+      return value.toString();
+    }
+
+    // Par défaut, on renvoie la valeur brute
+    return value;
+  }
+
+  // Helpers pour traduire actions et champs
+  function translateAction(action) {
+      if (!action) return "-";
+      const a = action.toLowerCase();
+      if (["création", "ajout", "creation", "add"].includes(a)) {
+        return translations["action_creation"] || "Création";
+      }
+      if (["modification", "update"].includes(a)) {
+        return translations["action_update"] || "Modification";
+      }
+      if (["suppression", "delete", "deletion"].includes(a)) {
+        return translations["action_delete"] || "Suppression";
+      }
+      return action;
+  }
+
+  function translateField(field) {
+    if (!field) return "-";
+    const f = field.toLowerCase();
+
+    if (["événement", "evento", "event"].includes(f)) return translations["field_event"] || "Événement";
+    if (["travail", "work", "trabajo"].includes(f)) return translations["field_work"] || "Travail";
+    if (f.startsWith("travail.") || f.startsWith("work.") || f.startsWith("trabajo.")) {
+      const sub = f.split(".")[1];
+
+      // Utiliser les clés de traduction existantes
+      switch (sub) {
+        case "se_aspire": return translations["field_work_se_aspire"] || "Aspiré";
+        case "se_cepillo": return translations["field_work_se_cepillo"] || "Brossé";
+        case "recogio_hojas": return translations["field_work_recogio_hojas"] || "Feuilles ramassées";
+        case "cl_libre": return translations["field_work_cl_libre"] || "Chlore libre";
+        case "cl_total": return translations["field_work_cl_total"] || "Chlore total";
+        case "cloro": return translations["field_work_cloro"] || "Chlore";
+        case "ph": return translations["field_work_ph"] || "pH";
+        case "timer": return translations["field_work_timer"] || "Minuteur";
+        case "cl_combinado": return translations["field_work_cl_combinado"] || "Chlore combiné";
+        case "ph_expert": return translations["field_work_ph_expert"] || "pH (expert)";
+        case "alcalinidad_total": return translations["field_work_alcalinidad_total"] || "Alcalinité totale";
+        case "dureza": return translations["field_work_dureza"] || "Dureté";
+        case "tds": return translations["field_work_tds"] || "TDS";
+        case "temperatura": return translations["field_work_temp"] || "Température";
+        default: return (translations["field_work"] || "Travail") + ` - ${sub}`;
+      }
+    }
+
+    if (["lieu", "location", "lugar"].includes(f)) return translations["field_location"] || "Lieu";
+    if (["nom", "name", "nombre"].includes(f)) return translations["field_name"] || "Nom";
+    if (["téléphone", "telefono", "phone"].includes(f)) return translations["field_phone"] || "Téléphone";
+    if (["date"].includes(f)) return translations["field_date"] || "Date";
+    if (["heure", "time", "hora"].includes(f)) return translations["field_time"] || "Heure";
+    if (["min"].includes(f)) return translations["field_min"] || "Min";
+    if (["observations", "observaciones"].includes(f)) return translations["field_observations"] || "Observations";
+
+    if (["payé", "paid", "pagado"].includes(f)) return translations["field_paid"] || "Payé";
+    if (["env_données", "data_sent", "datos_enviados"].includes(f)) return translations["field_data_sent"] || "Données envoyées";
+    if (["ajouté_pour", "added_for", "añadido_para"].includes(f)) return translations["field_added_for"] || "Ajouté pour";
+
+    if (typeof field === "object" || field.includes("{")) {
+        return translations["field_work"] || "Travail";
+    }
+
+    return field;
+  }
+
+  // 🔹 Modal détails (version corrigée)
+  function showDetails(rows) {
+      detailTableBody.innerHTML = "";
+      rows.forEach(r => {
+        let action = translateAction(r.action);
+        let field = translateField(r.champ_modifié);
+
+        let ancienne = translateValue(r.champ_modifié, r.valeur_ancienne);
+        let nouvelle = translateValue(r.champ_modifié, r.valeur_nouvelle);
+
+        // ✅ CORRECTION : Gestion spéciale pour Création/Suppression
+        if (r.action === "Création" || r.action === "Ajout" || r.action === "Creation" || r.action === "Add") {
+          action = translations["action_creation"] || "Création";
+          ancienne = "-";
+          nouvelle = translations["field_event"] || "Événement";
+        }
+        if (r.action === "Suppression" || r.action === "Delete" || r.action === "Deletion") {
+          action = translations["action_delete"] || "Suppression";
+          ancienne = translations["field_event"] || "Événement";
+          nouvelle = translations["action_delete"] || "Suppression";
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${new Date(r.date_modification).toLocaleString()}</td>
+          <td>${r.modifié_par || "-"}</td>
+          <td>${action}</td>
+          <td>${field}</td>
+          <td>${ancienne}</td>
+          <td>${nouvelle}</td>
+        `;
+        detailTableBody.appendChild(tr);
+      });
+      modal.style.display = "flex";
+  }
+
+
+
+  closeBtn.onclick = () => modal.style.display = "none";
+  window.onclick = (event) => { if (event.target === modal) modal.style.display = "none"; };
+
+  // 🔹 Écouteurs
+  document.getElementById("applySearch").addEventListener("click", searchHistorique);
+  document.getElementById("searchGlobal").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") searchHistorique();
+  });
+  document.getElementById("searchDate").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") searchHistorique();
+  });
+
+  // ✅ Chargement initial
+  await loadTranslations(currentLang);
+  await loadTotalEvents();
+  await loadRecent();
+  </script>
+
+</body>
+</html>

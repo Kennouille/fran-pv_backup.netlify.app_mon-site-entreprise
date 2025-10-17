@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Données</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+    </style>
+    <script type="module" src="supabaseClient.js"></script>
+    <script>
+        // Récupère le nom depuis le localStorage et affiche le message de bienvenue
+        const welcomeName = localStorage.getItem('welcomeName');
+        if (welcomeName) {
+            const welcomeMessage = document.getElementById('welcome-message');
+            welcomeMessage.innerText = `Bienvenue, ${welcomeName}!`;
+            welcomeMessage.style.fontSize = "24px";  // Style du message
+            welcomeMessage.style.color = "#333";
+            welcomeMessage.style.padding = "10px";
+            welcomeMessage.style.textAlign = "center";
+        }
+    </script>
+    <script type="module">
+        import { supabase } from './supabaseClient.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTableData();
+            getTotalRowCount();
+        });
+
+        async function loadTableData() {
+            try {
+                let allData = [];
+                let start = 0;
+                const limit = 1000;
+                let moreData = true;
+
+                while (moreData) {
+                    const { data, error } = await supabase
+                        .from('tableData1_fran')
+                        .select('*')
+                        .range(start, start + limit - 1);
+
+                    if (error) {
+                        console.error('Error fetching data:', error);
+                        return;
+                    }
+
+                    allData = allData.concat(data);
+                    start += limit;
+                    moreData = data.length === limit;
+                }
+
+                console.log('Data fetched from Supabase:', allData);
+
+                // Trier les données selon l'ordre défini dans Supabase
+                allData.sort((a, b) => a.Nom.localeCompare(b.Nom));
+
+                const tbody = document.querySelector('#data-table tbody');
+                tbody.innerHTML = ''; // Effacer les anciennes lignes
+                allData.forEach(rowData => {
+                    const row = tbody.insertRow();
+                    Object.entries(rowData).forEach(([key, value]) => {
+                        const cell = row.insertCell();
+                        cell.textContent = value;
+                        cell.contentEditable = "true";
+                        cell.dataset.column = key; // Ajouter un attribut pour identifier la colonne
+                        if (key === 'Téléphone') {
+                            cell.dataset.téléphone = value; // Ajouter un attribut pour identifier la ligne
+                        }
+                    });
+
+                    // Ajouter le bouton "Appliquer"
+                    const applyCell = row.insertCell();
+                    const applyButton = document.createElement('button');
+                    applyButton.textContent = 'Aplicar';
+                    applyButton.classList.add('apply-button');
+                    applyCell.appendChild(applyButton);
+                });
+
+                // Ajouter des écouteurs d'événements aux boutons "Appliquer"
+                document.querySelectorAll('.apply-button').forEach(button => {
+                    button.addEventListener('click', async function() {
+                        const row = button.closest('tr');
+                        const updatedEvent = {};
+                        Array.from(row.cells).forEach(cell => {
+                            if (cell.dataset.column) {
+                                let value = cell.textContent.trim();
+                                if ((cell.dataset.column === 'Date' || cell.dataset.column === 'Heure' || cell.dataset.column === 'Min' || cell.dataset.column === 'Prix') && value === '') {
+                                    value = null; // Remplacer les chaînes vides par null pour les dates et les types numériques
+                                }
+                                updatedEvent[cell.dataset.column] = value;
+                            }
+                        });
+
+                        const téléphone = row.querySelector('[data-téléphone]').dataset.téléphone;
+
+                        const { error } = await supabase
+                            .from('tableData1_fran')
+                            .update(updatedEvent)
+                            .eq('Téléphone', téléphone);
+
+                        if (error) {
+                            console.error('Erreur lors de la mise à jour des données :', error);
+                        } else {
+                            console.log('Données mises à jour avec succès');
+                            loadTableData(); // Recharger les données après la mise à jour
+                        }
+                    });
+                });
+
+                // Afficher le Nom de lignes affichées dans le log
+                console.log(`Nom de lignes affichées : ${allData.length}`);
+            } catch (err) {
+                console.error('Error loading Supabase client:', err);
+            }
+        }
+
+
+        async function getTotalRowCount() {
+            try {
+                const { count, error } = await supabase
+                    .from('tableData1_fran')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    console.error('Error fetching total row count:', error);
+                    return;
+                }
+
+                console.log(`Nom total de lignes dans tableData1_fran : ${count}`);
+            } catch (err) {
+                console.error('Error fetching total row count:', err);
+            }
+        }
+    </script>
+</head>
+<body>
+    <script src="supabaseClient.js"></script>
+    <script src="auth.js"></script>
+    <script src="config.js"></script>
+    <div class="welcome-message" id="welcome-message"></div>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Téléphone</th>
+                <th>Nom</th>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>Min</th>
+                <th>Lieu</th>
+                <th>Prix</th>
+                <th>Travail</th>
+                <th>Ajouté_par</th>
+                <th>env_données</th>
+                <th>paiement</th>
+                <th>payé</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Les données seront insérées ici -->
+        </tbody>
+    </table>
+</body>
+</html>

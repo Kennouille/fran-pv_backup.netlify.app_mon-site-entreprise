@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques</title>
+    <link rel="stylesheet" href="statistiques.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Statistiques</h1>
+        <div class="date-selection">
+            <label for="startDate">Date de début :</label>
+            <input type="date" id="startDate">
+            <label for="endDate">Date de fin :</label>
+            <input type="date" id="endDate">
+            <div class="buttons">
+                <button onclick="setLastWeek()">Dernière semaine</button>
+                <button onclick="setLastMonth()">Mois précédent</button>
+                <button onclick="setLast30Days()">30 derniers jours</button>
+                <!-- Botón para calcular manualmente -->
+                <button onclick="calculateManualPeriod()">Calcul manuel</button>
+            </div>
+        </div>
+
+        <!-- Display Statistics Results -->
+        <div class="stats-results">
+            <h2>Résultats :</h2>
+            <div id="totalAmount"></div>
+            <div id="eventsByPerson"></div>
+            <div id="topClients"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="statistiques.js"></script>
+</body>
+</html>
