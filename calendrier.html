@@ -2367,7 +2367,6 @@
         }
 
         // --- NOUVELLE FONCTION pour générer le PDF et l'enregistrer dans Supabase ---
-        // --- NOUVELLE FONCTION pour générer le PDF et l'enregistrer dans Supabase ---
         async function generatePdfNotaDeVenta(eventData, link, notaDeVentaPopup, entrepriseData) {
             showTemporaryMessage(getTranslation('temp_msg_generating_saving_sales_note'), 'info');
 
@@ -2388,6 +2387,42 @@
             logoImg.onload = async () => {
                 try {
                     console.log(getTranslation('log_logo_loaded_dimensions'), logoImg.naturalWidth, logoImg.naturalHeight);
+
+                    // CORRECTION: Extraire uniquement le travail sélectionné
+                    let travailSelectionne = '';
+
+                    // Méthode 1: Si eventData.travail est un élément HTML avec des options
+                    if (eventData.travail.includes('<select') || eventData.travail.includes('<option')) {
+                        // Créer un élément DOM temporaire pour parser le HTML
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = eventData.travail;
+
+                        // Trouver l'option sélectionnée
+                        const select = tempDiv.querySelector('select');
+                        if (select) {
+                            const selectedOption = select.options[select.selectedIndex];
+                            travailSelectionne = selectedOption ? selectedOption.textContent : '';
+                        } else {
+                            // Si pas de select, prendre le texte directement
+                            travailSelectionne = tempDiv.textContent || eventData.travail;
+                        }
+                    } else {
+                        // Méthode 2: Si c'est déjà du texte simple
+                        travailSelectionne = eventData.travail;
+                    }
+
+                    // Nettoyer le texte (enlever "– Sélectionner le statut –" et autres options)
+                    travailSelectionne = travailSelectionne.replace(/– Sélectionner le statut –/g, '')
+                                                          .replace(/\n/g, ' ')
+                                                          .replace(/\s+/g, ' ')
+                                                          .trim();
+
+                    // Si après nettoyage c'est vide, utiliser une valeur par défaut
+                    if (!travailSelectionne) {
+                        travailSelectionne = 'Service de nettoyage';
+                    }
+
+                    console.log('Travail sélectionné nettoyé:', travailSelectionne);
 
                     // Dimensions du logo
                     const logoWidth = 50;
@@ -2410,12 +2445,12 @@
                     doc.text(`${getTranslation('label_email_short')}: ${entrepriseData.email}`, headerRightX, currentY + 27);
                     doc.text(`${getTranslation('label_website_short')}: ${entrepriseData.web}`, headerRightX, currentY + 33);
 
-                    currentY += logoHeight + 25; // ESPACE AUGMENTÉ ICI (de 15 à 25)
+                    currentY += logoHeight + 25;
 
                     // --- Ligne de séparation ---
                     doc.setDrawColor(200, 200, 200);
                     doc.line(marginX, currentY, doc.internal.pageSize.width - marginX, currentY);
-                    currentY += 15; // ESPACE AUGMENTÉ ICI (de 10 à 15)
+                    currentY += 15;
 
                     // --- Titre du document ---
                     doc.setFontSize(20);
@@ -2439,13 +2474,9 @@
                     doc.text(eventData.eventId, marginX + 45, currentY + 7);
                     doc.text(eventData.date, marginX + 45, currentY + 14);
 
-                    currentY += 30; // ESPACE AUGMENTÉ ICI (de 25 à 30)
+                    currentY += 30;
 
-                    // --- Informations du client - TITRE SUPPRIMÉ ---
-                    // SUPPRIMÉ: doc.text(getTranslation('pdf_client_information') + ":", marginX, currentY);
-                    // SUPPRIMÉ: currentY += 8;
-
-                    // Cadre pour les informations client
+                    // --- Informations du client ---
                     doc.setFillColor(250, 250, 250);
                     doc.rect(marginX, currentY, doc.internal.pageSize.width - (marginX * 2), 15, 'F');
 
@@ -2457,7 +2488,7 @@
                     doc.text(eventData.nom, marginX + 30, currentY + 7);
                     doc.text(eventData.lieu, marginX + 100, currentY + 7);
 
-                    currentY += 25; // ESPACE AUGMENTÉ ICI (de 20 à 25)
+                    currentY += 25;
 
                     // --- Tableau des articles ---
                     const headers = [
@@ -2468,15 +2499,12 @@
                     const taxes = prixFloat * 0.15;
                     const totalWithTaxes = prixFloat + taxes;
 
-                    // CORRECTION: Utiliser uniquement le travail sélectionné, pas tout le select
-                    const travailSelectionne = eventData.travail;
-                    console.log('Travail sélectionné pour le PDF:', travailSelectionne);
-
+                    // UTILISER LE TRAVAIL SÉLECTIONNÉ NETTOYÉ
                     const body = [
                         [1, 1, travailSelectionne, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
                     ];
 
-                    console.log(getTranslation('log_table_body'), body);
+                    console.log('Tableau final:', body);
 
                     doc.autoTable({
                         startY: currentY,
