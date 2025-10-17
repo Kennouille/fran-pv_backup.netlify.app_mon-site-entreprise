@@ -2520,19 +2520,18 @@
                     // --- Création MANUELLE du tableau ---
                     const tableTop = currentY;
                     const colWidths = [15, 20, 90, 30, 30]; // Largeurs des colonnes
-                    const rowHeight = 12; // Augmenté un peu la hauteur pour mieux centrer
+                    const rowHeight = 10;
 
                     // En-tête du tableau
                     doc.setFillColor(70, 130, 180);
                     doc.setTextColor(255, 255, 255);
                     doc.setFont("helvetica", "bold");
-                    doc.setFontSize(9);
 
                     // Dessiner les cellules d'en-tête
                     let xPos = marginX;
                     headers[0].forEach((header, index) => {
                         doc.rect(xPos, tableTop, colWidths[index], rowHeight, 'F');
-                        doc.text(header, xPos + colWidths[index]/2, tableTop + rowHeight/2 + 3, { align: 'center' });
+                        doc.text(header, xPos + colWidths[index]/2, tableTop + rowHeight/2 + 2, { align: 'center' });
                         xPos += colWidths[index];
                     });
 
@@ -2540,35 +2539,22 @@
                     doc.setFillColor(255, 255, 255);
                     doc.setTextColor(0, 0, 0);
                     doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9); // Taille de police réduite pour mieux tenir
 
                     // Dessiner la ligne de données
                     xPos = marginX;
                     body[0].forEach((cell, index) => {
-                        // Fond de la cellule avec bordure
+                        // Fond de la cellule
                         doc.rect(xPos, tableTop + rowHeight, colWidths[index], rowHeight, 'S');
 
-                        // Texte de la cellule - TOUJOURS CENTRÉ sauf pour les prix
-                        const align = (index === 3 || index === 4) ? 'right' : 'center';
-                        const textX = (index === 3 || index === 4) ? xPos + colWidths[index] - 2 : xPos + colWidths[index]/2;
-                        const textY = tableTop + rowHeight + rowHeight/2 + 3;
+                        // Texte de la cellule
+                        const align = index === 3 || index === 4 ? 'right' : 'center';
+                        const textX = align === 'center' ? xPos + colWidths[index]/2 : xPos + colWidths[index] - 2;
 
-                        // Pour la colonne Description, s'assurer que le texte est bien centré
-                        if (index === 2) {
-                            // Forcer le centrage et réduire légèrement la police si le texte est long
-                            if (cell.toString().length > 20) {
-                                doc.setFontSize(8);
-                            }
-                            doc.text(cell.toString(), xPos + colWidths[index]/2, textY, { align: 'center' });
-                            doc.setFontSize(9); // Remettre la taille normale
-                        } else {
-                            doc.text(cell.toString(), textX, textY, { align: align });
-                        }
-
+                        doc.text(cell.toString(), textX, tableTop + rowHeight + rowHeight/2 + 2, { align: align });
                         xPos += colWidths[index];
                     });
 
-                    currentY = tableTop + (rowHeight * 2) + 10;
+                    currentY = tableTop + (rowHeight * 2) + 5;
 
                     // --- Section Totaux ---
                     const totalsStartX = doc.internal.pageSize.width - 100;
