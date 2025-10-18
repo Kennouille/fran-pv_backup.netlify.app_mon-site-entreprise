@@ -2584,7 +2584,7 @@
                     const pdfBlob = doc.output('blob');
 
                     const userId = eventData.userId;
-                    const eventId = eventData.eventId;
+                    // const eventId = eventData.eventId;
                     const safeClientName = eventData.nom.replace(/[^a-zA-Z0-9]/g, '_');
                     const fileName = `${getTranslation('pdf_file_name_prefix')}_${safeClientName}_${eventId}.pdf`;
 
