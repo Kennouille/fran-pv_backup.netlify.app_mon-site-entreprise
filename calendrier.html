@@ -2562,8 +2562,8 @@
                     const totalsStartX = doc.internal.pageSize.width - 100;
 
                     doc.setFillColor(240, 240, 240);
-                    // Le rectangle ne change pas : (X de départ: totalsStartX 10) | (Largeur: 90)
-                    doc.rect(totalsStartX - 10, currentY, 90, 25, 'F');
+                    // Le rectangle ne change pas : (X de départ: totalsStartX - 100) | (Largeur: 90)
+                    doc.rect(totalsStartX - 100, currentY, 90, 25, 'F');
 
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
