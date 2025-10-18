@@ -2418,7 +2418,8 @@
 
                     // Si toujours vide, utiliser une valeur par défaut basée sur le premier service non vide
                     if (!travailSelectionne) {
-                        const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier', 'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
+                        const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier',
+                                         'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
 
                         for (let service of services) {
                             if (eventData.travail.includes(service)) {
