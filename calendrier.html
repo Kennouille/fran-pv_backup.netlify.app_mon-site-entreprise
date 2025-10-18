@@ -2157,7 +2157,7 @@
                 return new Blob([u8arr], { type: mime });
             }
 
-            // Gérer les boutons (le code reste identique)
+            // Gérer les boutons (CODE MODIFIÉ pour générer un PDF au lieu d'un JSON)
             document.getElementById('enregistrerPaiement').addEventListener('click', function() {
                 const documentData = {
                     nom: document.getElementById('documentNom').value,
@@ -2165,24 +2165,88 @@
                     prix: document.getElementById('documentPrix').value,
                     travail: document.getElementById('documentTravail').value,
                     lieu: document.getElementById('documentLieu').value,
-                    banque: document.getElementById('documentBanco').value
+                    // Données bancaires
+                    banco: document.getElementById('documentBanco').value,
+                    banco1: document.getElementById('documentBanco1').value, // Sucursale
+                    banco2: document.getElementById('documentBanco2').value, // N° de compte
+                    banco3: document.getElementById('documentBanco3').value, // IBAN
+                    banco4: document.getElementById('documentBanco4').value  // Destinataire
                 };
 
-                const file = new Blob([JSON.stringify(documentData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(file);
-                const a = document.createElement('a');
-                a.href = url;
+                // eslint-disable-next-line no-undef
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                let currentY = 20;
+                const marginX = 15;
+
+                // --- Titre ---
+                doc.setFontSize(20);
+                doc.setFont("helvetica", "bold");
+                doc.text(getTranslation('payment_receipt_heading'), doc.internal.pageSize.width / 2, currentY, { align: 'center' });
+                currentY += 15;
+
+                // --- Détails de l'événement (Tableau simple) ---
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+
+                const details = [
+                    [getTranslation('label_name'), documentData.nom],
+                    [getTranslation('label_date'), documentData.date],
+                    [getTranslation('label_location'), documentData.lieu],
+                    [getTranslation('label_work'), documentData.travail],
+                    [getTranslation('label_price'), documentData.prix]
+                ];
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: [[getTranslation('pdf_table_header_detail'), getTranslation('pdf_table_header_value')]],
+                    body: details,
+                    theme: 'grid',
+                    margin: { left: marginX, right: marginX },
+                    columnStyles: {
+                        0: { fontStyle: 'bold', cellWidth: 50 },
+                        1: { cellWidth: 120 }
+                    },
+                });
+                currentY = doc.autoTable.previous.finalY + 15;
+
+                // --- Données Bancaires ---
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text(getTranslation('label_bank_details'), marginX, currentY);
+                currentY += 10;
+
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+
+                const bankDetails = [
+                    [getTranslation('label_bank'), documentData.banco],
+                    [getTranslation('label_branch'), documentData.banco1],
+                    [getTranslation('label_account_number'), documentData.banco2],
+                    [getTranslation('label_iban'), documentData.banco3],
+                    [getTranslation('label_recipient'), documentData.banco4]
+                ];
+
+                doc.autoTable({
+                    startY: currentY,
+                    body: bankDetails,
+                    theme: 'plain',
+                    margin: { left: marginX, right: marginX + 90 }, // Retrait pour aligner à gauche
+                    styles: { fontSize: 10, cellPadding: 2 },
+                    columnStyles: {
+                        0: { fontStyle: 'bold', cellWidth: 50 },
+                        1: { cellWidth: 100 }
+                    },
+                });
+                currentY = doc.autoTable.previous.finalY + 20;
+
+                // --- Finalisation ---
                 const fileNamePrefix = getTranslation('file_name_payment_prefix');
-                a.download = `${documentData.nom}_${fileNamePrefix}.json`;
-                document.body.appendChild(a);
-                a.click();
+                const fileName = `${documentData.nom}_${fileNamePrefix}.pdf`;
+                doc.save(fileName);
 
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 0);
+                showTemporaryMessage(getTranslation('alert_payment_saved_locally_pdf')); // Message mis à jour
 
-                alert(getTranslation('alert_payment_saved_locally'));
                 document.body.removeChild(documentPopup);
             });
 
