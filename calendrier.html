@@ -2532,16 +2532,48 @@
                       columnStyles: {
                         0: { cellWidth: 15, halign: 'center' },
                         1: { cellWidth: 25, halign: 'center' },
-                        2: { cellWidth: 90, halign: 'center' }, // FORCÉ à gauche
-                        3: { cellWidth: 30, halign: 'right' },
-                        4: { cellWidth: 30, halign: 'right' }
+                        // Garder halign: 'center'
+                        2: { cellWidth: 70, halign: 'center' },
+                        3: { cellWidth: 40, halign: 'right' },
+                        4: { cellWidth: 40, halign: 'right' }
                       },
-                      // Désactiver tout style global qui pourrait interférer
                       styles: {
                         fontSize: 10,
                         cellPadding: 4,
                         lineColor: [100, 100, 100],
                         lineWidth: 0.1
+                      },
+                      // 💡 NOUVEAU : Utiliser didDrawCell pour forcer l'alignement du texte multiligne
+                      didDrawCell: (data) => {
+                        // Cibler les cellules de la colonne Description (index 2) dans le corps du tableau
+                        if (data.section === 'body' && data.column.index === 2) {
+                          const cell = data.cell;
+                          // Définir l'alignement du texte à 'center'
+                          data.doc.setFont(data.doc.getFont().fontName, data.doc.getFont().fontStyle);
+                          data.doc.setFontSize(cell.styles.fontSize);
+                          data.doc.setTextColor(cell.styles.textColor[0], cell.styles.textColor[1], cell.styles.textColor[2]);
+
+                          const text = cell.text;
+
+                          // Calculer la position X centrée
+                          const textWidth = data.doc.getStringUnitWidth(text.join(' ')) * cell.styles.fontSize / data.doc.internal.scaleFactor;
+                          let x = cell.x + cell.width / 2;
+
+                          // Calculer la position Y centrée
+                          const lineHeight = data.doc.internal.getLineHeight();
+                          const textHeight = text.length * lineHeight + (text.length - 1) * 1; // 1 est un espace approximatif entre les lignes
+                          let y = cell.y + cell.height / 2 - textHeight / 2 + lineHeight / 2;
+
+                          // Dessiner le texte, centré horizontalement et verticalement
+                          data.doc.text(text, x, y, {
+                            align: 'center',
+                            baseline: 'middle', // Pour un meilleur centrage vertical
+                            lineHeightFactor: 1.2 // Ajuster si besoin
+                          });
+
+                          // Éviter qu'autoTable ne redessine le texte par défaut
+                          data.cell.text = [];
+                        }
                       }
                     });
 
