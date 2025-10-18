@@ -2544,22 +2544,22 @@
 
                       // Supprime le texte par défaut pour la colonne "Description"
                       didParseCell: (data) => {
-                        if (data.section === 'body' && data.column.index === 2) {
-                          data.cell.text = ['']; // on le dessinera manuellement
+                          if (data.section === 'body' && data.column.index === 2) {
+                            // Empêche AutoTable d'imprimer le texte (on le fera nous-mêmes)
+                            data.cell.text = [''];
+                          }
+                        },
+                        didDrawCell: (data) => {
+                          if (data.section === 'body' && data.column.index === 2) {
+                            const text = (data.row.raw[2] ?? '').toString();
+                            const x = data.cell.x + data.cell.width / 2;     // centre horizontal exact
+                            const y = data.cell.y + data.cell.height / 2;    // centre vertical exact
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(10);
+                            doc.text(text, x, y, { align: 'center', baseline: 'middle' }); // ← H & V parfaits
+                          }
                         }
-                      },
 
-                      // Dessine manuellement le texte centré H/V
-                      didDrawCell: (data) => {
-                        if (data.section === 'body' && data.column.index === 2) {
-                          const text = (data.row.raw[2] ?? '').toString();
-                          const x = data.cell.x + data.cell.width / 2;   // centre horizontal exact
-                          const y = data.cell.y + data.cell.height / 2;  // centre vertical exact
-                          doc.setFont('helvetica', 'normal');
-                          doc.setFontSize(10);
-                          doc.text(text, x, y, { align: 'center', baseline: 'middle' });
-                        }
-                      }
                     });
 
 
