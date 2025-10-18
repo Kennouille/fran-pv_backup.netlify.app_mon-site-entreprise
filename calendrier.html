@@ -2566,9 +2566,17 @@
                             textX = pos.x + pos.width - 3; // Décalage droite
                         }
 
-                        doc.text(body[0][index].toString(), textX, currentY + rowHeight + rowHeight/2 + 3, {
-                            align: pos.align
-                        });
+                        // AJOUT: Gestion spéciale pour la colonne Description (index 2)
+                        if (index === 2) { // Colonne Description
+                            // Pour le texte long, on utilise text avec options pour l'alignement gauche
+                            doc.text(body[0][index].toString(), textX, currentY + rowHeight + rowHeight/2 + 3, {
+                                align: 'left'
+                            });
+                        } else {
+                            doc.text(body[0][index].toString(), textX, currentY + rowHeight + rowHeight/2 + 3, {
+                                align: pos.align
+                            });
+                        }
                     });
 
                     currentY += rowHeight * 2 + 15;
