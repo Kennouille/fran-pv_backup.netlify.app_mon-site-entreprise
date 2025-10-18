@@ -2401,10 +2401,20 @@
                             if (select) {
                                 travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
                             } else {
-                                // Si le select n'est pas là, le texte affiché est SUREMENT le contenu de event.Travail
-                                // qui est inséré par ${event.Travail || '--'} dans le HTML.
-                                // On peut simplement nettoyer les espaces autour.
-                                travailSelectionne = travailCell.textContent.trim();
+                                // Prendre tout le texte de la cellule et nettoyer
+                                travailSelectionne = travailCell.textContent
+                                    .replace(/– Sélectionner le statut –/g, '')
+                                    .replace(/Lavage de vitres/g, '')
+                                    .replace(/Nettoyage de locaux/g, '')
+                                    .replace(/Nettoyage après chantier/g, '')
+                                    .replace(/Nettoyage de panneaux photovoltaïques/g, '')
+                                    .replace(/Lutte contre les nuisibles/g, '')
+                                    .replace(/Autre : Voir Observations/g, '')
+                                    .replace(/\s+/g, ' ')
+                                    // ✅ NOUVEAU : Supprimer les virgules et les espaces adjacents résiduels
+                                    .replace(/,(\s*)/g, ' ')
+                                    .replace(/\s+/g, ' ')
+                                    .trim();
                             }
                         }
                     }
