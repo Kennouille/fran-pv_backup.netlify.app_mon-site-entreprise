@@ -2567,18 +2567,22 @@
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
 
-                    doc.text(`${getTranslation('pdf_subtotal')}:`, totalsStartX, currentY + 8, { align: 'right' });
-                    doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 60, currentY + 8, { align: 'right' });
+                    // Calculer le centre du cadre gris
+                    const totalsCenterX = totalsStartX - 10 + 45; // totalsStartX - 10 = début du cadre, +45 pour le milieu (90/2)
 
-                    doc.text(`${getTranslation('pdf_taxes')} (15%):`, totalsStartX, currentY + 16, { align: 'right' });
-                    doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 60, currentY + 16, { align: 'right' });
+                    // Centrer tous les textes
+                    doc.text(`${getTranslation('pdf_subtotal')}:`, totalsCenterX, currentY + 8, { align: 'center' });
+                    doc.text(`${prixFloat.toFixed(2)} €`, totalsCenterX, currentY + 8, { align: 'center' });
+
+                    doc.text(`${getTranslation('pdf_taxes')} (15%):`, totalsCenterX, currentY + 16, { align: 'center' });
+                    doc.text(`${taxes.toFixed(2)} €`, totalsCenterX, currentY + 16, { align: 'center' });
 
                     doc.setDrawColor(150, 150, 150);
-                    doc.line(totalsStartX, currentY + 19, totalsStartX + 60, currentY + 19);
+                    doc.line(totalsStartX - 5, currentY + 19, totalsStartX + 85, currentY + 19); // Ligne centrée
 
                     doc.setFont("helvetica", "bold");
-                    doc.text(`${getTranslation('pdf_total')}:`, totalsStartX, currentY + 24, { align: 'right' });
-                    doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 60, currentY + 24, { align: 'right' });
+                    doc.text(`${getTranslation('pdf_total')}:`, totalsCenterX, currentY + 24, { align: 'center' });
+                    doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsCenterX, currentY + 24, { align: 'center' });
 
                     currentY += 35;
 
