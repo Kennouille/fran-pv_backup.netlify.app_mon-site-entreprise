@@ -2524,7 +2524,7 @@
                       theme: 'grid',
                       styles: {
                         halign: 'center',
-                        valign: 'middle',                  // ← centrage vertical global
+                        valign: 'middle',
                         fontSize: 10,
                         cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
                         lineWidth: 0.1,
@@ -2537,15 +2537,15 @@
                       columnStyles: {
                         0: { cellWidth: 15 },                 // N°
                         1: { cellWidth: 20 },                 // Quantité
-                        2: { cellWidth: 90, halign: 'center', valign: 'middle', minCellHeight: 15 }, // Description (centré H/V)
+                        2: { cellWidth: 90, halign: 'left', valign: 'middle', minCellHeight: 15 }, // Description À GAUCHE
                         3: { cellWidth: 30, halign: 'right',  valign: 'middle' }, // Tarif unitaire
                         4: { cellWidth: 30, halign: 'right',  valign: 'middle' }  // Montant
                       },
 
-                      // Sécurise le centrage H/V pour la colonne Description
+                      // Sécurise l'alignement à gauche pour la colonne Description
                       didParseCell: (data) => {
                         if (data.section === 'body' && data.column.index === 2) {
-                          data.cell.styles.halign = 'center';
+                          data.cell.styles.halign = 'left';
                           data.cell.styles.valign = 'middle';
                         }
                       }
