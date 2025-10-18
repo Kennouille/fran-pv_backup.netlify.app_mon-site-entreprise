@@ -2388,12 +2388,37 @@
                 try {
                     console.log(getTranslation('log_logo_loaded_dimensions'), logoImg.naturalWidth, logoImg.naturalHeight);
 
-                    // CORRECTION : Récupération SIMPLIFIÉE du travail sélectionné
-                    let travailSelectionne = eventData.travail || 'Service de nettoyage';
+                    // CORRECTION SIMPLE: Obtenir le texte directement depuis la cellule affichée
+                    let travailSelectionne = '';
 
-                    // Si le travail contient "Autre : Voir Observations", utiliser directement
-                    if (travailSelectionne.includes('Autre : Voir Observations')) {
-                        travailSelectionne = 'Autre : Voir Observations';
+                    // Utiliser la variable row qui existe déjà dans le scope parent
+                    const tableRow = link.closest('tr');
+                    if (tableRow) {
+                        const travailCell = tableRow.querySelector('[data-column="Travail"]');
+                        if (travailCell) {
+                            // Obtenir le select
+                            const select = travailCell.querySelector('select');
+
+                            // SOLUTION ALTERNATIVE PLUS FIABLE
+                            if (select) {
+                                travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
+                            } else {
+                                // Si pas de select, prendre uniquement le premier service trouvé dans eventData.travail
+                                const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier', 'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
+
+                                for (let service of services) {
+                                    if (eventData.travail.includes(service)) {
+                                        travailSelectionne = service;
+                                        break;
+                                    }
+                                }
+
+                                // Si toujours vide, valeur par défaut
+                                if (!travailSelectionne) {
+                                    travailSelectionne = 'Service de nettoyage';
+                                }
+                            }
+                        }
                     }
 
                     console.log('Travail sélectionné final:', travailSelectionne);
@@ -2473,14 +2498,16 @@
                     const taxes = prixFloat * 0.21;
                     const totalWithTaxes = prixFloat + taxes;
 
-                    // CORRECTION : Gestion simplifiée de la description
+                    // Gérer le cas où 'Autre : Voir Observations' est requis pour le multiligne
                     let descriptionContent = travailSelectionne;
-
-                    // Si c'est "Autre", diviser en deux lignes
-                    if (travailSelectionne === 'Autre : Voir Observations') {
+                    if (travailSelectionne.includes('Autre')) {
+                        // Forcer la division en tableau pour que autoTable gère les lignes et que valign fonctionne correctement.
                         descriptionContent = ['Autre : Voir', 'Observations'];
+                    } else if (travailSelectionne.includes('\n')) {
+                        descriptionContent = travailSelectionne.split('\n');
                     }
 
+                    // UTILISER LE TRAVAIL SÉLECTIONNÉ CORRECT
                     const body = [
                         [1, 1, descriptionContent, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
                     ];
@@ -2502,6 +2529,7 @@
                       columnStyles: {
                         0: { cellWidth: 15, halign: 'center' },
                         1: { cellWidth: 25, halign: 'center' },
+                        // ✅ Changements ici : halign: 'center' et l'ajout de valign: 'middle'
                         2: { cellWidth: 70, halign: 'left', valign: 'middle' },
                         3: { cellWidth: 40, halign: 'right' },
                         4: { cellWidth: 40, halign: 'right' }
@@ -2512,6 +2540,7 @@
                         lineColor: [100, 100, 100],
                         lineWidth: 0.1
                       },
+                      // ❌ Le bloc didDrawCell a été retiré pour éviter les conflits et les erreurs de centrage manuel
                     });
 
                     currentY = doc.autoTable.previous.finalY + 15;
@@ -2520,23 +2549,26 @@
                     const totalsStartX = doc.internal.pageSize.width - 100;
 
                     doc.setFillColor(240, 240, 240);
+                    // Le rectangle ne change pas : (X de départ: totalsStartX - 100) | (Largeur: 90)
                     doc.rect(totalsStartX - 5, currentY, 90, 25, 'F');
 
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
 
+                    // ✅ MODIFICATION 1 : Ancrage de l'étiquette (ex: 'Sous-total:') plus à droite (ex: +30) pour éviter le débordement à gauche.
                     doc.text(`${getTranslation('pdf_subtotal')}:`, totalsStartX + 30, currentY + 8, { align: 'right' });
-                    doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 78, currentY + 8, { align: 'right' });
+                    doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 78, currentY + 8, { align: 'right' }); // Ancré près de la limite droite (+78)
 
-                    doc.text(`${getTranslation('pdf_taxes')} (21%):`, totalsStartX + 30, currentY + 16, { align: 'right' });
-                    doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 78, currentY + 16, { align: 'right' });
+                    doc.text(`${getTranslation('pdf_taxes')} (21%):`, totalsStartX + 30, currentY + 16, { align: 'right' }); // Ancré à +30
+                    doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 78, currentY + 16, { align: 'right' }); // Ancré près de la limite droite (+78)
 
                     doc.setDrawColor(150, 150, 150);
+                    // La ligne est déplacée à +78 pour respecter la nouvelle limite droite
                     doc.line(totalsStartX + 30, currentY + 19, totalsStartX + 78, currentY + 19);
 
                     doc.setFont("helvetica", "bold");
-                    doc.text(`${getTranslation('pdf_total')}:`, totalsStartX + 30, currentY + 24, { align: 'right' });
-                    doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 78, currentY + 24, { align: 'right' });
+                    doc.text(`${getTranslation('pdf_total')}:`, totalsStartX + 30, currentY + 24, { align: 'right' }); // Ancré à +30
+                    doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 78, currentY + 24, { align: 'right' }); // Ancré près de la limite droite (+78)
 
                     currentY += 35;
 
@@ -2589,14 +2621,14 @@
 
                     showTemporaryMessage(getTranslation('temp_msg_sales_note_generated_uploaded'));
 
-                    // CORRECTION : Mise à jour de la table avec la bonne colonne d'identifiant
+                    // Mettre à jour le lien "paiement" dans la table Supabase
                     console.log(getTranslation('log_payment_path_to_update'), data.path);
                     console.log(getTranslation('log_event_user_id_for_update'), eventId);
 
                     const { error: updateError } = await supabase
                         .from('event_quot1_fran')
                         .update({ paiement: data.path })
-                        .eq('event_id', eventId); // CORRECTION : utiliser 'event_id' au lieu de 'user_id'
+                        .eq('user_id', eventId);
 
                     if (updateError) {
                         console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError);
