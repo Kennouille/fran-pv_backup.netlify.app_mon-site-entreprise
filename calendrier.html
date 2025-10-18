@@ -2522,32 +2522,26 @@
                       head: headers,
                       body: body,
                       theme: 'grid',
-                      styles: {
-                        halign: 'center',
-                        valign: 'middle',
-                        fontSize: 10,
-                        cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
-                        lineWidth: 0.1,
-                        lineColor: [100, 100, 100]
+                      headStyles: {
+                        fillColor: [70,130,180],
+                        textColor: [255,255,255],
+                        fontStyle: 'bold',
+                        halign: 'center'
                       },
-                      headStyles: { halign: 'center', valign: 'middle', fillColor: [70,130,180], textColor: [255,255,255], fontStyle: 'bold' },
-                      bodyStyles: { halign: 'center', valign: 'middle', textColor: [0,0,0] },
-
                       margin: { left: marginX, right: marginX },
                       columnStyles: {
-                        0: { cellWidth: 15 },                 // N°
-                        1: { cellWidth: 20 },                 // Quantité
-                        2: { cellWidth: 70, halign: 'left', valign: 'middle', minCellHeight: 15 }, // Description À GAUCHE
-                        3: { cellWidth: 30, halign: 'right',  valign: 'middle' }, // Tarif unitaire
-                        4: { cellWidth: 30, halign: 'right',  valign: 'middle' }  // Montant
+                        0: { cellWidth: 15, halign: 'center' },
+                        1: { cellWidth: 20, halign: 'center' },
+                        2: { cellWidth: 90, halign: 'left' }, // FORCÉ à gauche
+                        3: { cellWidth: 30, halign: 'right' },
+                        4: { cellWidth: 30, halign: 'right' }
                       },
-
-                      // Sécurise l'alignement à gauche pour la colonne Description
-                      didParseCell: (data) => {
-                        if (data.section === 'body' && data.column.index === 2) {
-                          data.cell.styles.halign = 'left';
-                          data.cell.styles.valign = 'middle';
-                        }
+                      // Désactiver tout style global qui pourrait interférer
+                      styles: {
+                        fontSize: 10,
+                        cellPadding: 4,
+                        lineColor: [100, 100, 100],
+                        lineWidth: 0.1
                       }
                     });
 
