@@ -2233,7 +2233,7 @@
                 doc.setDrawColor(tableColor[0], tableColor[1], tableColor[2]);
                 doc.setLineWidth(0.8);
                 doc.line(marginX, currentY, pageWidth - marginX, currentY); // Ligne au-dessus
-                currentY += 10;
+                currentY += 13;
 
                 doc.setFontSize(22);
                 doc.setFont("helvetica", "bold");
@@ -2341,43 +2341,46 @@
             });
 
             document.getElementById('enregistrerEtAjouterPaiement').addEventListener('click', function() {
-                html2canvas(documentPopup).then(canvas => {
-                    const imageBase64 = canvas.toDataURL("image/png");
-                    const blob = dataURLtoBlob(imageBase64);
-                    const userId = row.dataset.userId; // Utiliser row défini plus haut
+                // Ajout d'un petit délai pour s'assurer que le rendu CSS/DOM est complet
+                setTimeout(() => {
+                    html2canvas(documentPopup).then(canvas => {
+                        const imageBase64 = canvas.toDataURL("image/png");
+                        const blob = dataURLtoBlob(imageBase64);
+                        const userId = row.dataset.userId;
 
-                    supabase.storage
-                        .from('facturas_fran')
-                        .upload(`facturas_fran/${userId}/document_image.png`, blob)
-                        .then(({ data, error }) => {
-                            if (error) {
-                                console.error(getTranslation('error_uploading_image'), error);
-                                showTemporaryMessage(getTranslation('temp_msg_error_uploading_image'));
-                            } else {
-                                showTemporaryMessage(getTranslation('temp_msg_document_converted_uploaded'));
+                        supabase.storage
+                            .from('facturas_fran')
+                            .upload(`facturas_fran/${userId}/document_image.png`, blob)
+                            .then(({ data, error }) => {
+                                if (error) {
+                                    console.error(getTranslation('error_uploading_image'), error);
+                                    showTemporaryMessage(getTranslation('temp_msg_error_uploading_image'));
+                                } else {
+                                    showTemporaryMessage(getTranslation('temp_msg_document_converted_uploaded'));
 
-                                supabase
-                                    .from('event_quot1_fran')
-                                    .update({ paiement: data.path })
-                                    .eq('user_id', userId)
-                                    .then(({ error: updateError }) => {
-                                        if (updateError) {
-                                            console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError);
-                                        } else {
-                                            console.log(getTranslation('log_payment_updated_success_event_quot1_fran'));
-                                        }
-                                    });
+                                    supabase
+                                        .from('event_quot1_fran')
+                                        .update({ paiement: data.path })
+                                        .eq('user_id', userId)
+                                        .then(({ error: updateError }) => {
+                                            if (updateError) {
+                                                console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError);
+                                            } else {
+                                                console.log(getTranslation('log_payment_updated_success_event_quot1_fran'));
+                                            }
+                                        });
 
-                                link.textContent = getTranslation('link_view_payment');
-                                link.dataset.paiement = data.path;
-                                document.body.removeChild(documentPopup);
+                                    link.textContent = getTranslation('link_view_payment');
+                                    link.dataset.paiement = data.path;
+                                    document.body.removeChild(documentPopup);
 
-                                if (row) {
-                                    applyChangesWithoutPrompt(row, false);
+                                    if (row) {
+                                        applyChangesWithoutPrompt(row, false);
+                                    }
                                 }
-                            }
-                        });
-                });
+                            });
+                    });
+                }, 100); // Délai de 100ms
             });
 
             document.getElementById('annuler').addEventListener('click', function() {
