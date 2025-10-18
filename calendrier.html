@@ -2005,6 +2005,43 @@
                 console.error(getTranslation('error_loading_bank_data'), error); // Traduire
             }
         }
+
+        /**
+         * Charge une image à partir d'une URL et la convertit en Data URL (Base64).
+         * @param {string} imgUrl L'URL de l'image (e.g., '/images/cedunet.png').
+         * @returns {Promise<string>} La chaîne Base64 de l'image.
+         */
+        function getBase64Image(imgUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                // CROS S pour les ressources externes (souvent nécessaire même pour les ressources locales)
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    // Utiliser les dimensions du logo dans le modal (150x80px max) pour le Base64
+                    const maxWidth = 150;
+                    const maxHeight = 80;
+                    const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+
+                    canvas.width = img.width * ratio;
+                    canvas.height = img.height * ratio;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    // Assurez-vous d'utiliser le bon format d'image si ce n'est pas PNG
+                    const dataURL = canvas.toDataURL('image/png');
+                    resolve(dataURL);
+                };
+                img.onerror = (error) => {
+                    console.error("Erreur: Le chargement du logo a échoué. Vérifiez le chemin '/images/cedunet.png'.", error);
+                    // Si le chargement échoue, renvoyer une chaîne vide au lieu de bloquer le PDF
+                    resolve('');
+                };
+                img.src = imgUrl;
+            });
+        }
+
+
         // Fonction pour ouvrir le popup du document
         async function openDocumentPopup(link) { // <-- LA FONCTION DEVIENT ASYNC
             // Crée le popup pour le document
@@ -2157,8 +2194,8 @@
                 return new Blob([u8arr], { type: mime });
             }
 
-            // Gérer les boutons (CODE MODIFIÉ pour générer un PDF au lieu d'un JSON)
-            document.getElementById('enregistrerPaiement').addEventListener('click', function() {
+            // Gérer les boutons (CODE MODIFIÉ pour la génération PDF et l'ajout du logo)
+            document.getElementById('enregistrerPaiement').addEventListener('click', async function() { // <-- DEVIENT ASYNC
                 const documentData = {
                     nom: document.getElementById('documentNom').value,
                     date: document.getElementById('documentDate').value,
@@ -2166,38 +2203,31 @@
                     travail: document.getElementById('documentTravail').value,
                     lieu: document.getElementById('documentLieu').value,
                     banco: document.getElementById('documentBanco').value,
-                    banco1: document.getElementById('documentBanco1').value, // Sucursale
-                    banco2: document.getElementById('documentBanco2').value, // N° de compte
-                    banco3: document.getElementById('documentBanco3').value, // IBAN
-                    banco4: document.getElementById('documentBanco4').value  // Destinataire
+                    banco1: document.getElementById('documentBanco1').value,
+                    banco2: document.getElementById('documentBanco2').value,
+                    banco3: document.getElementById('documentBanco3').value,
+                    banco4: document.getElementById('documentBanco4').value
                 };
+
+                // 🟢 ÉTAPE 1: CHARGEMENT ASYNCHRONE DU LOGO
+                const logoBase64 = await getBase64Image('/images/cedunet.png');
 
                 // eslint-disable-next-line no-undef
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                let currentY = 20;
+                let currentY = 15; // Diminué pour laisser de la place au logo
                 const marginX = 15;
                 const pageWidth = doc.internal.pageSize.getWidth();
+                const logoWidth = 40; // Largeur arbitraire pour le PDF
+                const logoHeight = 20; // Hauteur arbitraire pour le PDF
 
-                // 1. AJOUT DU LOGO
-                // REMARQUE: Vous devez vous assurer que la variable globale 'logoBase64' existe et contient l'image.
-                // Si vous utilisez la librairie pour encoder l'image du modal, vous devez l'encoder ici.
-                // Pour cet exemple, je vais simuler l'ajout sans l'encoder, en supposant que vous avez une image encodée en Base64 disponible.
-                // Si 'logoBase64' n'est pas défini, cette partie doit être adaptée.
-                try {
-                    // Assurez-vous que votre logo est disponible en Base64
-                    // Par défaut, l'image du modal est '/images/cedunet.png'
-                    // Cette ligne ajoute une image Base64. (Remplacer 'logoBase64' par votre variable)
-                    // doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 20, currentY, 40, 20); // Exemple
-
-                    // Si vous ne pouvez pas charger le logo, on passe
-                    currentY += 10;
-                } catch (e) {
-                    // Gestion d'erreur si le logo n'est pas trouvé
+                // 🟢 ÉTAPE 2: AJOUT DU LOGO AU PDF
+                if (logoBase64) {
+                    doc.addImage(logoBase64, 'PNG', pageWidth / 2 - (logoWidth / 2), currentY, logoWidth, logoHeight);
+                    currentY += logoHeight + 5; // Avancer sous le logo
                 }
 
-
-                // 2. TITRE
+                // --- Titre ---
                 doc.setFontSize(20);
                 doc.setFont("helvetica", "bold");
                 doc.text(getTranslation('payment_receipt_heading'), pageWidth / 2, currentY, { align: 'center' });
@@ -2217,19 +2247,15 @@
 
                 doc.autoTable({
                     startY: currentY,
-                    // RETIRER LA LIGNE 'head' POUR SUPPRIMER L'EN-TÊTE VERT
                     body: details,
-                    theme: 'plain', // UTILISER 'plain' pour retirer les bordures
+                    theme: 'plain',
                     margin: { left: marginX, right: marginX },
                     styles: { fontSize: 12, cellPadding: 3 },
                     columnStyles: {
-                        // Largeur de la première colonne (Label)
                         0: { fontStyle: 'bold', cellWidth: 35, textColor: [51, 51, 51] },
-                        // Largeur de la seconde colonne (Valeur) - calculée automatiquement
                         1: { cellWidth: 'auto' }
                     },
                     didParseCell: function(data) {
-                        // S'assurer que les étiquettes sont alignées à droite et les valeurs à gauche (ou inversement)
                         if (data.column.index === 0) {
                             data.cell.styles.halign = 'left';
                         }
@@ -2261,10 +2287,9 @@
                     margin: { left: marginX },
                     styles: { fontSize: 11, cellPadding: 2, lineWidth: 0 },
                     columnStyles: {
-                        0: { fontStyle: 'bold', cellWidth: 50 }, // Augmenté pour éviter les coupures
+                        0: { fontStyle: 'bold', cellWidth: 50 },
                         1: { cellWidth: 'auto' }
                     },
-                    // Ajout d'une marge bas de page pour ne pas couper
                     pageBreak: 'avoid',
                 });
                 currentY = doc.autoTable.previous.finalY + 20;
