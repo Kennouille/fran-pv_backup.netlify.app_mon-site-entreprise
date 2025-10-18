@@ -2340,10 +2340,37 @@
                 document.body.removeChild(documentPopup);
             });
 
-            document.getElementById('enregistrerEtAjouterPaiement').addEventListener('click', function() {
-                // Ajout d'un petit délai pour s'assurer que le rendu CSS/DOM est complet
+           document.getElementById('enregistrerEtAjouterPaiement').addEventListener('click', function() {
+
+                // Sauvegarder les styles actuels
+                const originalPosition = documentPopup.style.position;
+                const originalTransform = documentPopup.style.transform;
+                const originalTop = documentPopup.style.top;
+                const originalLeft = documentPopup.style.left;
+
+                // Temporairement, retirer les styles qui peuvent poser problème pour html2canvas
+                documentPopup.style.position = 'absolute';
+                documentPopup.style.transform = 'none';
+                documentPopup.style.top = window.scrollY + 'px'; // Positionner en haut de la fenêtre visible
+                documentPopup.style.left = '0'; // Positionner à gauche
+
+                // Délai pour permettre le recalcul du rendu DOM après la modification des styles
                 setTimeout(() => {
-                    html2canvas(documentPopup).then(canvas => {
+                    // html2canvas()
+                    html2canvas(documentPopup, {
+                        // Permet de charger les styles inline (très courant dans votre code)
+                        allowTaint: true,
+                        // Permet l'utilisation d'images provenant d'autres domaines (si c'est le cas du logo)
+                        useCORS: true
+                    }).then(canvas => {
+
+                        // --- Rétablir les styles originaux IMMÉDIATEMENT après la capture ---
+                        documentPopup.style.position = originalPosition;
+                        documentPopup.style.transform = originalTransform;
+                        documentPopup.style.top = originalTop;
+                        documentPopup.style.left = originalLeft;
+                        // -------------------------------------------------------------------
+
                         const imageBase64 = canvas.toDataURL("image/png");
                         const blob = dataURLtoBlob(imageBase64);
                         const userId = row.dataset.userId;
@@ -2352,6 +2379,7 @@
                             .from('facturas_fran')
                             .upload(`facturas_fran/${userId}/document_image.png`, blob)
                             .then(({ data, error }) => {
+                                // ... (Le code d'upload reste identique)
                                 if (error) {
                                     console.error(getTranslation('error_uploading_image'), error);
                                     showTemporaryMessage(getTranslation('temp_msg_error_uploading_image'));
@@ -2380,7 +2408,7 @@
                                 }
                             });
                     });
-                }, 100); // Délai de 100ms
+                }, 50); // Délai réduit à 50ms, il est surtout là pour le recalcul du DOM
             });
 
             document.getElementById('annuler').addEventListener('click', function() {
