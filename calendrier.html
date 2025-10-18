@@ -2562,23 +2562,26 @@
                     const totalsStartX = doc.internal.pageSize.width - 100;
 
                     doc.setFillColor(240, 240, 240);
+                    // Le rectangle ne change pas : (X de départ: totalsStartX - 10) | (Largeur: 90)
                     doc.rect(totalsStartX - 10, currentY, 90, 25, 'F');
 
                     doc.setFontSize(10);
                     doc.setFont("helvetica", "normal");
 
-                    doc.text(`${getTranslation('pdf_subtotal')}:`, totalsStartX, currentY + 8, { align: 'right' });
-                    doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 60, currentY + 8, { align: 'right' });
+                    // ✅ MODIFICATION 1 : Ancrage de l'étiquette (ex: 'Sous-total:') plus à droite (ex: +30) pour éviter le débordement à gauche.
+                    doc.text(`${getTranslation('pdf_subtotal')}:`, totalsStartX + 30, currentY + 8, { align: 'right' });
+                    doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 78, currentY + 8, { align: 'right' }); // Ancré près de la limite droite (+78)
 
-                    doc.text(`${getTranslation('pdf_taxes')} (15%):`, totalsStartX, currentY + 16, { align: 'right' });
-                    doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 60, currentY + 16, { align: 'right' });
+                    doc.text(`${getTranslation('pdf_taxes')} (15%):`, totalsStartX + 30, currentY + 16, { align: 'right' }); // Ancré à +30
+                    doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 78, currentY + 16, { align: 'right' }); // Ancré près de la limite droite (+78)
 
                     doc.setDrawColor(150, 150, 150);
-                    doc.line(totalsStartX, currentY + 19, totalsStartX + 60, currentY + 19);
+                    // La ligne est déplacée à +78 pour respecter la nouvelle limite droite
+                    doc.line(totalsStartX + 30, currentY + 19, totalsStartX + 78, currentY + 19);
 
                     doc.setFont("helvetica", "bold");
-                    doc.text(`${getTranslation('pdf_total')}:`, totalsStartX, currentY + 24, { align: 'right' });
-                    doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 60, currentY + 24, { align: 'right' });
+                    doc.text(`${getTranslation('pdf_total')}:`, totalsStartX + 30, currentY + 24, { align: 'right' }); // Ancré à +30
+                    doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 78, currentY + 24, { align: 'right' }); // Ancré près de la limite droite (+78)
 
                     currentY += 35;
 
