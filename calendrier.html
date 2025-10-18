@@ -2585,25 +2585,7 @@
 
                     currentY += 35;
 
-                    // --- Section Notes ---
-                    if (currentY < doc.internal.pageSize.height - 40) {
-                        doc.setFontSize(10);
-                        doc.setFont("helvetica", "bold");
-                        doc.text(getTranslation('pdf_notes') + ":", marginX, currentY);
-                        doc.setFont("helvetica", "normal");
 
-                        const notes = [
-                            getTranslation('pdf_note_payment_terms'),
-                            getTranslation('pdf_note_delivery_terms'),
-                            getTranslation('pdf_note_validity_terms')
-                        ];
-
-                        notes.forEach((note, index) => {
-                            if (currentY < doc.internal.pageSize.height - 20) {
-                                doc.text(`• ${note}`, marginX + 5, currentY + 7 + (index * 5));
-                            }
-                        });
-                    }
 
                     // --- Pied de page ---
                     const footerY = doc.internal.pageSize.height - 15;
