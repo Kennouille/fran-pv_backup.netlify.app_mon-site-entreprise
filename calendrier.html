@@ -2342,34 +2342,48 @@
 
            document.getElementById('enregistrerEtAjouterPaiement').addEventListener('click', function() {
 
-                // Sauvegarder les styles actuels
+                // Référence aux boutons pour les masquer/rétablir
+                const btnEnregistrerPaiement = document.getElementById('enregistrerPaiement');
+                const btnEnregistrerEtAjouterPaiement = document.getElementById('enregistrerEtAjouterPaiement');
+                const btnAnnuler = document.getElementById('annuler');
+
+                // Sauvegarder les styles actuels du documentPopup
                 const originalPosition = documentPopup.style.position;
                 const originalTransform = documentPopup.style.transform;
                 const originalTop = documentPopup.style.top;
                 const originalLeft = documentPopup.style.left;
 
+                // Masquer les boutons avant la capture
+                btnEnregistrerPaiement.style.display = 'none';
+                btnEnregistrerEtAjouterPaiement.style.display = 'none';
+                btnAnnuler.style.display = 'none';
+
                 // Temporairement, retirer les styles qui peuvent poser problème pour html2canvas
+                // Ces styles doivent être modifiés avant le setTimeout pour être pris en compte
                 documentPopup.style.position = 'absolute';
                 documentPopup.style.transform = 'none';
-                documentPopup.style.top = window.scrollY + 'px'; // Positionner en haut de la fenêtre visible
-                documentPopup.style.left = '0'; // Positionner à gauche
+                // Utiliser la position actuelle du scroll + la position du modal pour le placer correctement si besoin
+                documentPopup.style.top = (window.scrollY + documentPopup.getBoundingClientRect().top) + 'px';
+                documentPopup.style.left = documentPopup.getBoundingClientRect().left + 'px';
 
-                // Délai pour permettre le recalcul du rendu DOM après la modification des styles
                 setTimeout(() => {
-                    // html2canvas()
                     html2canvas(documentPopup, {
-                        // Permet de charger les styles inline (très courant dans votre code)
                         allowTaint: true,
-                        // Permet l'utilisation d'images provenant d'autres domaines (si c'est le cas du logo)
                         useCORS: true
                     }).then(canvas => {
 
-                        // --- Rétablir les styles originaux IMMÉDIATEMENT après la capture ---
+                        // --- Rétablir les styles originaux de documentPopup ---
                         documentPopup.style.position = originalPosition;
                         documentPopup.style.transform = originalTransform;
                         documentPopup.style.top = originalTop;
                         documentPopup.style.left = originalLeft;
                         // -------------------------------------------------------------------
+
+                        // --- Rétablir l'affichage des boutons ---
+                        btnEnregistrerPaiement.style.display = ''; // Rétablit le display par défaut
+                        btnEnregistrerEtAjouterPaiement.style.display = '';
+                        btnAnnuler.style.display = '';
+                        // ----------------------------------------
 
                         const imageBase64 = canvas.toDataURL("image/png");
                         const blob = dataURLtoBlob(imageBase64);
@@ -2379,7 +2393,6 @@
                             .from('facturas_fran')
                             .upload(`facturas_fran/${userId}/document_image.png`, blob)
                             .then(({ data, error }) => {
-                                // ... (Le code d'upload reste identique)
                                 if (error) {
                                     console.error(getTranslation('error_uploading_image'), error);
                                     showTemporaryMessage(getTranslation('temp_msg_error_uploading_image'));
@@ -2408,7 +2421,7 @@
                                 }
                             });
                     });
-                }, 50); // Délai réduit à 50ms, il est surtout là pour le recalcul du DOM
+                }, 50);
             });
 
             document.getElementById('annuler').addEventListener('click', function() {
