@@ -2510,9 +2510,18 @@
                     const taxes = prixFloat * 0.15;
                     const totalWithTaxes = prixFloat + taxes;
 
+                    // Gérer le cas où 'Autre : Voir Observations' est requis pour le multiligne
+                    let descriptionContent = travailSelectionne;
+                    if (travailSelectionne.includes('Autre')) {
+                        // Forcer la division en tableau pour que autoTable gère les lignes et que valign fonctionne correctement.
+                        descriptionContent = ['Autre : Voir', 'Observations'];
+                    } else if (travailSelectionne.includes('\n')) {
+                        descriptionContent = travailSelectionne.split('\n');
+                    }
+
                     // UTILISER LE TRAVAIL SÉLECTIONNÉ CORRECT
                     const body = [
-                        [1, 1, travailSelectionne, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
+                        [1, 1, descriptionContent, `${prixFloat.toFixed(2)} €`, `${prixFloat.toFixed(2)} €`]
                     ];
 
                     console.log('Tableau final avec travail:', body);
@@ -2532,8 +2541,8 @@
                       columnStyles: {
                         0: { cellWidth: 15, halign: 'center' },
                         1: { cellWidth: 25, halign: 'center' },
-                        // Garder halign: 'center'
-                        2: { cellWidth: 70, halign: 'center' },
+                        // ✅ Changements ici : halign: 'center' et l'ajout de valign: 'middle'
+                        2: { cellWidth: 70, halign: 'center', valign: 'middle' },
                         3: { cellWidth: 40, halign: 'right' },
                         4: { cellWidth: 40, halign: 'right' }
                       },
@@ -2543,38 +2552,7 @@
                         lineColor: [100, 100, 100],
                         lineWidth: 0.1
                       },
-                      // 💡 NOUVEAU : Utiliser didDrawCell pour forcer l'alignement du texte multiligne
-                      didDrawCell: (data) => {
-                        // Cibler les cellules de la colonne Description (index 2) dans le corps du tableau
-                        if (data.section === 'body' && data.column.index === 2) {
-                          const cell = data.cell;
-                          // Définir l'alignement du texte à 'center'
-                          data.doc.setFont(data.doc.getFont().fontName, data.doc.getFont().fontStyle);
-                          data.doc.setFontSize(cell.styles.fontSize);
-                          data.doc.setTextColor(cell.styles.textColor[0], cell.styles.textColor[1], cell.styles.textColor[2]);
-
-                          const text = cell.text;
-
-                          // Calculer la position X centrée
-                          const textWidth = data.doc.getStringUnitWidth(text.join(' ')) * cell.styles.fontSize / data.doc.internal.scaleFactor;
-                          let x = cell.x + cell.width / 2;
-
-                          // Calculer la position Y centrée
-                          const lineHeight = data.doc.internal.getLineHeight();
-                          const textHeight = text.length * lineHeight + (text.length - 1) * 1; // 1 est un espace approximatif entre les lignes
-                          let y = cell.y + cell.height / 2 - textHeight / 2 + lineHeight / 2;
-
-                          // Dessiner le texte, centré horizontalement et verticalement
-                          data.doc.text(text, x, y, {
-                            align: 'center',
-                            baseline: 'middle', // Pour un meilleur centrage vertical
-                            lineHeightFactor: 1.2 // Ajuster si besoin
-                          });
-
-                          // Éviter qu'autoTable ne redessine le texte par défaut
-                          data.cell.text = [];
-                        }
-                      }
+                      // ❌ Le bloc didDrawCell a été retiré pour éviter les conflits et les erreurs de centrage manuel
                     });
 
 
