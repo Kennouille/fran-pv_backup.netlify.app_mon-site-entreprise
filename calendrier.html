@@ -2592,8 +2592,6 @@
                     // CORRECTION : Mise à jour de la table avec la bonne colonne d'identifiant
                     console.log(getTranslation('log_payment_path_to_update'), data.path);
                     console.log(getTranslation('log_event_user_id_for_update'), eventId);
-                    console.log('Type de eventId:', typeof eventId, 'Valeur:', eventId);
-                    console.log('Type de userId:', typeof userId, 'Valeur:', userId);
 
                     const { error: updateError } = await supabase
                         .from('event_quot1_fran')
