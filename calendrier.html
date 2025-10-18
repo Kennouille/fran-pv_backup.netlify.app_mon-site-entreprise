@@ -2598,7 +2598,7 @@
                     const { error: updateError } = await supabase
                         .from('event_quot1_fran')
                         .update({ paiement: data.path })
-                        .eq('user_id', eventId); // CORRECTION : utiliser 'event_id' au lieu de 'user_id'
+                        .eq('event_id', eventId); // CORRECTION : utiliser 'event_id' au lieu de 'user_id'
 
                     if (updateError) {
                         console.error(getTranslation('error_updating_event_quot1_fran_colon'), updateError);
