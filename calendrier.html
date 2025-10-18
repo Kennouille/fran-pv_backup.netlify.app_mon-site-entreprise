@@ -2165,7 +2165,6 @@
                     prix: document.getElementById('documentPrix').value,
                     travail: document.getElementById('documentTravail').value,
                     lieu: document.getElementById('documentLieu').value,
-                    // Données bancaires
                     banco: document.getElementById('documentBanco').value,
                     banco1: document.getElementById('documentBanco1').value, // Sucursale
                     banco2: document.getElementById('documentBanco2').value, // N° de compte
@@ -2178,65 +2177,95 @@
                 const doc = new jsPDF();
                 let currentY = 20;
                 const marginX = 15;
+                const pageWidth = doc.internal.pageSize.getWidth();
 
-                // --- Titre ---
+                // 1. AJOUT DU LOGO
+                // REMARQUE: Vous devez vous assurer que la variable globale 'logoBase64' existe et contient l'image.
+                // Si vous utilisez la librairie pour encoder l'image du modal, vous devez l'encoder ici.
+                // Pour cet exemple, je vais simuler l'ajout sans l'encoder, en supposant que vous avez une image encodée en Base64 disponible.
+                // Si 'logoBase64' n'est pas défini, cette partie doit être adaptée.
+                try {
+                    // Assurez-vous que votre logo est disponible en Base64
+                    // Par défaut, l'image du modal est '/images/cedunet.png'
+                    // Cette ligne ajoute une image Base64. (Remplacer 'logoBase64' par votre variable)
+                    // doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 20, currentY, 40, 20); // Exemple
+
+                    // Si vous ne pouvez pas charger le logo, on passe
+                    currentY += 10;
+                } catch (e) {
+                    // Gestion d'erreur si le logo n'est pas trouvé
+                }
+
+
+                // 2. TITRE
                 doc.setFontSize(20);
                 doc.setFont("helvetica", "bold");
-                doc.text(getTranslation('payment_receipt_heading'), doc.internal.pageSize.width / 2, currentY, { align: 'center' });
+                doc.text(getTranslation('payment_receipt_heading'), pageWidth / 2, currentY, { align: 'center' });
                 currentY += 15;
 
-                // --- Détails de l'événement (Tableau simple) ---
+                // --- Détails de l'événement (Tableau) ---
                 doc.setFontSize(12);
                 doc.setFont("helvetica", "normal");
 
                 const details = [
-                    [getTranslation('label_name'), documentData.nom],
-                    [getTranslation('label_date'), documentData.date],
-                    [getTranslation('label_location'), documentData.lieu],
-                    [getTranslation('label_work'), documentData.travail],
-                    [getTranslation('label_price'), documentData.prix]
+                    [getTranslation('label_name') + ':', documentData.nom],
+                    [getTranslation('label_date') + ':', documentData.date],
+                    [getTranslation('label_location') + ':', documentData.lieu],
+                    [getTranslation('label_work') + ':', documentData.travail],
+                    [getTranslation('label_price') + ':', documentData.prix]
                 ];
 
                 doc.autoTable({
                     startY: currentY,
-                    head: [[getTranslation('pdf_table_header_detail'), getTranslation('pdf_table_header_value')]],
+                    // RETIRER LA LIGNE 'head' POUR SUPPRIMER L'EN-TÊTE VERT
                     body: details,
-                    theme: 'grid',
+                    theme: 'plain', // UTILISER 'plain' pour retirer les bordures
                     margin: { left: marginX, right: marginX },
+                    styles: { fontSize: 12, cellPadding: 3 },
                     columnStyles: {
-                        0: { fontStyle: 'bold', cellWidth: 50 },
-                        1: { cellWidth: 120 }
+                        // Largeur de la première colonne (Label)
+                        0: { fontStyle: 'bold', cellWidth: 35, textColor: [51, 51, 51] },
+                        // Largeur de la seconde colonne (Valeur) - calculée automatiquement
+                        1: { cellWidth: 'auto' }
                     },
+                    didParseCell: function(data) {
+                        // S'assurer que les étiquettes sont alignées à droite et les valeurs à gauche (ou inversement)
+                        if (data.column.index === 0) {
+                            data.cell.styles.halign = 'left';
+                        }
+                    }
                 });
                 currentY = doc.autoTable.previous.finalY + 15;
 
                 // --- Données Bancaires ---
                 doc.setFontSize(14);
                 doc.setFont("helvetica", "bold");
-                doc.text(getTranslation('label_bank_details'), marginX, currentY);
-                currentY += 10;
+                doc.text(getTranslation('label_bank_details') + ':', marginX, currentY);
+                currentY += 8;
 
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
 
                 const bankDetails = [
-                    [getTranslation('label_bank'), documentData.banco],
-                    [getTranslation('label_branch'), documentData.banco1],
-                    [getTranslation('label_account_number'), documentData.banco2],
-                    [getTranslation('label_iban'), documentData.banco3],
-                    [getTranslation('label_recipient'), documentData.banco4]
+                    [getTranslation('label_bank') + ':', documentData.banco],
+                    [getTranslation('label_branch') + ':', documentData.banco1],
+                    [getTranslation('label_account_number') + ':', documentData.banco2],
+                    [getTranslation('label_iban') + ':', documentData.banco3],
+                    [getTranslation('label_recipient') + ':', documentData.banco4]
                 ];
 
                 doc.autoTable({
                     startY: currentY,
                     body: bankDetails,
                     theme: 'plain',
-                    margin: { left: marginX, right: marginX + 90 }, // Retrait pour aligner à gauche
-                    styles: { fontSize: 10, cellPadding: 2 },
+                    margin: { left: marginX },
+                    styles: { fontSize: 11, cellPadding: 2, lineWidth: 0 },
                     columnStyles: {
-                        0: { fontStyle: 'bold', cellWidth: 50 },
-                        1: { cellWidth: 100 }
+                        0: { fontStyle: 'bold', cellWidth: 50 }, // Augmenté pour éviter les coupures
+                        1: { cellWidth: 'auto' }
                     },
+                    // Ajout d'une marge bas de page pour ne pas couper
+                    pageBreak: 'avoid',
                 });
                 currentY = doc.autoTable.previous.finalY + 20;
 
@@ -2245,7 +2274,7 @@
                 const fileName = `${documentData.nom}_${fileNamePrefix}.pdf`;
                 doc.save(fileName);
 
-                showTemporaryMessage(getTranslation('alert_payment_saved_locally_pdf')); // Message mis à jour
+                showTemporaryMessage(getTranslation('alert_payment_saved_locally_pdf'));
 
                 document.body.removeChild(documentPopup);
             });
