@@ -2401,23 +2401,10 @@
                             if (select) {
                                 travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
                             } else {
-                                // Prendre tout le texte de la cellule et nettoyer
-                                travailSelectionne = travailCell.textContent
-                                    // ✅ MODIFICATION : Inclure l'espace avant et après la chaîne à supprimer
-                                    .replace(/\s*– Sélectionner le statut –\s*/g, '')
-                                    .replace(/\s*Lavage de vitres\s*/g, '')
-                                    .replace(/\s*Nettoyage de locaux\s*/g, '')
-                                    .replace(/\s*Nettoyage après chantier\s*/g, '')
-                                    .replace(/\s*,\s*Nettoyage de panneaux photovoltaïques\s*/g, '')
-                                    .replace(/\s*Nettoyage de panneaux photovoltaïques\s*,?\s*/g, '')
-                                    .replace(/\s*Lutte contre les nuisibles\s*/g, '')
-                                    .replace(/\s*Autre : Voir Observations\s*/g, '')
-                                    // 1. Remplacer les espaces multiples, y compris ceux laissés, par un seul
-                                    .replace(/\s+/g, ' ')
-                                    .trim();
-
-                                // 2. Supprimer les virgules et autres ponctuations au début (même si on a nettoyé les espaces)
-                                travailSelectionne = travailSelectionne.replace(/^[\s,.;:]+/, '').trim();
+                                // Si le select n'est pas là, le texte affiché est SUREMENT le contenu de event.Travail
+                                // qui est inséré par ${event.Travail || '--'} dans le HTML.
+                                // On peut simplement nettoyer les espaces autour.
+                                travailSelectionne = travailCell.textContent.trim();
                             }
                         }
                     }
