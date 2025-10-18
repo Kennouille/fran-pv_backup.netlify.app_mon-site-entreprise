@@ -2411,6 +2411,9 @@
                                     .replace(/Lutte contre les nuisibles/g, '')
                                     .replace(/Autre : Voir Observations/g, '')
                                     .replace(/\s+/g, ' ')
+                                    // ✅ NOUVEAU : Supprimer les virgules et les espaces adjacents résiduels
+                                    .replace(/,(\s*)/g, ' ')
+                                    .replace(/\s+/g, ' ')
                                     .trim();
                             }
                         }
@@ -2418,8 +2421,7 @@
 
                     // Si toujours vide, utiliser une valeur par défaut basée sur le premier service non vide
                     if (!travailSelectionne) {
-                        const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier',
-                                         'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
+                        const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier', 'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
 
                         for (let service of services) {
                             if (eventData.travail.includes(service)) {
