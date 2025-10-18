@@ -1762,6 +1762,11 @@
             }
         }
 
+        // ------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------
+        // Introduire facture avec boite de dialogue
+        // ------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------
 
         async function handleFacturaUpload(link, userId) {
             console.log(getTranslation('log_handle_factura_upload_triggered')); // Traduire
@@ -2001,7 +2006,7 @@
             }
         }
         // Fonction pour ouvrir le popup du document
-        function openDocumentPopup(link) {
+        async function openDocumentPopup(link) { // <-- LA FONCTION DEVIENT ASYNC
             // Crée le popup pour le document
             const documentPopup = document.createElement('div');
             documentPopup.id = 'documentPopup';
@@ -2019,6 +2024,33 @@
             documentPopup.style.width = '450px';
             documentPopup.style.maxHeight = '90vh';
             documentPopup.style.overflowY = 'auto';
+
+            // Récupération de l'ID nécessaire pour la requête Supabase
+            const row = link.closest('tr');
+            const userId = row.dataset.userId; // Supposons que l'ID de l'événement est dans data-userId
+
+            let travailDB = ''; // Variable pour stocker la valeur récupérée
+
+            // ✅ NOUVEAU BLOC : RÉCUPÉRATION DE LA VALEUR DE TRAVAIL DEPUIS SUPABASE
+            if (userId) {
+                try {
+                    const { data, error } = await supabase
+                        .from('event_quot1_fran')
+                        .select('Travail')
+                        .eq('user_id', userId)
+                        .single();
+
+                    if (error) {
+                        console.error("Erreur Supabase lors de la récupération du Travail:", error);
+                    } else if (data && data.Travail) {
+                        travailDB = data.Travail.trim();
+                    }
+                } catch (e) {
+                    console.error("Erreur inattendue lors de la requête Supabase:", e);
+                }
+            }
+            // Si la requête échoue ou l'ID est manquant, on utilisera la valeur par défaut du tableau.
+
 
             // Formulaire pour les détails du document avec logo et meilleure mise en page
             documentPopup.innerHTML = `
@@ -2094,11 +2126,14 @@
             document.body.appendChild(documentPopup);
 
             // Remplir les valeurs depuis la ligne du tableau
-            document.getElementById('documentNom').value = link.closest('tr').querySelector('[data-column="Nom"]').textContent;
-            document.getElementById('documentDate').value = link.closest('tr').querySelector('[data-column="Date"]').textContent;
-            document.getElementById('documentPrix').value = link.closest('tr').querySelector('[data-column="Prix"]').textContent;
-            document.getElementById('documentTravail').value = link.closest('tr').querySelector('[data-column="Travail"]').textContent;
-            document.getElementById('documentLieu').value = link.closest('tr').querySelector('[data-column="Lieu"]').textContent;
+            // Utiliser row qui est déjà défini
+            document.getElementById('documentNom').value = row.querySelector('[data-column="Nom"]').textContent;
+            document.getElementById('documentDate').value = row.querySelector('[data-column="Date"]').textContent;
+            document.getElementById('documentPrix').value = row.querySelector('[data-column="Prix"]').textContent;
+            document.getElementById('documentLieu').value = row.querySelector('[data-column="Lieu"]').textContent;
+
+            // ✅ UTILISATION DE LA VALEUR RÉCUPÉRÉE DE SUPABASE (ou du contenu du tableau si échec)
+            document.getElementById('documentTravail').value = travailDB || row.querySelector('[data-column="Travail"]').textContent;
 
             // Appliquer les traductions
             documentPopup.querySelectorAll('[data-i18n]').forEach(element => {
@@ -2106,6 +2141,7 @@
             });
 
             // Charger les données bancaires
+            // NOTE : Assurez-vous que chargerDonneesBancaires() est bien défini et remplit les champs.
             chargerDonneesBancaires();
 
             // [Le reste du code pour dataURLtoBlob et les gestionnaires d'événements reste identique...]
@@ -2154,7 +2190,7 @@
                 html2canvas(documentPopup).then(canvas => {
                     const imageBase64 = canvas.toDataURL("image/png");
                     const blob = dataURLtoBlob(imageBase64);
-                    const userId = link.closest('tr').dataset.userId;
+                    const userId = row.dataset.userId; // Utiliser row défini plus haut
 
                     supabase.storage
                         .from('facturas_fran')
@@ -2182,7 +2218,6 @@
                                 link.dataset.paiement = data.path;
                                 document.body.removeChild(documentPopup);
 
-                                const row = link.closest('tr');
                                 if (row) {
                                     applyChangesWithoutPrompt(row, false);
                                 }
