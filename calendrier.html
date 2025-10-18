@@ -2597,7 +2597,7 @@
                     doc.setFont("helvetica", "normal");
                     doc.text(entrepriseData.nom, doc.internal.pageSize.width / 2, footerY - 5, { align: 'center' });
                     doc.text(`${entrepriseData.adresse} - ${getTranslation('label_phone_short')}: ${entrepriseData.tel} - ${getTranslation('label_email_short')}: ${entrepriseData.email}`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
-                    doc.text(getTranslation('pdf_thank_you_message'), doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
+                    doc.text(getTranslation('Merci pour votre confiance'), doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
 
                     // --- Enregistrer le PDF dans Supabase ---
                     const pdfBlob = doc.output('blob');
