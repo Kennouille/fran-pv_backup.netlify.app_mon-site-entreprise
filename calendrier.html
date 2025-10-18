@@ -2398,51 +2398,26 @@
                         if (travailCell) {
                             // Obtenir le select
                             const select = travailCell.querySelector('select');
+
+                            // SOLUTION ALTERNATIVE PLUS FIABLE
                             if (select) {
                                 travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
                             } else {
-                                // Prendre tout le texte de la cellule et nettoyer
-                                travailSelectionne = travailCell.textContent
-                                    // ✅ MODIFICATION AMÉLIORÉE : Supprimer chaque option avec sa ponctuation
-                                    .replace(/\s*– Sélectionner le statut –\s*/g, '')
-                                    .replace(/\s*,\s*Lavage de vitres\s*/g, '')
-                                    .replace(/\s*Lavage de vitres\s*,?\s*/g, '')
-                                    .replace(/\s*,\s*Nettoyage de locaux\s*/g, '')
-                                    .replace(/\s*Nettoyage de locaux\s*,?\s*/g, '')
-                                    .replace(/\s*,\s*Nettoyage après chantier\s*/g, '')
-                                    .replace(/\s*Nettoyage après chantier\s*,?\s*/g, '')
-                                    .replace(/\s*,\s*Nettoyage de panneaux photovoltaïques\s*/g, '')
-                                    .replace(/\s*Nettoyage de panneaux photovoltaïques\s*,?\s*/g, '')
-                                    .replace(/\s*,\s*Lutte contre les nuisibles\s*/g, '')
-                                    .replace(/\s*Lutte contre les nuisibles\s*,?\s*/g, '')
-                                    .replace(/\s*,\s*Autre : Voir Observations\s*/g, '')
-                                    .replace(/\s*Autre : Voir Observations\s*,?\s*/g, '')
-                                    // Nettoyer la ponctuation restante
-                                    .replace(/^[\s,.;:]+/, '')
-                                    .replace(/[\s,.;:]+$/, '')
-                                    // Remplacer les espaces multiples par un seul
-                                    .replace(/\s+/g, ' ')
-                                    .trim();
+                                // Si pas de select, prendre uniquement le premier service trouvé dans eventData.travail
+                                const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier', 'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
 
-                                // 2. Supprimer les virgules et autres ponctuations au début (même si on a nettoyé les espaces)
-                                travailSelectionne = travailSelectionne.replace(/^[\s,.;:]+/, '').trim();
+                                for (let service of services) {
+                                    if (eventData.travail.includes(service)) {
+                                        travailSelectionne = service;
+                                        break;
+                                    }
+                                }
+
+                                // Si toujours vide, valeur par défaut
+                                if (!travailSelectionne) {
+                                    travailSelectionne = 'Service de nettoyage';
+                                }
                             }
-                        }
-                    }
-
-                    // Si toujours vide, utiliser une valeur par défaut basée sur le premier service non vide
-                    if (!travailSelectionne) {
-                        const services = ['Lavage de vitres', 'Nettoyage de locaux', 'Nettoyage après chantier', 'Nettoyage de panneaux photovoltaïques', 'Lutte contre les nuisibles', 'Autre'];
-
-                        for (let service of services) {
-                            if (eventData.travail.includes(service)) {
-                                travailSelectionne = service;
-                                break;
-                            }
-                        }
-
-                        if (!travailSelectionne) {
-                            travailSelectionne = 'Service de nettoyage';
                         }
                     }
 
@@ -2568,7 +2543,6 @@
                       // ❌ Le bloc didDrawCell a été retiré pour éviter les conflits et les erreurs de centrage manuel
                     });
 
-
                     currentY = doc.autoTable.previous.finalY + 15;
 
                     // --- Section Totaux ---
@@ -2597,8 +2571,6 @@
                     doc.text(`${totalWithTaxes.toFixed(2)} €`, totalsStartX + 78, currentY + 24, { align: 'right' }); // Ancré près de la limite droite (+78)
 
                     currentY += 35;
-
-
 
                     // --- Pied de page ---
                     const footerY = doc.internal.pageSize.height - 15;
