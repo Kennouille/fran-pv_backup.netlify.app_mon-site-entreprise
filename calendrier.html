@@ -2401,9 +2401,11 @@
                             if (select) {
                                 travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
                             } else {
-                                // Prendre tout le texte de la cellule et nettoyer
-                                travailSelectionne = travailCell.textContent
-                                    // ✅ MODIFICATION AMÉLIORÉE : Supprimer chaque option avec sa ponctuation
+                                // Prendre tout le texte de la cellule
+                                let rawText = travailCell.textContent;
+
+                                // 1. Supprimer toutes les options de la liste et leur ponctuation/espace adjacente.
+                                rawText = rawText
                                     .replace(/\s*– Sélectionner le statut –\s*/g, '')
                                     .replace(/\s*,\s*Lavage de vitres\s*/g, '')
                                     .replace(/\s*Lavage de vitres\s*,?\s*/g, '')
@@ -2416,16 +2418,14 @@
                                     .replace(/\s*,\s*Lutte contre les nuisibles\s*/g, '')
                                     .replace(/\s*Lutte contre les nuisibles\s*,?\s*/g, '')
                                     .replace(/\s*,\s*Autre : Voir Observations\s*/g, '')
-                                    .replace(/\s*Autre : Voir Observations\s*,?\s*/g, '')
-                                    // Nettoyer la ponctuation restante
-                                    .replace(/^[\s,.;:]+/, '')
-                                    .replace(/[\s,.;:]+$/, '')
-                                    // Remplacer les espaces multiples par un seul
-                                    .replace(/\s+/g, ' ')
-                                    .trim();
+                                    .replace(/\s*Autre : Voir Observations\s*,?\s*/g, '');
 
-                                // 2. Supprimer les virgules et autres ponctuations au début (même si on a nettoyé les espaces)
-                                travailSelectionne = travailSelectionne.replace(/^[\s,.;:]+/, '').trim();
+                                // 2. Remplacer les espaces multiples par un seul.
+                                travailSelectionne = rawText.replace(/\s+/g, ' ').trim();
+
+                                // 3. ✅ NETTOYAGE AGRESSIF ET FINAL : Supprimer toute ponctuation (virgule, point, etc.)
+                                // ou caractère non-mot (\W) qui reste au tout début de la chaîne.
+                                travailSelectionne = travailSelectionne.replace(/^[\W\s]+/, '').trim();
                             }
                         }
                     }
