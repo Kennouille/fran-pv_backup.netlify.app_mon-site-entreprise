@@ -2517,69 +2517,36 @@
 
                     console.log('Tableau final avec travail:', body);
 
-                    // --- Solution ULTRA SIMPLE - Tableau manuel ---
-                    const startX = marginX;
-                    const rowHeight = 12;
-
-                    // En-têtes
-                    doc.setFillColor(70, 130, 180);
-                    doc.setTextColor(255, 255, 255);
-                    doc.setFont("helvetica", "bold");
-
-                    const headerPositions = [
-                        { x: startX + 10, width: 20, align: 'center' }, // N°
-                        { x: startX + 35, width: 25, align: 'center' }, // Quantité
-                        { x: startX + 65, width: 100, align: 'center' }, // Description (en-tête centré)
-                        { x: startX + 170, width: 35, align: 'center' }, // Tarif
-                        { x: startX + 210, width: 35, align: 'center' }  // Montant
-                    ];
-
-                    // Dessiner les en-têtes
-                    headerPositions.forEach((pos, index) => {
-                        doc.rect(pos.x, currentY, pos.width, rowHeight, 'F');
-                        doc.text(headers[0][index], pos.x + pos.width/2, currentY + rowHeight/2 + 3, { align: 'center' });
+                    doc.autoTable({
+                      startY: currentY,
+                      head: headers,
+                      body: body,
+                      theme: 'grid',
+                      headStyles: {
+                        fillColor: [70,130,180],
+                        textColor: [255,255,255],
+                        fontStyle: 'bold',
+                        halign: 'center'
+                      },
+                      margin: { left: marginX, right: marginX },
+                      columnStyles: {
+                        0: { cellWidth: 15, halign: 'center' },
+                        1: { cellWidth: 20, halign: 'center' },
+                        2: { cellWidth: 90, halign: 'left' }, // FORCÉ à gauche
+                        3: { cellWidth: 30, halign: 'right' },
+                        4: { cellWidth: 30, halign: 'right' }
+                      },
+                      // Désactiver tout style global qui pourrait interférer
+                      styles: {
+                        fontSize: 10,
+                        cellPadding: 4,
+                        lineColor: [100, 100, 100],
+                        lineWidth: 0.1
+                      }
                     });
 
-                    // Données
-                    doc.setFillColor(255, 255, 255);
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFont("helvetica", "normal");
 
-                    const dataPositions = [
-                        { x: startX + 10, width: 20, align: 'center' }, // N°
-                        { x: startX + 35, width: 25, align: 'center' }, // Quantité
-                        { x: startX + 35, width: 100, align: 'left' },  // Description - À GAUCHE
-                        { x: startX + 170, width: 35, align: 'right' }, // Tarif
-                        { x: startX + 210, width: 35, align: 'right' }  // Montant
-                    ];
-
-                    // Dessiner les données
-                    dataPositions.forEach((pos, index) => {
-                        doc.rect(pos.x, currentY + rowHeight, pos.width, rowHeight, 'S');
-
-                        let textX;
-                        if (pos.align === 'center') {
-                            textX = pos.x + pos.width/2;
-                        } else if (pos.align === 'left') {
-                            textX = pos.x + 4; // Décalage gauche
-                        } else { // right
-                            textX = pos.x + pos.width - 3; // Décalage droite
-                        }
-
-                        // AJOUT: Gestion spéciale pour la colonne Description (index 2)
-                        if (index === 2) { // Colonne Description
-                            // Pour le texte long, on utilise text avec options pour l'alignement gauche
-                            doc.text(body[0][index].toString(), textX, currentY + rowHeight + rowHeight/2 + 3, {
-                                align: 'left'
-                            });
-                        } else {
-                            doc.text(body[0][index].toString(), textX, currentY + rowHeight + rowHeight/2 + 3, {
-                                align: pos.align
-                            });
-                        }
-                    });
-
-                    currentY += rowHeight * 2 + 15;
+                    currentY = doc.autoTable.previous.finalY + 15;
 
                     // --- Section Totaux ---
                     const totalsStartX = doc.internal.pageSize.width - 100;
