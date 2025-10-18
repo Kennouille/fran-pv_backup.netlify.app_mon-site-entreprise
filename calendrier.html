@@ -2398,23 +2398,25 @@
                         if (travailCell) {
                             // Obtenir le select
                             const select = travailCell.querySelector('select');
-
                             if (select) {
-                                // Logique pour SELECT : Récupérer l'option sélectionnée
                                 travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
-
                             } else {
-                                // Logique pour DIV (affichage statique)
-                                // Récupérer le texte directement de la DIV interne si possible, ou du TD.
-                                const divContent = travailCell.querySelector('div')?.textContent || travailCell.textContent;
-
-                                // Nettoyer SEULEMENT les caractères de ponctuation ou les espaces indésirables
-                                travailSelectionne = divContent
-                                    // 1. Supprimer les espaces multiples et les sauts de ligne en un seul espace
+                                // Prendre tout le texte de la cellule et nettoyer
+                                travailSelectionne = travailCell.textContent
+                                    // ✅ MODIFICATION : Inclure l'espace avant et après la chaîne à supprimer
+                                    .replace(/\s*– Sélectionner le statut –\s*/g, '')
+                                    .replace(/\s*Lavage de vitres\s*/g, '')
+                                    .replace(/\s*Nettoyage de locaux\s*/g, '')
+                                    .replace(/\s*Nettoyage après chantier\s*/g, '')
+                                    .replace(/\s*Nettoyage de panneaux photovoltaïques\s*/g, '')
+                                    .replace(/\s*Lutte contre les nuisibles\s*/g, '')
+                                    .replace(/\s*Autre : Voir Observations\s*/g, '')
+                                    // 1. Remplacer les espaces multiples, y compris ceux laissés, par un seul
                                     .replace(/\s+/g, ' ')
-                                    // 2. Supprimer la virgule et l'espace qui se trouve au tout début de la chaîne
-                                    .replace(/^[\s,.;:]+/, '')
                                     .trim();
+
+                                // 2. Supprimer les virgules et autres ponctuations au début (même si on a nettoyé les espaces)
+                                travailSelectionne = travailSelectionne.replace(/^[\s,.;:]+/, '').trim();
                             }
                         }
                     }
