@@ -2507,7 +2507,7 @@
                     ];
 
                     const prixFloat = parseFloat(eventData.prix.replace(',', '.'));
-                    const taxes = prixFloat * 0.15;
+                    const taxes = prixFloat * 0.21;
                     const totalWithTaxes = prixFloat + taxes;
 
                     // Gérer le cas où 'Autre : Voir Observations' est requis pour le multiligne
@@ -2572,7 +2572,7 @@
                     doc.text(`${getTranslation('pdf_subtotal')}:`, totalsStartX + 30, currentY + 8, { align: 'right' });
                     doc.text(`${prixFloat.toFixed(2)} €`, totalsStartX + 78, currentY + 8, { align: 'right' }); // Ancré près de la limite droite (+78)
 
-                    doc.text(`${getTranslation('pdf_taxes')} (15%):`, totalsStartX + 30, currentY + 16, { align: 'right' }); // Ancré à +30
+                    doc.text(`${getTranslation('pdf_taxes')} (21%):`, totalsStartX + 30, currentY + 16, { align: 'right' }); // Ancré à +30
                     doc.text(`${taxes.toFixed(2)} €`, totalsStartX + 78, currentY + 16, { align: 'right' }); // Ancré près de la limite droite (+78)
 
                     doc.setDrawColor(150, 150, 150);
