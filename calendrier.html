@@ -2398,27 +2398,23 @@
                         if (travailCell) {
                             // Obtenir le select
                             const select = travailCell.querySelector('select');
-                            if (select) {
-                                travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
-                            } else {
-                                // Prendre tout le texte de la cellule et nettoyer
-                                travailSelectionne = travailCell.textContent
-                                    // 1. Suppression des options de statut/service pour ne laisser que le texte "libre"
-                                    .replace(/– Sélectionner le statut –/g, '')
-                                    .replace(/Lavage de vitres/g, '')
-                                    .replace(/Nettoyage de locaux/g, '')
-                                    .replace(/Nettoyage après chantier/g, '')
-                                    .replace(/Nettoyage de panneaux photovoltaïques/g, '')
-                                    .replace(/Lutte contre les nuisibles/g, '')
-                                    .replace(/Autre : Voir Observations/g, '')
-                                    // 2. Remplacer les espaces multiples, sauts de ligne, etc. par un seul espace
-                                    .replace(/\s+/g, ' ')
-                                    .trim();
 
-                                // 3. ✅ NOUVEAU : Supprimer les caractères de ponctuation ou les espaces résiduels
-                                // au début de la chaîne après le nettoyage initial (y compris la virgule).
-                                // Motif : Retire les espaces, virgules, ou points qui pourraient persister au début.
-                                travailSelectionne = travailSelectionne.replace(/^[\s,.;:]+/, '').trim();
+                            if (select) {
+                                // Logique pour SELECT : Récupérer l'option sélectionnée
+                                travailSelectionne = select.options[select.selectedIndex]?.textContent || '';
+
+                            } else {
+                                // Logique pour DIV (affichage statique)
+                                // Récupérer le texte directement de la DIV interne si possible, ou du TD.
+                                const divContent = travailCell.querySelector('div')?.textContent || travailCell.textContent;
+
+                                // Nettoyer SEULEMENT les caractères de ponctuation ou les espaces indésirables
+                                travailSelectionne = divContent
+                                    // 1. Supprimer les espaces multiples et les sauts de ligne en un seul espace
+                                    .replace(/\s+/g, ' ')
+                                    // 2. Supprimer la virgule et l'espace qui se trouve au tout début de la chaîne
+                                    .replace(/^[\s,.;:]+/, '')
+                                    .trim();
                             }
                         }
                     }
