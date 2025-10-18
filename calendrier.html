@@ -2195,7 +2195,7 @@
             }
 
             // Gérer les boutons (CODE MODIFIÉ pour la génération PDF et l'ajout du logo)
-            document.getElementById('enregistrerPaiement').addEventListener('click', async function() { // <-- DEVIENT ASYNC
+            document.getElementById('enregistrerPaiement').addEventListener('click', async function() {
                 const documentData = {
                     nom: document.getElementById('documentNom').value,
                     date: document.getElementById('documentDate').value,
@@ -2209,31 +2209,42 @@
                     banco4: document.getElementById('documentBanco4').value
                 };
 
-                // 🟢 ÉTAPE 1: CHARGEMENT ASYNCHRONE DU LOGO
+                // CHARGEMENT ASYNCHRONE DU LOGO
                 const logoBase64 = await getBase64Image('/images/cedunet.png');
 
                 // eslint-disable-next-line no-undef
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                let currentY = 15; // Diminué pour laisser de la place au logo
+                let currentY = 15;
                 const marginX = 15;
                 const pageWidth = doc.internal.pageSize.getWidth();
-                const logoWidth = 40; // Largeur arbitraire pour le PDF
-                const logoHeight = 20; // Hauteur arbitraire pour le PDF
+                const logoWidth = 45; // Ajusté
+                const logoHeight = 25; // Ajusté
+                const tableColor = [0, 150, 136]; // Couleur verte/turquoise foncée (similaire à vos en-têtes)
 
-                // 🟢 ÉTAPE 2: AJOUT DU LOGO AU PDF
+                // 1. AJOUT DU LOGO
                 if (logoBase64) {
+                    // Centrer l'image
                     doc.addImage(logoBase64, 'PNG', pageWidth / 2 - (logoWidth / 2), currentY, logoWidth, logoHeight);
-                    currentY += logoHeight + 5; // Avancer sous le logo
+                    currentY += logoHeight + 10; // Grand espace sous le logo
                 }
 
-                // --- Titre ---
-                doc.setFontSize(20);
-                doc.setFont("helvetica", "bold");
-                doc.text(getTranslation('payment_receipt_heading'), pageWidth / 2, currentY, { align: 'center' });
-                currentY += 15;
+                // 2. TITRE DU DOCUMENT (avec ligne de séparation)
+                doc.setDrawColor(tableColor[0], tableColor[1], tableColor[2]);
+                doc.setLineWidth(0.5);
+                doc.line(marginX, currentY, pageWidth - marginX, currentY); // Ligne au-dessus
+                currentY += 5;
 
-                // --- Détails de l'événement (Tableau) ---
+                doc.setFontSize(22);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(51, 51, 51); // Couleur de texte foncée
+                doc.text(getTranslation('payment_receipt_heading'), pageWidth / 2, currentY, { align: 'center' });
+                currentY += 10;
+
+                doc.line(marginX, currentY, pageWidth - marginX, currentY); // Ligne en-dessous
+                currentY += 10;
+
+                // --- Détails de l'événement (Tableau 1: Information) ---
                 doc.setFontSize(12);
                 doc.setFont("helvetica", "normal");
 
@@ -2248,14 +2259,21 @@
                 doc.autoTable({
                     startY: currentY,
                     body: details,
-                    theme: 'plain',
+                    theme: 'striped', // Utiliser un thème rayé pour une meilleure lisibilité
                     margin: { left: marginX, right: marginX },
-                    styles: { fontSize: 12, cellPadding: 3 },
+                    styles: {
+                        fontSize: 12,
+                        cellPadding: 3,
+                        valign: 'middle',
+                    },
+                    alternateRowStyles: { fillColor: [240, 240, 240] }, // Lignes paires gris clair
+                    headStyles: { fillColor: tableColor }, // Couleur d'en-tête (même si l'en-tête est vide)
                     columnStyles: {
-                        0: { fontStyle: 'bold', cellWidth: 35, textColor: [51, 51, 51] },
+                        0: { fontStyle: 'bold', cellWidth: 40, textColor: [51, 51, 51] },
                         1: { cellWidth: 'auto' }
                     },
                     didParseCell: function(data) {
+                        // S'assurer que les valeurs ne sont pas en gras et que les labels le sont
                         if (data.column.index === 0) {
                             data.cell.styles.halign = 'left';
                         }
@@ -2263,14 +2281,19 @@
                 });
                 currentY = doc.autoTable.previous.finalY + 15;
 
-                // --- Données Bancaires ---
+                // --- Titre Données Bancaires (Encadré) ---
                 doc.setFontSize(14);
                 doc.setFont("helvetica", "bold");
-                doc.text(getTranslation('label_bank_details') + ':', marginX, currentY);
-                currentY += 8;
+                doc.setFillColor(tableColor[0], tableColor[1], tableColor[2]); // Couleur de remplissage
+                doc.setTextColor(255, 255, 255); // Texte blanc
+                // Dessiner un rectangle coloré pour le titre
+                doc.rect(marginX, currentY, pageWidth - (2 * marginX), 8, 'F');
+                doc.text(getTranslation('label_bank_details'), pageWidth / 2, currentY + 6, { align: 'center' });
+                currentY += 10;
 
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
+                doc.setTextColor(51, 51, 51); // Revenir au noir/gris foncé
 
                 const bankDetails = [
                     [getTranslation('label_bank') + ':', documentData.banco],
@@ -2284,11 +2307,24 @@
                     startY: currentY,
                     body: bankDetails,
                     theme: 'plain',
-                    margin: { left: marginX },
-                    styles: { fontSize: 11, cellPadding: 2, lineWidth: 0 },
+                    margin: { left: marginX + 10, right: marginX + 10 }, // Marge interne pour le centrage visuel
+                    styles: {
+                        fontSize: 11,
+                        cellPadding: 3,
+                        lineWidth: 0,
+                        valign: 'middle'
+                    },
                     columnStyles: {
+                        // Réduire l'espace pour la première colonne car on est sous un titre
                         0: { fontStyle: 'bold', cellWidth: 50 },
                         1: { cellWidth: 'auto' }
+                    },
+                    // Ajouter une bordure pour simuler un encadrement autour des détails bancaires
+                    willDrawCell: function(data) {
+                        if (data.row.index === 0 && data.cell.section === 'body') {
+                            doc.setDrawColor(200, 200, 200);
+                            doc.rect(marginX, data.cell.y, pageWidth - (2 * marginX), doc.autoTable.previous.finalY - data.cell.y + 1, 'S');
+                        }
                     },
                     pageBreak: 'avoid',
                 });
