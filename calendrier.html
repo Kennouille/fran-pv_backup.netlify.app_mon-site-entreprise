@@ -2403,15 +2403,24 @@
                             } else {
                                 // Prendre tout le texte de la cellule et nettoyer
                                 travailSelectionne = travailCell.textContent
-                                    // ✅ MODIFICATION : Inclure l'espace avant et après la chaîne à supprimer
+                                    // ✅ MODIFICATION AMÉLIORÉE : Supprimer chaque option avec sa ponctuation
                                     .replace(/\s*– Sélectionner le statut –\s*/g, '')
-                                    .replace(/\s*Lavage de vitres\s*/g, '')
-                                    .replace(/\s*Nettoyage de locaux\s*/g, '')
-                                    .replace(/\s*Nettoyage après chantier\s*/g, '')
-                                    .replace(/\s*Nettoyage de panneaux photovoltaïques\s*/g, '')
-                                    .replace(/\s*Lutte contre les nuisibles\s*/g, '')
-                                    .replace(/\s*Autre : Voir Observations\s*/g, '')
-                                    // 1. Remplacer les espaces multiples, y compris ceux laissés, par un seul
+                                    .replace(/\s*,\s*Lavage de vitres\s*/g, '')
+                                    .replace(/\s*Lavage de vitres\s*,?\s*/g, '')
+                                    .replace(/\s*,\s*Nettoyage de locaux\s*/g, '')
+                                    .replace(/\s*Nettoyage de locaux\s*,?\s*/g, '')
+                                    .replace(/\s*,\s*Nettoyage après chantier\s*/g, '')
+                                    .replace(/\s*Nettoyage après chantier\s*,?\s*/g, '')
+                                    .replace(/\s*,\s*Nettoyage de panneaux photovoltaïques\s*/g, '')
+                                    .replace(/\s*Nettoyage de panneaux photovoltaïques\s*,?\s*/g, '')
+                                    .replace(/\s*,\s*Lutte contre les nuisibles\s*/g, '')
+                                    .replace(/\s*Lutte contre les nuisibles\s*,?\s*/g, '')
+                                    .replace(/\s*,\s*Autre : Voir Observations\s*/g, '')
+                                    .replace(/\s*Autre : Voir Observations\s*,?\s*/g, '')
+                                    // Nettoyer la ponctuation restante
+                                    .replace(/^[\s,.;:]+/, '')
+                                    .replace(/[\s,.;:]+$/, '')
+                                    // Remplacer les espaces multiples par un seul
                                     .replace(/\s+/g, ' ')
                                     .trim();
 
