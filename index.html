@@ -33,10 +33,20 @@
             pointer-events: none;
         }
 
-        .startup-image {
-            max-width: 90%;
-            max-height: 90%;
-            object-fit: contain;
+        .startup-text {
+            font-size: 8rem;
+            font-weight: bold;
+            color: var(--003);
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         body {
@@ -311,6 +321,19 @@
             display: block;
         }
 
+        /* Responsive pour les petits écrans */
+        @media (max-width: 768px) {
+            .startup-text {
+                font-size: 4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .startup-text {
+                font-size: 3rem;
+            }
+        }
+
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -318,9 +341,9 @@
     <link rel="stylesheet" href="styles1.css">
 </head>
 <body>
-    <!-- Écran de démarrage avec l'image nexen-suite -->
+    <!-- Écran de démarrage avec le texte "Next Suite" -->
     <div class="startup-screen" id="startupScreen">
-        <img src="images/nexen-suite.html" alt="Nexen Suite" class="startup-image">
+        <div class="startup-text">Next Suite</div>
     </div>
 
     <!-- Contenu principal (masqué au début) -->
@@ -488,7 +511,6 @@
             // Redirige vers la page calendrier avec le numéro en paramètre
             window.location.href = `calendrier_invite.html?phone=${encodeURIComponent(phone)}`;
         }
-
 
     </script>
 </body>
