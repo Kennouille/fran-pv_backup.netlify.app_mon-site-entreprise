@@ -13,29 +13,55 @@
             --003: #00AAA3;
         }
 
+        /* Nouveau style pour l'écran de démarrage */
+        .startup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--base);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .startup-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .startup-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: var(--base); /* Utilisation de la couleur de fond principale */
+            background-color: var(--base);
             color: var(--contrast);
         }
 
         .image-container {
             position: relative;
             width: 100%;
-            height: 100vh; /* 100% de la hauteur de l'écran */
+            height: 100vh;
             overflow: hidden;
         }
 
         .image-container img {
-            width: auto; /* Garde les proportions originales */
-            height: 100%; /* Ajuste la hauteur à 100% de l'écran */
-            object-fit: contain; /* Garde l'image entière sans la couper */
+            width: auto;
+            height: 100%;
+            object-fit: contain;
             position: absolute;
             top: 0;
-            left: 50%; /* Centre l'image horizontalement */
-            transform: translateX(-50%); /* Centre l'image horizontalement */
+            left: 50%;
+            transform: translateX(-50%);
             opacity: 0;
             transition: opacity 1s ease-in-out;
         }
@@ -50,20 +76,20 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent pour améliorer la lisibilité */
+            background-color: rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
             align-items: center;
-            color: var(--base-3); /* Texte blanc */
+            color: var(--base-3);
             text-align: center;
-            padding-top: 20vh; /* Espace en haut pour le titre et les boutons */
+            padding-top: 20vh;
         }
 
         .button {
             font-family: 'Lobster', cursive;
             border: 4px solid var(--003);
-            background-color: var(--003); /* Vert de base */
+            background-color: var(--003);
             color: var(--base-3);
             padding: 10px 20px;
             text-align: center;
@@ -77,8 +103,8 @@
         }
 
         .button:hover {
-            transform: scale(1.1); /* Agrandissement au passage de la souris */
-            background-color: var(--003); /* Même couleur au survol */
+            transform: scale(1.1);
+            background-color: var(--003);
         }
 
         .contact-info {
@@ -87,7 +113,7 @@
         }
 
         .popup {
-            display: none; /* Masqué par défaut */
+            display: none;
             position: fixed;
             z-index: 1;
             left: 0;
@@ -112,7 +138,6 @@
             position: relative;
         }
 
-        /* Styles pour le pied de page */
         .footer {
             position: fixed;
             bottom: 0;
@@ -155,7 +180,6 @@
             text-decoration: underline;
         }
 
-        /* Nouvelle popup pour les options de contact */
         #contactOptionsPopup {
             display: none;
             position: fixed;
@@ -222,20 +246,19 @@
             color: var(--contrast);
         }
 
-        /* Styles pour le sélecteur de langue */
         .language-selector {
             position: absolute;
             top: 20px;
             right: 20px;
             z-index: 10;
             display: flex;
-            gap: 10px; /* Espace entre les drapeaux */
+            gap: 10px;
         }
 
         .language-selector img {
-            width: 40px; /* Taille des drapeaux */
+            width: 40px;
             height: 40px;
-            border-radius: 50%; /* Rendre les drapeaux circulaires */
+            border-radius: 50%;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -247,14 +270,16 @@
         }
 
         .language-selector img.active-lang {
-            transform: scale(1.2); /* Agrandit le drapeau sélectionné */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.6); /* Ombre plus prononcée */
-            border: 2px solid var(--003); /* Petite bordure pour le démarquer encore plus */
+            transform: scale(1.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            border: 2px solid var(--003);
         }
+
         .guest-login {
             margin-top: 20px;
             text-align: center;
         }
+
         .guest-login input {
             padding: 10px;
             font-size: 16px;
@@ -271,11 +296,19 @@
 
         .guest-fixed-image img {
           width: 300px;
-            height: auto;
-            background: transparent;   /* au lieu de rgba(...) */
-            border-radius: 8px;
-            padding: 4px;
+          height: auto;
+          background: transparent;
+          border-radius: 8px;
+          padding: 4px;
+        }
 
+        /* Masquer le contenu principal pendant l'affichage de l'écran de démarrage */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.visible {
+            display: block;
         }
 
     </style>
@@ -285,48 +318,61 @@
     <link rel="stylesheet" href="styles1.css">
 </head>
 <body>
-    <div class="image-container" id="image-container">
-        <img src="images/1000.jpg" alt="Image de bienvenida" class="active">
-        <img src="images/2000.jpg" alt="2000">
-        <img src="images/3000.jpg" alt="3000">
-        <img src="images/4000.jpg" alt="4000">
-        <img src="images/5000.jpg" alt="5000">
-        <img src="images/6000.jpg" alt="6000">
-        <img src="images/7000.jpg" alt="7000">
-        <img src="images/8000.jpg" alt="8000">
-        <img src="images/9000.jpg" alt="9000">
-        <img src="images/10000.jpg" alt="10000">
-
+    <!-- Écran de démarrage avec l'image nexen-suite -->
+    <div class="startup-screen" id="startupScreen">
+        <img src="images/nexen-suite.html" alt="Nexen Suite" class="startup-image">
     </div>
 
-    <!-- 👉 Zone overlay (fixe) -->
-    <div class="overlay">
-        <h1 style="color: white;">Bienvenue</h1>
-        <div class="buttons">
-            <button class="button" onclick="showCodePrompt('calendrier.html')">Calendrier</button>
-            <button class="button" onclick="showCodePrompt('statistiques.html')">Statistiques</button>
-            <button class="button" onclick="showCodePrompt('journalier.html')">Journalier</button>
-            <button class="button" onclick="showCodePrompt('configuration.html')">Configuration</button>
-            <button class="button" onclick="showCodePrompt('historique.html')">Historique</button>
+    <!-- Contenu principal (masqué au début) -->
+    <div class="main-content" id="mainContent">
+        <div class="image-container" id="image-container">
+            <img src="images/1000.jpg" alt="Image de bienvenida" class="active">
+            <img src="images/2000.jpg" alt="2000">
+            <img src="images/3000.jpg" alt="3000">
+            <img src="images/4000.jpg" alt="4000">
+            <img src="images/5000.jpg" alt="5000">
+            <img src="images/6000.jpg" alt="6000">
+            <img src="images/7000.jpg" alt="7000">
+            <img src="images/8000.jpg" alt="8000">
+            <img src="images/9000.jpg" alt="9000">
+            <img src="images/10000.jpg" alt="10000">
         </div>
 
+        <!-- 👉 Zone overlay (fixe) -->
+        <div class="overlay">
+            <h1 style="color: white;">Bienvenue</h1>
+            <div class="buttons">
+                <button class="button" onclick="showCodePrompt('calendrier.html')">Calendrier</button>
+                <button class="button" onclick="showCodePrompt('statistiques.html')">Statistiques</button>
+                <button class="button" onclick="showCodePrompt('journalier.html')">Journalier</button>
+                <button class="button" onclick="showCodePrompt('configuration.html')">Configuration</button>
+                <button class="button" onclick="showCodePrompt('historique.html')">Historique</button>
+            </div>
 
-        <div class="contact-info">Contact : 085512302</div>
+            <div class="contact-info">Contact : 085512302</div>
 
-        <div class="guest-login">
-            <h2>Accès invité</h2>
-            <input
-              type="text"
-              id="guestPhone"
-              placeholder="Entrez votre numéro de téléphone"
-              data-i18n-placeholder="placeholder_enter_phone">
-            <button class="button" onclick="enterAsGuest()" data-i18n="button_guest_enter">Entrer</button>
+            <div class="guest-login">
+                <h2>Accès invité</h2>
+                <input
+                  type="text"
+                  id="guestPhone"
+                  placeholder="Entrez votre numéro de téléphone"
+                  data-i18n-placeholder="placeholder_enter_phone">
+                <button class="button" onclick="enterAsGuest()" data-i18n="button_guest_enter">Entrer</button>
+            </div>
+
+            <!-- ✅ Petite image FIXE (hors carrousel, visible en permanence) -->
+            <div class="guest-fixed-image">
+                <img src="images/cedunet.png" alt="Invité">
+            </div>
         </div>
 
-        <!-- ✅ Petite image FIXE (hors carrousel, visible en permanence) -->
-        <div class="guest-fixed-image">
-            <img src="images/cedunet.png" alt="Invité">
-        </div>
+        <footer class="footer">
+            <div class="footer-content">
+                <img src="images/Logo KM.png" alt="Logo KM" class="logo-footer" onclick="showContactOptions()">
+                <span class="copyright-text" id="footerCopyright">© 2025 — Tous droits réservés</span>
+            </div>
+        </footer>
     </div>
 
     <div id="popup" class="popup">
@@ -337,13 +383,6 @@
             <button class="button" onclick="closePopup()">Fermer</button>
         </div>
     </div>
-
-    <footer class="footer">
-        <div class="footer-content">
-            <img src="images/Logo KM.png" alt="Logo KM" class="logo-footer" onclick="showContactOptions()">
-            <span class="copyright-text" id="footerCopyright">© 2025 — Tous droits réservés</span>
-        </div>
-    </footer>
 
     <div id="contactOptionsPopup" class="popup" onclick="closeContactOptionsPopup()">
         <div class="popup-content" onclick="event.stopPropagation()">
@@ -360,7 +399,30 @@
 
     <script type="module" src="auth.js"></script>
     <script>
+        // Gestion de l'écran de démarrage
         document.addEventListener('DOMContentLoaded', () => {
+            const startupScreen = document.getElementById('startupScreen');
+            const mainContent = document.getElementById('mainContent');
+
+            // Temps d'affichage de l'écran de démarrage (6 secondes)
+            const startupDuration = 6000; // 6000ms = 6 secondes
+
+            // Afficher l'écran de démarrage pendant le temps défini
+            setTimeout(() => {
+                // Faire disparaître l'écran de démarrage
+                startupScreen.classList.add('hidden');
+
+                // Afficher le contenu principal après la transition
+                setTimeout(() => {
+                    mainContent.classList.add('visible');
+                    // Démarrer le carrousel d'images
+                    startMainCarousel();
+                }, 500); // Attendre la fin de la transition
+            }, startupDuration);
+        });
+
+        // Fonction pour démarrer le carrousel principal
+        function startMainCarousel() {
             let index = 0;
             const images = document.querySelectorAll('.image-container img');
             let interval = setInterval(nextImage, 5000);
@@ -382,16 +444,14 @@
             const imageContainer = document.getElementById('image-container');
             imageContainer.addEventListener('pointerdown', stopCarousel);
             imageContainer.addEventListener('pointerup', startCarousel);
-        });
+        }
 
         // Fonction pour copier l'e-mail dans le presse-papiers
         function copyEmailToClipboard(email) {
             navigator.clipboard.writeText(email).then(() => {
-                // Utilisation d'une chaîne de caractères (string)
                 alert("E-mail copié : " + email);
                 closeContactOptionsPopup();
             }).catch(err => {
-                // Utilisation d'une chaîne de caractères (string)
                 const errorMessage = "Erreur lors de la copie de l'e-mail.";
                 console.error(errorMessage, err);
                 alert(errorMessage);
@@ -428,6 +488,7 @@
             // Redirige vers la page calendrier avec le numéro en paramètre
             window.location.href = `calendrier_invite.html?phone=${encodeURIComponent(phone)}`;
         }
+
 
     </script>
 </body>
