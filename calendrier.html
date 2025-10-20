@@ -6738,13 +6738,17 @@
                     </div>
 
                   <div id="monthly-options" style="display:none; margin-top:10px;">
-                      <div style="margin-bottom: 10px;">
-                        <input type="radio" id="monthly-type-fixed" name="monthly-type" value="fixed" checked>
-                        <label for="monthly-type-fixed" data-i18n="monthly_fixed_day">Jour fixe du mois</label>
+                      <div style="margin-bottom: 10px; display: flex; gap: 20px;">
+                          <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="radio" id="monthly-type-fixed" name="monthly-type" value="fixed" checked>
+                            <span data-i18n="monthly_fixed_day">Jour fixe du mois</span>
+                          </label>
 
-                        <input type="radio" id="monthly-type-relative" name="monthly-type" value="relative">
-                        <label for="monthly-type-relative" data-i18n="monthly_relative_day">Jour relatif</label>
-                      </div>
+                          <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="radio" id="monthly-type-relative" name="monthly-type" value="relative">
+                            <span data-i18n="monthly_relative_day">Jour relatif</span>
+                          </label>
+                        </div>
 
                       <!-- Option Jour fixe (existant) -->
                       <div id="monthly-fixed-options">
