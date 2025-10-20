@@ -71,9 +71,9 @@ async function calculateEmployeeStats() {
 
 // Récupérer les statistiques employés
 async function fetchEmployeeStats(year, month, employee) {
-    // Calculer les dates de début et fin du mois
+    // Calculer les dates de début et fin du mois (corrigé)
     const startDate = `${year}-${month.padStart(2, '0')}-01`;
-    const endDate = new Date(year, month, 0).toISOString().slice(0, 10); // Dernier jour du mois
+    const endDate = `${year}-${month.padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
 
     const { data, error } = await supabase
         .from('event_quot1_fran')
@@ -95,23 +95,23 @@ function displayEmployeeStats(data, year, month, employee) {
     // Calculer les heures par jour
     const hoursByDay = calculateHoursByDay(data, year, month);
 
-    // Calculer les heures par semaine (locale)
+    // Calculer les heures par semaine (locale) - version corrigée
     const hoursByWeek = calculateHoursByWeekLocal(data, year, month);
 
     // Calculer le total du mois
     const monthlyTotal = calculateMonthlyTotal(data);
 
-    displayDailyHours(hoursByDay, employee);
+    displayDailyHours(hoursByDay, employee, year, month);
     displayWeeklyHours(hoursByWeek, employee);
     displayMonthlyHours(monthlyTotal, employee, month, year);
 }
 
-// Calculer les heures par jour
+// Calculer les heures par jour (version corrigée)
 function calculateHoursByDay(data, year, month) {
     const daysInMonth = new Date(year, month, 0).getDate();
     const hoursByDay = {};
 
-    // Initialiser tous les jours du mois à 0
+    // Initialiser tous les jours du mois à 0 avec les bonnes dates
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         hoursByDay[dateStr] = 0;
@@ -120,48 +120,106 @@ function calculateHoursByDay(data, year, month) {
     // Ajouter les heures réelles
     data.forEach(event => {
         if (event.nombre_heures) {
-            hoursByDay[event.Date] = (hoursByDay[event.Date] || 0) + event.nombre_heures;
+            // S'assurer que la date est bien dans le mois sélectionné
+            const eventDate = new Date(event.Date);
+            const eventYear = eventDate.getFullYear();
+            const eventMonth = eventDate.getMonth() + 1;
+
+            if (eventYear == year && eventMonth == month) {
+                hoursByDay[event.Date] = (hoursByDay[event.Date] || 0) + event.nombre_heures;
+            }
         }
     });
 
     return hoursByDay;
 }
 
-// Calculer les heures par semaine (version locale)
+// Calculer les heures par semaine (version corrigée)
 function calculateHoursByWeekLocal(data, year, month) {
     const weeks = {};
+    const monthInt = parseInt(month);
+    const yearInt = parseInt(year);
 
+    // Obtenir toutes les semaines du mois (même celles sans données)
+    const allWeeks = getAllWeeksInMonth(yearInt, monthInt);
+
+    // Initialiser toutes les semaines à 0
+    allWeeks.forEach(week => {
+        weeks[week.key] = 0;
+    });
+
+    // Ajouter les heures réelles
     data.forEach(event => {
         if (event.nombre_heures) {
-            const date = new Date(event.Date);
-            const weekKey = getWeekLocal(date);
-            weeks[weekKey] = (weeks[weekKey] || 0) + event.nombre_heures;
+            const eventDate = new Date(event.Date);
+            const weekKey = getWeekKeyForDate(eventDate);
+            if (weeks[weekKey] !== undefined) {
+                weeks[weekKey] += event.nombre_heures;
+            }
         }
     });
 
     return weeks;
 }
 
-// Obtenir la semaine locale (Lundi à Dimanche)
-function getWeekLocal(date) {
-    // Créer une copie de la date pour éviter la modification de l'original
+// Obtenir toutes les semaines du mois
+function getAllWeeksInMonth(year, month) {
+    const weeks = [];
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+
+    let currentDate = new Date(firstDay);
+
+    // Reculer jusqu'au lundi de la semaine
+    while (currentDate.getDay() !== 1) { // 1 = lundi
+        currentDate.setDate(currentDate.getDate() - 1);
+    }
+
+    // Avancer semaine par semaine
+    while (currentDate <= lastDay || currentDate.getMonth() === month - 1) {
+        const weekStart = new Date(currentDate);
+        const weekEnd = new Date(currentDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+
+        const weekKey = getWeekKey(weekStart, weekEnd);
+
+        weeks.push({
+            key: weekKey,
+            start: new Date(weekStart),
+            end: new Date(weekEnd)
+        });
+
+        currentDate.setDate(currentDate.getDate() + 7);
+    }
+
+    return weeks;
+}
+
+// Générer une clé de semaine
+function getWeekKey(start, end) {
+    const startStr = formatDateLocal(start);
+    const endStr = formatDateLocal(end);
+    const weekNumber = getWeekNumberLocal(start);
+    return `S${weekNumber} (${startStr} - ${endStr})`;
+}
+
+// Obtenir la clé de semaine pour une date
+function getWeekKeyForDate(date) {
+    const weekStart = getWeekStart(date);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    return getWeekKey(weekStart, weekEnd);
+}
+
+// Obtenir le début de la semaine (lundi) pour une date
+function getWeekStart(date) {
     const d = new Date(date);
-
-    // Début de la semaine (Lundi)
-    const startOfWeek = new Date(d);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Ajuster pour Lundi
-    startOfWeek.setDate(diff);
-
-    // Fin de la semaine (Dimanche)
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-    // Formater la clé de semaine
-    const startStr = formatDateLocal(startOfWeek);
-    const endStr = formatDateLocal(endOfWeek);
-
-    return `S${getWeekNumberLocal(date)} (${startStr} - ${endStr})`;
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajuster pour lundi
+    const weekStart = new Date(d);
+    weekStart.setDate(diff);
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
 }
 
 // Obtenir le numéro de semaine local
@@ -172,7 +230,7 @@ function getWeekNumberLocal(date) {
     // Premier jour de l'année
     const yearStart = new Date(d.getFullYear(), 0, 1);
 
-    // Ajuster pour que la semaine commence le Lundi
+    // Ajuster pour que la semaine commence le lundi
     const dayOfWeek = d.getDay();
     const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lundi=0, Dimanche=6
 
@@ -197,16 +255,20 @@ function calculateMonthlyTotal(data) {
     }, 0);
 }
 
-// Afficher les heures par jour
-function displayDailyHours(hoursByDay, employee) {
+// Afficher les heures par jour (version corrigée)
+function displayDailyHours(hoursByDay, employee, year, month) {
     let html = `<h4>Heures par jour pour ${employee} :</h4>`;
     html += '<div class="daily-hours-grid">';
 
-    Object.entries(hoursByDay).forEach(([date, hours]) => {
+    // Trier les dates
+    const sortedDates = Object.keys(hoursByDay).sort();
+
+    sortedDates.forEach(date => {
         const dateObj = new Date(date);
         const dayName = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
         const dayNumber = dateObj.getDate();
         const formattedDate = dateObj.toLocaleDateString('fr-FR');
+        const hours = hoursByDay[date];
 
         html += `
             <div class="day-item">
@@ -221,20 +283,21 @@ function displayDailyHours(hoursByDay, employee) {
     document.getElementById('employeeDailyHours').innerHTML = html;
 }
 
-// Afficher les heures par semaine
+// Afficher les heures par semaine (version corrigée)
 function displayWeeklyHours(hoursByWeek, employee) {
     let html = `<h4>Heures par semaine pour ${employee} :</h4>`;
 
-    if (Object.keys(hoursByWeek).length === 0) {
+    // Trier les semaines par ordre chronologique
+    const sortedWeeks = Object.entries(hoursByWeek).sort((a, b) => {
+        return a[0].localeCompare(b[0]);
+    });
+
+    if (sortedWeeks.length === 0) {
         html += '<p>Aucune donnée pour ce mois</p>';
     } else {
-        // Trier les semaines par ordre chronologique
-        const sortedWeeks = Object.entries(hoursByWeek).sort((a, b) => {
-            return a[0].localeCompare(b[0]);
-        });
-
         sortedWeeks.forEach(([week, hours]) => {
-            html += `<p><strong>${week}</strong> : ${hours.toFixed(1)} heures</p>`;
+            const hoursDisplay = hours > 0 ? hours.toFixed(1) + ' heures' : '0 heure';
+            html += `<p><strong>${week}</strong> : ${hoursDisplay}</p>`;
         });
     }
 
@@ -256,6 +319,7 @@ function displayMonthlyHours(total, employee, month, year) {
 
     document.getElementById('employeeMonthlyHours').innerHTML = html;
 }
+
 
 // Fonctions existantes (conservées)
 async function fetchStats(startDate, endDate) {
