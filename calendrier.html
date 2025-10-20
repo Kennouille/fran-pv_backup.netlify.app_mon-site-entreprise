@@ -2938,6 +2938,7 @@
             const lieu = document.getElementById('Lieu') ? document.getElementById('Lieu').value || null : null;
             const prix = document.getElementById('Prix') ? document.getElementById('Prix').value || null : null;
             const observations = "";
+            const nombre_heures = document.getElementById('nombre_heures') ? document.getElementById('nombre_heures').value || null : null;
             const employeSelect = document.getElementById('employeSelect');
             const ajouté_pour = employeSelect ? employeSelect.value || null : null;
 
@@ -3029,6 +3030,7 @@
                         Travail: travail || existingData[0].Travail,
                         Ajouté_pour: ajouté_pour || existingData[0].Ajouté_pour,
                         Observations: observations || existingData[0].Observations,
+                        nombre_heures: nombre_heures || existingData[0].nombre_heures,
                         env_données: env_données || existingData[0].env_données,
                         paiement: paiement || existingData[0].paiement,
                         payé: payé,
@@ -3059,6 +3061,7 @@
                         Prix: prix,
                         Travail: travail,
                         Observations: observations,
+                        nombre_heures: nombre_heures,
                         Ajouté_pour: ajouté_pour,
                         env_données: env_données,
                         paiement: paiement,
@@ -3107,6 +3110,7 @@
                         Prix: prix,
                         Travail: travail,
                         Observations: observations,
+                        nombre_heures: nombre_heures,
                         Ajouté_pour: ajouté_pour,
                         env_données: env_données,
                         paiement: paiement,
@@ -5893,11 +5897,12 @@
                     observations: row.querySelector('textarea.observation-text')?.value || '',
                     photo_avant_url: row.querySelector('.photo-avant')?.src || null,
                     photo_apres_url: row.querySelector('.photo-apres')?.src || null,
-                    ajouté_pour: cells[9].textContent,
-                    user_id: cells[10].textContent,
-                    env_données: cells[11].querySelector('[data-column="env_données"]').checked,
-                    paiement: cells[11].querySelector('.paiement-link').dataset.paiement,
-                    payé: cells[11].querySelector('[data-column="payé"]').checked
+                    nombre_heures: cells[9].textContent,
+                    ajouté_pour: cells[10].textContent,
+                    user_id: cells[11].textContent,
+                    env_données: cells[12].querySelector('[data-column="env_données"]').checked,
+                    paiement: cells[12].querySelector('.paiement-link').dataset.paiement,
+                    payé: cells[12].querySelector('[data-column="payé"]').checked
                 };
                  event[selectedDate].push(rowData);
 
@@ -6205,6 +6210,7 @@
                 Prix: eventToDuplicate.Prix,
                 Travail: eventToDuplicate.Travail,
                 Observations: eventToDuplicate.Observations,
+                nombre_heures: eventToDuplicate.nombre_heures,
                 Ajouté_pour: newAjoutePour,
                 env_données: eventToDuplicate.env_données,
                 paiement: eventToDuplicate.paiement,
@@ -6231,6 +6237,7 @@
                 Prix: eventToDuplicate.Prix,
                 Travail: eventToDuplicate.Travail,
                 Observations: eventToDuplicate.Observations,
+                nombre_heures: eventToDuplicate.nombre_heures,
                 Ajouté_pour: newAjoutePour,
                 env_données: eventToDuplicate.env_données,
                 paiement: eventToDuplicate.paiement,
