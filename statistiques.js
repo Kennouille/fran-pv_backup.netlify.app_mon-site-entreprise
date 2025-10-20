@@ -835,13 +835,44 @@ function calculateGeneralManualPeriod() {
     }
 }
 
-// Initialisation des statistiques générales
-// Initialisation au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-    initializeEmployeeStats();
-    // NE PAS appeler updateStats() ici car cela appelle l'ancienne fonction
-    // À la place, initialiser les stats générales si les éléments existent
-    if (document.getElementById('startDate') && document.getElementById('endDate')) {
-        setCurrentMonth(); // Charger les stats générales du mois en cours
-    }
-});
+// Exposer les fonctions globales
+window.setCurrentMonth = setCurrentMonth;
+window.calculateGeneralManualPeriod = calculateGeneralManualPeriod;
+window.exportDataToCsv = exportDataToCsv;
+window.exportToPdf = exportToPdf;
+window.calculateManualPeriod = calculateGeneralManualPeriod;
+
+// Fonctions pour les boutons de période des statistiques générales
+window.setLastWeek = function() {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 7);
+    document.getElementById('startDate').value = start.toISOString().slice(0, 10);
+    document.getElementById('endDate').value = end.toISOString().slice(0, 10);
+    updateGeneralStats();
+};
+
+window.setLastMonth = function() {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    const formattedStart = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+    const formattedEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+
+    document.getElementById('startDate').value = formattedStart;
+    document.getElementById('endDate').value = formattedEnd;
+    updateGeneralStats();
+};
+
+window.setLast30Days = function() {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 30);
+    document.getElementById('startDate').value = start.toISOString().slice(0, 10);
+    document.getElementById('endDate').value = end.toISOString().slice(0, 10);
+    updateGeneralStats();
+};
+
+// Fonction pour les statistiques employés
+window.calculateEmployeeStats = calculateEmployeeStats;
