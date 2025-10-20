@@ -480,14 +480,243 @@
             toggleRecurrenceAlertBar(true);
         }
 
-        // Fonction pour afficher le détail d'une alerte (à compléter ensuite)
+        // Fonction pour afficher le détail d'une alerte
         function showRecurrenceAlertDetail(alert) {
-            console.log("Détail de l'alerte:", alert);
-            // Pour l'instant, on va juste afficher une alerte simple
-            alert("Détail de l'alerte pour: " + alert.event.Téléphone + " - J-" + alert.daysUntilEnd);
+            const modal = document.getElementById('recurrence-alert-modal');
+            const content = document.getElementById('recurrence-alert-content');
 
-            // Dans la prochaine étape, on remplira le modal avec toutes les infos
-            // et les boutons d'action
+            // Formater la description de la récurrence
+            const recurrenceDescription = formatRecurrenceDescription(alert.rule);
+
+            // Créer le contenu du modal
+            content.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #ff8c00; margin-bottom: 15px;">
+                        🔔 RÉCURRENCE TERMINE DANS ${alert.daysUntilEnd} JOURS
+                    </h3>
+
+                    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <p><strong>📞 Téléphone:</strong> ${alert.event.Téléphone || '-'}</p>
+                        <p><strong>👤 Nom:</strong> ${alert.event.Nom || '-'}</p>
+                        <p><strong>📅 Prochaine date:</strong> ${alert.event.Date} à ${alert.event.Heure || ''}${alert.event.Min || ''}</p>
+                        <p><strong>📍 Lieu:</strong> ${alert.event.Lieu || '-'}</p>
+                        <p><strong>💰 Prix:</strong> ${alert.event.Prix || '-'}€</p>
+                        <p><strong>🔧 Travail:</strong> ${alert.event.Travail || '-'}</p>
+                        <p><strong>⏱️ Durée:</strong> ${alert.event.nombre_heures || '-'} heures</p>
+                        <p><strong>👨‍💼 Employé:</strong> ${alert.event.Ajouté_pour || '-'}</p>
+                        <p><strong>🔄 Type:</strong> ${recurrenceDescription}</p>
+                        <p><strong>📅 Fin de récurrence:</strong> ${alert.rule.endDate}</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label><strong>⏰ Rappelez-moi dans:</strong></label>
+                            <select id="reminder-delay" style="width: 100%; padding: 8px; margin-top: 5px;">
+                                <option value="1">1 jour</option>
+                                <option value="5">5 jours</option>
+                                <option value="15">15 jours</option>
+                                <option value="never">Jamais</option>
+                            </select>
+                        </div>
+
+                        <div style="flex: 1; min-width: 200px;">
+                            <label><strong>📅 Nouvelle récurrence:</strong></label>
+                            <button id="create-new-recurrence" style="width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                🔄 Créer nouvelle récurrence
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button id="mark-treated" style="padding: 8px 15px; background: #66D19E; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            ✓ Marquer comme traitée
+                        </button>
+                        <button id="close-detail-modal" style="padding: 8px 15px; background: #ccc; border: none; border-radius: 5px; cursor: pointer;">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Afficher le modal
+            modal.style.display = 'flex';
+
+            // Gestion des événements
+            document.getElementById('create-new-recurrence').addEventListener('click', function() {
+                createNewRecurrenceFromAlert(alert);
+            });
+
+            document.getElementById('mark-treated').addEventListener('click', function() {
+                const delay = document.getElementById('reminder-delay').value;
+                handleReminderAction(alert, delay);
+            });
+
+            document.getElementById('close-detail-modal').addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+        }
+
+        // Fonction pour formater la description de la récurrence
+        function formatRecurrenceDescription(rule) {
+            if (!rule) return 'Aucune';
+
+            switch (rule.frequency) {
+                case 'daily':
+                    return 'Quotidienne';
+
+                case 'weekly':
+                    const days = rule.days ? rule.days.map(day =>
+                        day.charAt(0).toUpperCase() + day.slice(1)
+                    ).join(', ') : 'Aucun jour';
+                    return `Hebdomadaire (${days})`;
+
+                case 'monthly':
+                    if (rule.monthlyType === 'relative') {
+                        const weekNames = {
+                            '1': 'Premier', '2': 'Deuxième', '3': 'Troisième',
+                            '4': 'Quatrième', 'last': 'Dernier'
+                        };
+                        const dayNames = {
+                            'monday': 'Lundi', 'tuesday': 'Mardi', 'wednesday': 'Mercredi',
+                            'thursday': 'Jeudi', 'friday': 'Vendredi', 'saturday': 'Samedi',
+                            'sunday': 'Dimanche'
+                        };
+                        return `Mensuelle (${weekNames[rule.weekOfMonth]} ${dayNames[rule.dayOfWeek]})`;
+                    } else {
+                        return `Mensuelle (Jour ${rule.dayOfMonth})`;
+                    }
+
+                case 'yearly':
+                    return `Annuelle (${rule.day}/${rule.month})`;
+
+                default:
+                    return 'Aucune';
+            }
+        }
+
+        // Fonction pour gérer l'action "Rappelez-moi"
+        function handleReminderAction(alert, delay) {
+            const modal = document.getElementById('recurrence-alert-modal');
+
+            if (delay === 'never') {
+                // Marquer comme "ne plus rappeler" pour cette récurrence
+                console.log("Ne plus rappeler pour:", alert.recurrenceId);
+                // Ici vous pourriez stocker cette préférence en base de données
+            } else {
+                console.log(`Rappel programmé dans ${delay} jours pour:`, alert.recurrenceId);
+                // Programmer un rappel (à implémenter avec une table de rappels)
+            }
+
+            // Fermer le modal
+            modal.style.display = 'none';
+
+            // Optionnel: retirer cette alerte de la liste actuelle
+            // (à implémenter selon votre logique de gestion d'alertes)
+        }
+
+        // Fonction pour créer une nouvelle récurrence (à compléter)
+        function createNewRecurrenceFromAlert(alert) {
+            console.log("Création d'une nouvelle récurrence à partir de:", alert);
+
+            // Remplir le formulaire avec les données de l'ancienne récurrence
+            fillEventFormWithRecurrenceData(alert);
+
+            // Fermer le modal
+            document.getElementById('recurrence-alert-modal').style.display = 'none';
+
+            // Faire défiler jusqu'au formulaire
+            document.querySelector('.form-wrapper').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Fonction pour pré-remplir le formulaire avec les données de récurrence
+        function fillEventFormWithRecurrenceData(alert) {
+            const event = alert.event;
+
+            // Remplir les champs de base
+            if (document.getElementById('Téléphone'))
+                document.getElementById('Téléphone').value = event.Téléphone || '';
+            if (document.getElementById('Nom'))
+                document.getElementById('Nom').value = event.Nom || '';
+            if (document.getElementById('Lieu'))
+                document.getElementById('Lieu').value = event.Lieu || '';
+            if (document.getElementById('Prix'))
+                document.getElementById('Prix').value = event.Prix || '';
+            if (document.getElementById('Travail'))
+                document.getElementById('Travail').value = event.Travail || '';
+            if (document.getElementById('NombreHeures'))
+                document.getElementById('NombreHeures').value = event.nombre_heures || '';
+            if (document.getElementById('employeSelect'))
+                document.getElementById('employeSelect').value = event.Ajouté_pour || '';
+
+            // Calculer la nouvelle date de début (jour suivant la fin actuelle)
+            const currentEndDate = parseLocalDate(alert.rule.endDate);
+            const newStartDate = new Date(currentEndDate);
+            newStartDate.setDate(newStartDate.getDate() + 1);
+
+            if (document.getElementById('Date')) {
+                document.getElementById('Date').value = newStartDate.toISOString().split('T')[0];
+            }
+
+            // Pré-remplir la récurrence avec les mêmes paramètres
+            if (document.getElementById('recurrence-frequency')) {
+                document.getElementById('recurrence-frequency').value = alert.rule.frequency;
+
+                // Déclencher l'événement change pour afficher les bonnes options
+                document.getElementById('recurrence-frequency').dispatchEvent(new Event('change'));
+
+                // Remplir les options selon le type de récurrence
+                setTimeout(() => {
+                    fillRecurrenceOptions(alert.rule);
+                }, 100);
+            }
+        }
+
+        // Fonction pour remplir les options de récurrence
+        function fillRecurrenceOptions(rule) {
+            if (rule.frequency === 'weekly' && rule.days) {
+                rule.days.forEach(day => {
+                    const checkbox = document.querySelector(`#weekly-options input[value="${day}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            else if (rule.frequency === 'monthly') {
+                if (rule.monthlyType === 'fixed') {
+                    document.getElementById('monthly-type-fixed').checked = true;
+                    document.getElementById('monthly-type-fixed').dispatchEvent(new Event('change'));
+                    if (document.getElementById('recurrence-dayOfMonth')) {
+                        document.getElementById('recurrence-dayOfMonth').value = rule.dayOfMonth || 1;
+                    }
+                } else {
+                    document.getElementById('monthly-type-relative').checked = true;
+                    document.getElementById('monthly-type-relative').dispatchEvent(new Event('change'));
+                    if (document.getElementById('recurrence-weekOfMonth')) {
+                        document.getElementById('recurrence-weekOfMonth').value = rule.weekOfMonth || '1';
+                    }
+                    if (document.getElementById('recurrence-dayOfWeek')) {
+                        document.getElementById('recurrence-dayOfWeek').value = rule.dayOfWeek || 'monday';
+                    }
+                }
+            }
+
+            else if (rule.frequency === 'yearly') {
+                if (document.getElementById('recurrence-month')) {
+                    document.getElementById('recurrence-month').value = rule.month || 1;
+                }
+                if (document.getElementById('recurrence-day')) {
+                    document.getElementById('recurrence-day').value = rule.day || 1;
+                }
+            }
+
+            // Remplir la date de fin (par exemple, +1 an)
+            if (rule.endDate && document.getElementById('recurrence-endDate')) {
+                const currentEnd = parseLocalDate(rule.endDate);
+                const newEnd = new Date(currentEnd);
+                newEnd.setFullYear(newEnd.getFullYear() + 1);
+                document.getElementById('recurrence-endDate').value = newEnd.toISOString().split('T')[0];
+            }
         }
 
         // Scanner au chargement de la page
