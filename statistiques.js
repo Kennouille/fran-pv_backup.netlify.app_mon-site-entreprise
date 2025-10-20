@@ -506,6 +506,11 @@ async function fetchGeneralStats(startDate, endDate) {
         .gte('Date', startDate)
         .lte('Date', endDate);
 
+    console.log('✅ Réponse Supabase reçue');
+    console.log('📊 Données reçues:', data?.length, 'lignes');
+    console.log('❌ Erreur:', error);
+
+
     document.getElementById('loadingIndicator').style.display = 'none';
 
     if (error) {
@@ -517,6 +522,7 @@ async function fetchGeneralStats(startDate, endDate) {
         return;
     }
 
+    console.log('🔄 Début traitement données...');
     exportableStats.period.startDate = startDate;
     exportableStats.period.endDate = endDate;
     exportableStats.rawData = data;
@@ -535,6 +541,7 @@ async function fetchGeneralStats(startDate, endDate) {
         updateComparisonDisplays(0, 0, 0, 0, 0, 0);
         return;
     }
+    console.log('📈 Calcul des métriques...');
 
     const totalAmount = data.reduce((sum, row) => sum + row.Prix, 0);
     const averagePricePerEvent = data.length > 0 ? totalAmount / data.length : 0;
@@ -611,12 +618,15 @@ async function fetchGeneralStats(startDate, endDate) {
         data: orderedEventsByDayOfWeek
     };
 
+    console.log('🎨 Affichage des résultats...');
     displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek);
     updateComparisonDisplays(
         totalAmount, prevTotalAmount,
         averagePricePerEvent, prevAveragePricePerEvent,
         averageEventsPerDay, prevAverageEventsPerDay
     );
+
+    console.log('✅ fetchGeneralStats terminé');
 }
 
 // Mise à jour des comparaisons
@@ -640,6 +650,8 @@ function updateComparisonDisplays(
 
 // Affichage des résultats avec graphiques
 function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek) {
+    console.log('🖼️ Début affichage résultats');
+
     document.getElementById('totalAmount').innerHTML = `Montant total : <span class="value">${totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
     document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">${averagePricePerEvent.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
     document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">${averageEventsPerDay.toFixed(2)}</span>`;
@@ -672,6 +684,8 @@ function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsP
             plugins: { legend: { display: false } }
         }
     });
+
+    console.log('📊 Création graphiques...');
 
     // Graphique top clients
     const topClientsCtx = document.getElementById('topClientsChart').getContext('2d');
@@ -726,6 +740,8 @@ function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsP
             plugins: { legend: { display: false } }
         }
     });
+
+    console.log('✅ Affichage terminé');
 }
 
 // Nettoyage des résultats généraux
