@@ -231,25 +231,6 @@ function getWeekStart(date) {
     return weekStart;
 }
 
-// Obtenir le numéro de semaine local
-function getWeekNumberLocal(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-
-    // Premier jour de l'année
-    const yearStart = new Date(d.getFullYear(), 0, 1);
-
-    // Ajuster pour que la semaine commence le lundi
-    const dayOfWeek = d.getDay();
-    const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lundi=0, Dimanche=6
-
-    // Calculer le numéro de semaine
-    const diff = Math.floor((d - yearStart) / (24 * 60 * 60 * 1000));
-    const weekNumber = Math.floor((diff + yearStart.getDay() - 1) / 7) + 1;
-
-    return weekNumber;
-}
-
 // Formater la date en local (JJ/MM)
 function formatDateLocal(date) {
     const day = date.getDate().toString().padStart(2, '0');
