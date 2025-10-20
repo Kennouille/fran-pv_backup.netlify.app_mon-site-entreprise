@@ -357,14 +357,6 @@ function groupDaysByWeek(hoursByDay, year, month) {
     });
 }
 
-    // Convertir en tableau et trier par semaine
-    return Object.values(weeks).sort((a, b) => {
-        const weekA = parseInt(a.weekLabel.replace('Semaine ', ''));
-        const weekB = parseInt(b.weekLabel.replace('Semaine ', ''));
-        return weekA - weekB;
-    });
-}
-
 // Obtenir le numéro de semaine local
 function getWeekNumberLocal(date) {
     const d = new Date(date);
