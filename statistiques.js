@@ -106,27 +106,26 @@ function displayEmployeeStats(data, year, month, employee) {
     displayMonthlyHours(monthlyTotal, employee, month, year);
 }
 
-// Calculer les heures par jour (version corrigée)
+// Calculer les heures par jour (version simplifiée)
 function calculateHoursByDay(data, year, month) {
     const daysInMonth = new Date(year, month, 0).getDate();
     const hoursByDay = {};
 
-    // Initialiser uniquement les jours du mois (du 1er au dernier)
+    // Initialiser uniquement les jours du mois
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         hoursByDay[dateStr] = 0;
     }
 
-    // Ajouter les heures réelles uniquement pour les dates du mois
+    // Ajouter les heures réelles
     data.forEach(event => {
         if (event.nombre_heures) {
-            const eventDate = new Date(event.Date);
-            const eventYear = eventDate.getFullYear();
-            const eventMonth = eventDate.getMonth() + 1;
+            // Extraire directement les parties de la date sans conversion
+            const [eventYear, eventMonth, eventDay] = event.Date.split('-');
 
             // Vérifier que la date est bien dans le mois sélectionné
-            if (eventYear == year && eventMonth == month) {
-                const dateStr = event.Date; // Format YYYY-MM-DD
+            if (eventYear == year && eventMonth == month.padStart(2, '0')) {
+                const dateStr = event.Date; // Utiliser directement la date de la base
                 if (hoursByDay[dateStr] !== undefined) {
                     hoursByDay[dateStr] += event.nombre_heures;
                 }
@@ -265,31 +264,33 @@ function calculateMonthlyTotal(data) {
     }, 0);
 }
 
-// Afficher les heures par jour (version corrigée)
+// Afficher les heures par jour (version encore plus robuste)
 function displayDailyHours(hoursByDay, employee, year, month) {
     let html = `<h4>Heures par jour pour ${employee} :</h4>`;
     html += '<div class="daily-hours-grid">';
 
-    // Filtrer et trier uniquement les dates du mois
-    const sortedDates = Object.keys(hoursByDay)
-        .filter(date => {
-            const dateObj = new Date(date);
-            return dateObj.getFullYear() == year &&
-                   (dateObj.getMonth() + 1) == month;
-        })
-        .sort();
+    // Créer un tableau avec les jours du mois
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const monthDays = [];
 
-    sortedDates.forEach(date => {
-        const dateObj = new Date(date);
-        const dayName = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
-        const dayNumber = dateObj.getDate();
-        const formattedDate = dateObj.toLocaleDateString('fr-FR');
-        const hours = hoursByDay[date];
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        monthDays.push({
+            dateStr: dateStr,
+            dateObj: new Date(year, month - 1, day), // Création directe sans décalage
+            hours: hoursByDay[dateStr] || 0
+        });
+    }
+
+    monthDays.forEach(day => {
+        const dayName = day.dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
+        const dayNumber = day.dateObj.getDate();
+        const formattedDate = day.dateObj.toLocaleDateString('fr-FR');
 
         html += `
             <div class="day-item">
                 <span class="day-name">${dayName} ${dayNumber}</span>
-                <span class="day-hours">${hours.toFixed(1)}h</span>
+                <span class="day-hours">${day.hours.toFixed(1)}h</span>
                 <div class="day-date">${formattedDate}</div>
             </div>
         `;
