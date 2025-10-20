@@ -22,7 +22,11 @@ let exportableStats = {
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
     initializeEmployeeStats();
-    updateStats();
+    // NE PAS appeler updateStats() ici car cela appelle l'ancienne fonction
+    // À la place, initialiser les stats générales si les éléments existent
+    if (document.getElementById('startDate') && document.getElementById('endDate')) {
+        setCurrentMonth(); // Charger les stats générales du mois en cours
+    }
 });
 
 // Initialisation des statistiques employés
