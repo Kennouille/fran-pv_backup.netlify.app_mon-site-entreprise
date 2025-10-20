@@ -228,3 +228,118 @@ ul, ol {
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+.horizontal-weeks-table {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.weeks-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+.week-headers th {
+    background-color: #3498db;
+    color: white;
+    padding: 0.8rem;
+    text-align: center;
+    border: 1px solid #2980b9;
+}
+
+.day-label {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    padding: 0.5rem;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    min-width: 60px;
+}
+
+.day-cell {
+    border: 1px solid #dee2e6;
+    padding: 0.5rem;
+    text-align: center;
+    min-width: 80px;
+    height: 60px;
+    vertical-align: top;
+}
+
+.day-cell.empty {
+    background-color: #f8f9fa;
+}
+
+.day-number {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 0.2rem;
+}
+
+.day-hours {
+    color: #e74c3c;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.weeks-rows-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.week-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+}
+
+.week-label {
+    font-weight: bold;
+    min-width: 100px;
+    color: #2c3e50;
+}
+
+.week-days {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.week-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    background-color: white;
+    min-width: 70px;
+}
+
+.week-day.empty {
+    background-color: transparent;
+    border: 1px dashed #ddd;
+}
+
+.day-name {
+    font-weight: bold;
+    font-size: 0.8em;
+    color: #2c3e50;
+}
+
+.day-number {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 0.2rem 0;
+}
+
+.day-hours {
+    color: #e74c3c;
+    font-weight: bold;
+    font-size: 0.9em;
+}

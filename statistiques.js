@@ -245,32 +245,41 @@ function calculateMonthlyTotal(data) {
     }, 0);
 }
 
-// Afficher les heures par jour groupées par semaine
+// Afficher les heures par jour avec les semaines en lignes
 function displayDailyHours(hoursByDay, employee, year, month) {
     let html = `<h4>Heures par jour pour ${employee} :</h4>`;
 
     // Grouper les jours par semaine
     const weeks = groupDaysByWeek(hoursByDay, year, month);
 
-    // Afficher chaque semaine
-    weeks.forEach(week => {
-        html += `<div class="week-section">`;
-        html += `<h5>${week.weekLabel}</h5>`;
-        html += `<div class="week-days-grid">`;
+    html += `<div class="weeks-rows-container">`;
 
-        // Afficher les jours de la semaine
-        week.days.forEach(day => {
-            html += `
-                <div class="week-day-item">
-                    <div class="day-header">${day.dayName} ${day.dayNumber}</div>
-                    <div class="day-hours">${day.hours.toFixed(1)}h</div>
-                    <div class="day-date">${day.formattedDate}</div>
-                </div>
-            `;
-        });
+    // Afficher chaque semaine en ligne
+    weeks.forEach(week => {
+        html += `<div class="week-row">`;
+        html += `<div class="week-label">${week.weekLabel}</div>`;
+        html += `<div class="week-days">`;
+
+        // Afficher les 7 jours de la semaine
+        for (let i = 0; i < 7; i++) {
+            const day = week.days[i];
+            if (day) {
+                html += `
+                    <div class="week-day">
+                        <div class="day-name">${day.dayName}</div>
+                        <div class="day-number">${day.dayNumber}</div>
+                        <div class="day-hours">${day.hours.toFixed(1)}h</div>
+                    </div>
+                `;
+            } else {
+                html += `<div class="week-day empty"></div>`;
+            }
+        }
 
         html += `</div></div>`;
     });
+
+    html += `</div>`;
 
     document.getElementById('employeeDailyHours').innerHTML = html;
 }
