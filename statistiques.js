@@ -95,6 +95,7 @@ async function calculateEmployeeStats() {
 
 // Récupérer les statistiques employés
 async function fetchEmployeeStats(year, month, employee) {
+    console.log('👤 fetchEmployeeStats appelé pour:', employee, month, year);
     // Calculer les dates de début et fin du mois (corrigé)
     const startDate = `${year}-${month.padStart(2, '0')}-01`;
     const endDate = `${year}-${month.padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
@@ -650,8 +651,6 @@ function updateComparisonDisplays(
 
 // Affichage des résultats avec graphiques
 function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek) {
-    console.log('🖼️ Début affichage résultats');
-
     document.getElementById('totalAmount').innerHTML = `Montant total : <span class="value">${totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
     document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">${averagePricePerEvent.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
     document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">${averageEventsPerDay.toFixed(2)}</span>`;
@@ -659,12 +658,22 @@ function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsP
     // Afficher les graphiques
     const chartsContainer = document.querySelector('.charts-container');
     if (chartsContainer) {
-        chartsContainer.style.display = 'block';
+        chartsContainer.classList.add('visible');
+        chartsContainer.style.display = 'grid';
     }
 
     // Graphique événements par employé
     const eventsByPersonCtx = document.getElementById('eventsByPersonChart').getContext('2d');
-    if (eventsByPersonChartInstance) { eventsByPersonChartInstance.destroy(); }
+    if (eventsByPersonChartInstance) {
+        eventsByPersonChartInstance.destroy();
+        eventsByPersonChartInstance = null;
+    }
+
+    // S'assurer que le canvas a la bonne taille
+    const eventsByPersonCanvas = document.getElementById('eventsByPersonChart');
+    eventsByPersonCanvas.style.height = '300px';
+    eventsByPersonCanvas.style.width = '100%';
+
     eventsByPersonChartInstance = new Chart(eventsByPersonCtx, {
         type: 'bar',
         data: {
@@ -680,16 +689,27 @@ function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsP
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            },
             plugins: { legend: { display: false } }
         }
     });
 
-    console.log('📊 Création graphiques...');
-
     // Graphique top clients
     const topClientsCtx = document.getElementById('topClientsChart').getContext('2d');
-    if (topClientsChartInstance) { topClientsChartInstance.destroy(); }
+    if (topClientsChartInstance) {
+        topClientsChartInstance.destroy();
+        topClientsChartInstance = null;
+    }
+
+    const topClientsCanvas = document.getElementById('topClientsChart');
+    topClientsCanvas.style.height = '300px';
+    topClientsCanvas.style.width = '100%';
+
     topClientsChartInstance = new Chart(topClientsCtx, {
         type: 'bar',
         data: {
@@ -713,14 +733,31 @@ function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsP
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+                        }
+                    }
+                }
+            },
             plugins: { legend: { display: false } }
         }
     });
 
     // Graphique événements par jour de la semaine
     const eventsByDayOfWeekCtx = document.getElementById('eventsByDayOfWeekChart').getContext('2d');
-    if (eventsByDayOfWeekChartInstance) { eventsByDayOfWeekChartInstance.destroy(); }
+    if (eventsByDayOfWeekChartInstance) {
+        eventsByDayOfWeekChartInstance.destroy();
+        eventsByDayOfWeekChartInstance = null;
+    }
+
+    const eventsByDayOfWeekCanvas = document.getElementById('eventsByDayOfWeekChart');
+    eventsByDayOfWeekCanvas.style.height = '300px';
+    eventsByDayOfWeekCanvas.style.width = '100%';
+
     eventsByDayOfWeekChartInstance = new Chart(eventsByDayOfWeekCtx, {
         type: 'bar',
         data: {
@@ -736,12 +773,15 @@ function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsP
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            },
             plugins: { legend: { display: false } }
         }
     });
-
-    console.log('✅ Affichage terminé');
 }
 
 // Nettoyage des résultats généraux

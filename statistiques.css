@@ -372,3 +372,51 @@ ul, ol {
 .buttons button:hover {
     background: #0056b3;
 }
+
+/* Correction pour les graphiques Chart.js */
+.chart-wrapper canvas {
+    max-height: 300px !important;
+    width: 100% !important;
+}
+
+/* Assurez-vous que les conteneurs de graphiques ont une hauteur fixe */
+.chart-wrapper {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 400px; /* Hauteur fixe */
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-wrapper h3 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+    text-align: center;
+    flex-shrink: 0; /* Empêche le titre de réduire */
+}
+
+.chart-wrapper div {
+    flex: 1; /* Prend tout l'espace restant */
+    position: relative;
+    min-height: 300px;
+}
+
+/* Correction spécifique pour Chart.js */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+/* Masquer les graphiques initialement */
+.charts-container {
+    display: none;
+}
+
+.charts-container.visible {
+    display: grid;
+}
