@@ -1261,7 +1261,10 @@ function calculateGeneralManualPeriod() {
 window.setCurrentMonth = setCurrentMonth;
 window.calculateGeneralManualPeriod = calculateGeneralManualPeriod;
 window.exportDataToCsv = exportDataToCsv;
+window.exportEmployeeStatsToPdf = exportEmployeeStatsToPdf;
+window.exportGeneralStatsToPdf = exportGeneralStatsToPdf;
 window.exportToPdf = exportToPdf;
+window.exportDataToCsv = exportDataToCsv;
 window.calculateManualPeriod = calculateGeneralManualPeriod;
 
 // Fonctions pour les boutons de période des statistiques générales
