@@ -346,15 +346,7 @@
 
         <div class="contact-info">Contact : 0800/200.94</div>
 
-        <div class="guest-login">
-            <h2>Accès invité</h2>
-            <input
-              type="text"
-              id="guestPhone"
-              placeholder="Entrez votre numéro de téléphone"
-              data-i18n-placeholder="placeholder_enter_phone">
-            <button class="button" onclick="enterAsGuest()" data-i18n="button_guest_enter">Entrer</button>
-        </div>
+
 
         <!-- ✅ Petite image FIXE (hors carrousel, visible en permanence) -->
         <div class="guest-fixed-image">
@@ -389,6 +381,30 @@
                 Email : muhlemannk@gmail.com
             </button>
         </div>
+    </div>
+
+    <!-- Bandeau RGPD -->
+    <div id="cookie-banner" style="
+      position:fixed;bottom:0;left:0;width:100%;
+      background:#222;color:#fff;
+      padding:15px;text-align:center;z-index:1000;
+      display:none;font-family:Arial, sans-serif;">
+      Ce site utilise des cookies pour assurer son bon fonctionnement.
+      <a href="/politique-confidentialite.html" style="color:#ffd700;text-decoration:underline;">
+        En savoir plus
+      </a>
+      <button id="accept-cookies" style="
+        margin-left:10px;padding:6px 12px;
+        background:#4caf50;border:none;color:white;
+        cursor:pointer;border-radius:4px;">
+        Accepter
+      </button>
+      <button id="decline-cookies" style="
+        margin-left:5px;padding:6px 12px;
+        background:#555;border:none;color:white;
+        cursor:pointer;border-radius:4px;">
+        Refuser
+      </button>
     </div>
 
     <script type="module" src="auth.js"></script>
@@ -479,8 +495,23 @@
           setTimeout(() => {
             splash.classList.add('fade-out');
             setTimeout(() => splash.remove(), 1000); // le retire après la transition
-          }, 3000);
+          }, 4000);
         });
+
+        (function(){
+          const banner = document.getElementById('cookie-banner');
+          const accepted = localStorage.getItem('cookiesAccepted');
+          if(!accepted) banner.style.display = 'block';
+
+          document.getElementById('accept-cookies').onclick = () => {
+            localStorage.setItem('cookiesAccepted','true');
+            banner.style.display='none';
+          };
+          document.getElementById('decline-cookies').onclick = () => {
+            localStorage.setItem('cookiesAccepted','false');
+            banner.style.display='none';
+          };
+        })();
 
 
     </script>
