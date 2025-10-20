@@ -866,10 +866,374 @@ function exportDataToCsv() {
     URL.revokeObjectURL(url);
 }
 
-// Export PDF (nécessite les bibliothèques html2canvas et jspdf)
+// Export PDF pour les Statistiques Générales
+async function exportGeneralStatsToPdf() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+
+    if (exportableStats.rawData.length === 0) {
+        alert('Aucune donnée à exporter pour les statistiques générales');
+        return;
+    }
+
+    loadingIndicator.textContent = 'Génération du PDF en cours...';
+    loadingIndicator.style.display = 'block';
+
+    try {
+        // Créer un conteneur temporaire pour le PDF
+        const pdfContainer = document.createElement('div');
+        pdfContainer.style.cssText = `
+            position: fixed;
+            left: -10000px;
+            top: 0;
+            width: 800px;
+            background: white;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        `;
+
+        // Contenu du PDF
+        pdfContainer.innerHTML = `
+            <h1 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">
+                Rapport Statistiques Générales
+            </h1>
+
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;">
+                    Période d'analyse
+                </h2>
+                <p><strong>Du :</strong> ${exportableStats.period.startDate}</p>
+                <p><strong>Au :</strong> ${exportableStats.period.endDate}</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;">
+                    Métriques de synthèse
+                </h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Métrique</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Valeur</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Évolution</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Montant total</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">
+                            ${exportableStats.summaryMetrics.totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            ${exportableStats.summaryMetrics.totalAmountChange}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Prix moyen par événement</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">
+                            ${exportableStats.summaryMetrics.averagePricePerEvent.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            ${exportableStats.summaryMetrics.averagePricePerEventChange}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Moyenne événements/jour</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">
+                            ${exportableStats.summaryMetrics.averageEventsPerDay.toFixed(2)}
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            ${exportableStats.summaryMetrics.averageEventsPerDayChange}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;">
+                    Événements par employé
+                </h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Employé</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Nombre d'événements</th>
+                    </tr>
+                    ${Object.entries(exportableStats.eventsByPerson).map(([employe, count]) => `
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${employe}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${count}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;">
+                    Top 10 clients
+                </h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Client</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Montant dépensé</th>
+                    </tr>
+                    ${exportableStats.topClients.map(([client, montant]) => `
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${client}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">
+                                ${montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </table>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;">
+                    Événements par jour de la semaine
+                </h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Jour</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Nombre d'événements</th>
+                    </tr>
+                    ${exportableStats.eventsByDayOfWeek.labels.map((jour, index) => `
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${jour}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">
+                                ${exportableStats.eventsByDayOfWeek.data[index]}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </table>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center; color: #7f8c8d; font-size: 12px;">
+                Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+            </div>
+        `;
+
+        document.body.appendChild(pdfContainer);
+
+        // Convertir en image avec html2canvas
+        const canvas = await html2canvas(pdfContainer, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        // Créer le PDF
+        const pdf = new jspdf.jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Pages supplémentaires si nécessaire
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        // Télécharger
+        const fileName = `statistiques_generales_${exportableStats.period.startDate}_${exportableStats.period.endDate}.pdf`;
+        pdf.save(fileName);
+
+        // Nettoyer
+        document.body.removeChild(pdfContainer);
+
+    } catch (error) {
+        console.error("Erreur lors de la génération du PDF :", error);
+        alert('Erreur lors de la génération du PDF');
+    } finally {
+        loadingIndicator.style.display = 'none';
+    }
+}
+
+// Export PDF pour les Statistiques Employés
+async function exportEmployeeStatsToPdf() {
+    const year = document.getElementById('yearSelect').value;
+    const month = document.getElementById('monthSelect').value;
+    const employee = document.getElementById('employeeSelect').value;
+
+    if (!year || !month || !employee) {
+        alert('Veuillez sélectionner une année, un mois et un employé');
+        return;
+    }
+
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    loadingIndicator.textContent = 'Génération du PDF employé en cours...';
+    loadingIndicator.style.display = 'block';
+
+    try {
+        // Récupérer les données employés
+        const startDate = `${year}-${month.padStart(2, '0')}-01`;
+        const endDate = `${year}-${month.padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
+
+        const { data, error } = await supabase
+            .from('event_quot1_fran')
+            .select('Date, nombre_heures, Ajouté_pour')
+            .gte('Date', startDate)
+            .lte('Date', endDate)
+            .eq('Ajouté_pour', employee);
+
+        if (error) throw error;
+
+        const hoursByDay = calculateHoursByDay(data, year, month);
+        const monthlyTotal = calculateMonthlyTotal(data);
+        const weeks = groupDaysByWeek(hoursByDay, year, month);
+
+        // Créer le contenu PDF
+        const pdfContainer = document.createElement('div');
+        pdfContainer.style.cssText = `
+            position: fixed;
+            left: -10000px;
+            top: 0;
+            width: 800px;
+            background: white;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        `;
+
+        const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        const monthName = monthNames[parseInt(month) - 1];
+
+        let weeksHTML = '';
+        weeks.forEach(week => {
+            const weekTotal = week.days.reduce((total, day) => total + (day.hours || 0), 0);
+
+            let daysHTML = '';
+            week.days.forEach(day => {
+                if (day.inMonth) {
+                    daysHTML += `
+                        <div style="display: inline-block; width: 80px; margin: 2px; padding: 5px; border: 1px solid #ddd; text-align: center;">
+                            <div style="font-size: 10px; font-weight: bold;">${day.dayName}</div>
+                            <div style="font-size: 14px; font-weight: bold;">${day.dayNumber}</div>
+                            <div style="font-size: 12px; color: #e74c3c; font-weight: bold;">${day.hours.toFixed(1)}h</div>
+                        </div>
+                    `;
+                } else {
+                    daysHTML += `
+                        <div style="display: inline-block; width: 80px; margin: 2px; padding: 5px; border: 1px dashed #ddd; text-align: center; background-color: #f8f9fa;">
+                            &nbsp;
+                        </div>
+                    `;
+                }
+            });
+
+            weeksHTML += `
+                <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; color: #2c3e50;">${week.weekLabel}</h3>
+                        <div style="font-size: 16px; font-weight: bold; color: #3498db; background: white; padding: 5px 10px; border: 2px solid #3498db; border-radius: 5px;">
+                            Total: ${weekTotal.toFixed(1)}h
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                        ${daysHTML}
+                    </div>
+                </div>
+            `;
+        });
+
+        pdfContainer.innerHTML = `
+            <h1 style="text-align: center; color: #2c3e50; margin-bottom: 10px;">
+                Rapport Heures - ${employee}
+            </h1>
+            <h2 style="text-align: center; color: #7f8c8d; margin-bottom: 20px;">
+                ${monthName} ${year}
+            </h2>
+
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;">
+                    Détail des heures par semaine
+                </h2>
+                ${weeksHTML}
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background-color: #2c3e50; color: white; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0; font-size: 18px;">
+                    Total mensuel pour ${employee} : ${monthName} ${year}
+                </h3>
+                <p style="margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">
+                    ${monthlyTotal.toFixed(1)} heures
+                </p>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center; color: #7f8c8d; font-size: 12px;">
+                Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+            </div>
+        `;
+
+        document.body.appendChild(pdfContainer);
+
+        // Convertir en PDF
+        const canvas = await html2canvas(pdfContainer, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jspdf.jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const imgWidth = 210;
+        const pageHeight = 297;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        const fileName = `heures_${employee}_${monthName}_${year}.pdf`;
+        pdf.save(fileName);
+
+        document.body.removeChild(pdfContainer);
+
+    } catch (error) {
+        console.error("Erreur lors de la génération du PDF employé :", error);
+        alert('Erreur lors de la génération du PDF employé');
+    } finally {
+        loadingIndicator.style.display = 'none';
+    }
+}
+
+// Fonction d'export générale avec choix
 async function exportToPdf() {
-    alert('Fonction PDF à implémenter avec html2canvas et jspdf');
-    // Implémentation similaire à votre code existant
+    const choice = prompt(
+        'Que souhaitez-vous exporter ?\n\n' +
+        '1 - Statistiques Générales\n' +
+        '2 - Statistiques Employés\n\n' +
+        'Entrez 1 ou 2 :'
+    );
+
+    if (choice === '1') {
+        await exportGeneralStatsToPdf();
+    } else if (choice === '2') {
+        await exportEmployeeStatsToPdf();
+    } else {
+        alert('Choix annulé ou invalide');
+    }
 }
 
 // Période - Mois en cours (ne s'exécute PAS automatiquement)
