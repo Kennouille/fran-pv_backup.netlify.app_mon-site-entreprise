@@ -461,7 +461,7 @@ function displayMonthlyHours(total, employee, month, year) {
 }
 
 
-// Fonction pour obtenir les dates de la période précédente
+// Fonctions pour les statistiques générales avancées
 function getPreviousPeriodDates(startDateStr, endDateStr) {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
@@ -477,7 +477,6 @@ function getPreviousPeriodDates(startDateStr, endDateStr) {
     };
 }
 
-// Formatage des pourcentages de changement
 function formatPercentageChange(current, prev) {
     if (prev === 0) return current > 0 ? '+Inf%' : 'N/A';
     const change = ((current - prev) / prev) * 100;
@@ -485,9 +484,8 @@ function formatPercentageChange(current, prev) {
     return `${sign}${change.toFixed(2)}%`;
 }
 
-// Fonction principale pour récupérer les statistiques
-async function fetchStats(startDate, endDate) {
-    clearResults();
+async function fetchGeneralStats(startDate, endDate) {
+    clearGeneralResults();
     document.getElementById('loadingIndicator').textContent = 'Chargement des données...';
     document.getElementById('loadingIndicator').style.display = 'block';
 
@@ -602,7 +600,7 @@ async function fetchStats(startDate, endDate) {
         data: orderedEventsByDayOfWeek
     };
 
-    displayResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek);
+    displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek);
     updateComparisonDisplays(
         totalAmount, prevTotalAmount,
         averagePricePerEvent, prevAveragePricePerEvent,
@@ -630,7 +628,7 @@ function updateComparisonDisplays(
 }
 
 // Affichage des résultats avec graphiques
-function displayResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek) {
+function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek) {
     document.getElementById('totalAmount').innerHTML = `Montant total : <span class="value">${totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
     document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">${averagePricePerEvent.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
     document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">${averageEventsPerDay.toFixed(2)}</span>`;
@@ -713,8 +711,8 @@ function displayResults(totalAmount, averagePricePerEvent, averageEventsPerDay, 
     });
 }
 
-// Nettoyage des résultats
-function clearResults() {
+// Nettoyage des résultats généraux
+function clearGeneralResults() {
     document.getElementById('totalAmount').innerHTML = `Montant total : <span class="value">--</span>`;
     document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">--</span>`;
     document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">--</span>`;
@@ -803,21 +801,50 @@ function setCurrentMonth() {
 
     document.getElementById('startDate').value = start.toISOString().slice(0, 10);
     document.getElementById('endDate').value = end.toISOString().slice(0, 10);
-    updateStats();
+    updateGeneralStats();
 }
 
-// Initialisation
+// Mettre à jour les statistiques générales
+async function updateGeneralStats() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    if (startDate && endDate) {
+        if (new Date(startDate) > new Date(endDate)) {
+            return;
+        }
+        await fetchGeneralStats(startDate, endDate);
+    }
+}
+
+// Calcul manuel pour les statistiques générales
+function calculateGeneralManualPeriod() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    if (startDate && endDate) {
+        if (new Date(startDate) > new Date(endDate)) {
+            alert("La date de début ne peut pas être après la date de fin");
+            return;
+        }
+        fetchGeneralStats(startDate, endDate);
+    } else {
+        alert("Choisissez les dates de début et de fin de période pour faire le calcul.");
+    }
+}
+
+// Initialisation des statistiques générales
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('startDate').addEventListener('change', updateStats);
-    document.getElementById('endDate').addEventListener('change', updateStats);
+    document.getElementById('startDate').addEventListener('change', updateGeneralStats);
+    document.getElementById('endDate').addEventListener('change', updateGeneralStats);
     setCurrentMonth(); // Charger les données du mois en cours par défaut
 });
 
-// Fonctions globales
-window.setLastWeek = setLastWeek;
-window.setLastMonth = setLastMonth;
-window.setLast30Days = setLast30Days;
+// Exposer les fonctions globales pour les statistiques générales
 window.setCurrentMonth = setCurrentMonth;
-window.calculateManualPeriod = calculateManualPeriod;
+window.calculateGeneralManualPeriod = calculateGeneralManualPeriod;
 window.exportDataToCsv = exportDataToCsv;
 window.exportToPdf = exportToPdf;
+
+// Remplacer les anciennes fonctions par les nouvelles
+window.calculateManualPeriod = calculateGeneralManualPeriod;
+window.updateStats = updateGeneralStats;
+window.fetchStats = fetchGeneralStats;
