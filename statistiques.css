@@ -92,3 +92,65 @@ ul, ol {
 #eventsByPerson, #topClients {
     margin-top: 30px; /* Ajout d'espace entre les sections */
 }
+
+.employee-stats {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.employee-selection {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.select-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.select-group label {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.employee-results {
+    margin-top: 1rem;
+}
+
+.daily-hours-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.day-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.day-name {
+    font-weight: bold;
+}
+
+.day-hours {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.employee-results h4 {
+    margin-top: 1rem;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+}

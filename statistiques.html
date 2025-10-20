@@ -9,7 +9,53 @@
 <body>
     <div class="container">
         <h1>Statistiques</h1>
+
+        <!-- Nouvelle section pour les statistiques employés -->
+        <div class="employee-stats">
+            <h2>Statistiques Employés</h2>
+            <div class="employee-selection">
+                <div class="select-group">
+                    <label for="yearSelect">Année :</label>
+                    <select id="yearSelect">
+                        <!-- Les options seront ajoutées dynamiquement -->
+                    </select>
+                </div>
+                <div class="select-group">
+                    <label for="monthSelect">Mois :</label>
+                    <select id="monthSelect">
+                        <option value="1">Janvier</option>
+                        <option value="2">Février</option>
+                        <option value="3">Mars</option>
+                        <option value="4">Avril</option>
+                        <option value="5">Mai</option>
+                        <option value="6">Juin</option>
+                        <option value="7">Juillet</option>
+                        <option value="8">Août</option>
+                        <option value="9">Septembre</option>
+                        <option value="10">Octobre</option>
+                        <option value="11">Novembre</option>
+                        <option value="12">Décembre</option>
+                    </select>
+                </div>
+                <div class="select-group">
+                    <label for="employeeSelect">Employé :</label>
+                    <select id="employeeSelect">
+                        <!-- Les options seront ajoutées dynamiquement -->
+                    </select>
+                </div>
+                <button onclick="calculateEmployeeStats()">Calculer les statistiques</button>
+            </div>
+
+            <div class="employee-results">
+                <h3>Résultats pour l'employé :</h3>
+                <div id="employeeDailyHours"></div>
+                <div id="employeeWeeklyHours"></div>
+                <div id="employeeMonthlyHours"></div>
+            </div>
+        </div>
+
         <div class="date-selection">
+            <h2>Statistiques Générales</h2>
             <label for="startDate">Date de début :</label>
             <input type="date" id="startDate">
             <label for="endDate">Date de fin :</label>
@@ -18,7 +64,6 @@
                 <button onclick="setLastWeek()">Dernière semaine</button>
                 <button onclick="setLastMonth()">Mois précédent</button>
                 <button onclick="setLast30Days()">30 derniers jours</button>
-                <!-- Botón para calcular manualmente -->
                 <button onclick="calculateManualPeriod()">Calcul manuel</button>
             </div>
         </div>
