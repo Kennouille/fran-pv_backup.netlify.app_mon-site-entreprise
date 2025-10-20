@@ -5,7 +5,7 @@ async function fetchStats(startDate, endDate) {
 
     const { data, error } = await supabase
         .from('event_quot1_fran')
-        .select('Nom, Prix, Ajouté_par')
+        .select('Nom, Prix, Ajouté_pour')
         .gte('Date', startDate)
         .lte('Date', endDate);
 
@@ -19,7 +19,7 @@ async function fetchStats(startDate, endDate) {
 
     // Compter les événements ajoutés par chaque personne
     const eventsByPerson = data.reduce((acc, row) => {
-        acc[row.Ajouté_par] = (acc[row.Ajouté_par] || 0) + 1;
+        acc[row.Ajouté_pour] = (acc[row.Ajouté_pour] || 0) + 1;
         return acc;
     }, {});
 

@@ -3949,8 +3949,8 @@
                             `}
                         </td>
                         <td data-column="Observations">
-                          <textarea class="observation-text"
-                                    data-field="observations">${event.Observations || ''}</textarea>
+                            <textarea class="observation-text"
+                                      data-field="observations">${event.Observations || ''}</textarea>
                             <div class="photo-buttons">
                                 <button type="button" class="btn-photo" data-type="avant" data-user-id="${event.user_id}">
                                     ${getTranslation('photo_before')}
@@ -3983,6 +3983,14 @@
                                     </div>` : ''}
                             </div>
                         </td>
+
+                        <!-- Nouvelle colonne Nombre d'heures ajoutée ici -->
+                        <td class="editable-number-cell" contenteditable="${editableAttr}"
+                            data-column="nombre_heures"
+                            data-current-value="${event.nombre_heures !== null ? event.nombre_heures : ''}">
+                            ${event.nombre_heures !== null ? event.nombre_heures : ''}
+                        </td>
+
                         <td class="editable-select-cell" contenteditable="${editableAttr}" data-column="Ajouté_pour" data-current-value="${event.Ajouté_pour !== null ? event.Ajouté_pour : ''}">${event.Ajouté_pour !== null ? event.Ajouté_pour : ''}</td>
                         <td contenteditable="false" data-column="user_id" ${isConfigUser ? '' : 'hidden'}>${event.user_id !== null ? event.user_id : ''}</td>
                         <td ${isConfigUser ? '' : 'hidden'}>
