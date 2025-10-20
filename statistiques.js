@@ -21,13 +21,16 @@ let exportableStats = {
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 DOMContentLoaded - Début initialisation');
     initializeEmployeeStats();
 
-    // Initialiser les dates mais NE PAS calculer automatiquement
     if (document.getElementById('startDate') && document.getElementById('endDate')) {
-        setCurrentMonth(); // Remplit les dates seulement
-        clearGeneralResults(); // Masque les résultats initiaux
+        console.log('📝 Initialisation dates seulement');
+        setCurrentMonth(); // Remplit les dates
+        clearGeneralResults(); // Masque résultats
+        console.log('✅ Initialisation terminée - AUCUN calcul automatique');
     }
+    console.log('🎯 DOMContentLoaded - Fin initialisation');
 });
 
 // Initialisation des statistiques employés
@@ -490,6 +493,9 @@ function formatPercentageChange(current, prev) {
 }
 
 async function fetchGeneralStats(startDate, endDate) {
+    console.log('🚨 fetchGeneralStats appelé avec:', startDate, '->', endDate);
+    console.trace('Stack trace'); // Montre d'où vient l'appel
+
     clearGeneralResults();
     document.getElementById('loadingIndicator').textContent = 'Chargement des données...';
     document.getElementById('loadingIndicator').style.display = 'block';
@@ -812,6 +818,7 @@ async function exportToPdf() {
 
 // Période - Mois en cours (ne s'exécute PAS automatiquement)
 function setCurrentMonth() {
+    console.log('📊 setCurrentMonth appelé (remplissage dates seulement)');
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
     const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -824,8 +831,11 @@ function setCurrentMonth() {
 
 // Mettre à jour les statistiques générales
 async function updateGeneralStats() {
+    console.log('🔧 updateGeneralStats appelé');
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
+    console.log('📅 Dates:', startDate, endDate);
+
     if (startDate && endDate) {
         if (new Date(startDate) > new Date(endDate)) {
             return;
@@ -858,6 +868,7 @@ window.calculateManualPeriod = calculateGeneralManualPeriod;
 
 // Fonctions pour les boutons de période des statistiques générales
 window.setLastWeek = function() {
+    console.log('🔄 setLastWeek appelé MANUELLEMENT');
     const end = new Date();
     const start = new Date();
     start.setDate(end.getDate() - 7);
