@@ -22,10 +22,11 @@ let exportableStats = {
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
     initializeEmployeeStats();
-    // NE PAS appeler updateStats() ici car cela appelle l'ancienne fonction
-    // À la place, initialiser les stats générales si les éléments existent
+
+    // Initialiser les dates mais NE PAS calculer automatiquement
     if (document.getElementById('startDate') && document.getElementById('endDate')) {
-        setCurrentMonth(); // Charger les stats générales du mois en cours
+        setCurrentMonth(); // Remplit les dates seulement
+        clearGeneralResults(); // Masque les résultats initiaux
     }
 });
 
@@ -637,6 +638,12 @@ function displayGeneralResults(totalAmount, averagePricePerEvent, averageEventsP
     document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">${averagePricePerEvent.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
     document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">${averageEventsPerDay.toFixed(2)}</span>`;
 
+    // Afficher les graphiques
+    const chartsContainer = document.querySelector('.charts-container');
+    if (chartsContainer) {
+        chartsContainer.style.display = 'block';
+    }
+
     // Graphique événements par employé
     const eventsByPersonCtx = document.getElementById('eventsByPersonChart').getContext('2d');
     if (eventsByPersonChartInstance) { eventsByPersonChartInstance.destroy(); }
@@ -724,6 +731,12 @@ function clearGeneralResults() {
     document.getElementById('averagePricePerEventComparison').innerText = '';
     document.getElementById('averageEventsPerDayComparison').innerText = '';
 
+    // Masquer les graphiques
+    const chartsContainer = document.querySelector('.charts-container');
+    if (chartsContainer) {
+        chartsContainer.style.display = 'none';
+    }
+
     if (eventsByPersonChartInstance) { eventsByPersonChartInstance.destroy(); eventsByPersonChartInstance = null; }
     if (topClientsChartInstance) { topClientsChartInstance.destroy(); topClientsChartInstance = null; }
     if (eventsByDayOfWeekChartInstance) { eventsByDayOfWeekChartInstance.destroy(); eventsByDayOfWeekChartInstance = null; }
@@ -797,7 +810,7 @@ async function exportToPdf() {
     // Implémentation similaire à votre code existant
 }
 
-// Période - Mois en cours
+// Période - Mois en cours (ne s'exécute PAS automatiquement)
 function setCurrentMonth() {
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -805,7 +818,8 @@ function setCurrentMonth() {
 
     document.getElementById('startDate').value = start.toISOString().slice(0, 10);
     document.getElementById('endDate').value = end.toISOString().slice(0, 10);
-    updateGeneralStats();
+    // NE PAS appeler updateGeneralStats() automatiquement
+    // L'utilisateur devra cliquer sur "Calcul manuel"
 }
 
 // Mettre à jour les statistiques générales
