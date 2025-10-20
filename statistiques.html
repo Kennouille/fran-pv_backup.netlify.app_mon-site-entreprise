@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Statistiques</title>
     <link rel="stylesheet" href="statistiques.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Pour PDF (optionnel) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -62,18 +66,58 @@
                 <button onclick="setLastWeek()">Dernière semaine</button>
                 <button onclick="setLastMonth()">Mois précédent</button>
                 <button onclick="setLast30Days()">30 derniers jours</button>
+                <button onclick="setCurrentMonth()">Mois en cours</button>
                 <button onclick="calculateManualPeriod()">Calcul manuel</button>
+                <button onclick="exportDataToCsv()">Exporter CSV</button>
+                <button onclick="exportToPdf()">Exporter PDF</button>
             </div>
         </div>
 
         <!-- Display Statistics Results -->
         <div class="stats-results">
             <h2>Résultats :</h2>
-            <div id="totalAmount"></div>
-            <div id="eventsByPerson"></div>
-            <div id="topClients"></div>
+
+            <!-- Indicateur de chargement -->
+            <div id="loadingIndicator" style="display: none; padding: 10px; background: #f0f0f0; margin-bottom: 10px;"></div>
+
+            <!-- Métriques de synthèse -->
+            <div class="summary-metrics">
+                <div class="metric-card">
+                    <div id="totalAmount" class="metric-value">Montant total : --</div>
+                    <div id="totalAmountComparison" class="metric-comparison"></div>
+                </div>
+                <div class="metric-card">
+                    <div id="averagePricePerEvent" class="metric-value">Prix moyen par événement : --</div>
+                    <div id="averagePricePerEventComparison" class="metric-comparison"></div>
+                </div>
+                <div class="metric-card">
+                    <div id="averageEventsPerDay" class="metric-value">Moyenne événements/jour : --</div>
+                    <div id="averageEventsPerDayComparison" class="metric-comparison"></div>
+                </div>
+            </div>
+
+            <!-- Graphiques -->
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h3>Événements par employé</h3>
+                    <canvas id="eventsByPersonChart" height="300"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Top clients</h3>
+                    <canvas id="topClientsChart" height="300"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Événements par jour de la semaine</h3>
+                    <canvas id="eventsByDayOfWeekChart" height="300"></canvas>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <!-- Section pour l'export PDF (cachée) -->
+        <div id="statsReportSection" style="display: none;">
+            <h1>Rapport Statistiques</h1>
+            <div id="pdfContent"></div>
+        </div>
 
     <!-- Scripts -->
     <script type="module" src="statistiques.js"></script>

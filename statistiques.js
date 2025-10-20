@@ -2,6 +2,22 @@ import { supabase } from './supabaseClient.js';
 
 // Variables globales
 let employees = [];
+let eventsByPersonChartInstance = null;
+let topClientsChartInstance = null;
+let eventsByDayOfWeekChartInstance = null;
+
+// Structure pour l'export
+let exportableStats = {
+    period: { startDate: '', endDate: '' },
+    summaryMetrics: {
+        totalAmount: 0, averagePricePerEvent: 0, averageEventsPerDay: 0,
+        totalAmountChange: '', averagePricePerEventChange: '', averageEventsPerDayChange: ''
+    },
+    eventsByPerson: {},
+    topClients: [],
+    eventsByDayOfWeek: { labels: [], data: [] },
+    rawData: []
+};
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -247,7 +263,7 @@ function calculateMonthlyTotal(data) {
 
 // Afficher les heures par jour avec les totaux
 function displayDailyHours(hoursByDay, employee, year, month) {
-    let html = `<h4>Heures par jour pour ${employee} :</h4>`;
+    let html = `<h4>Calcul des heures pour ${employee} :</h4>`;
 
     // Grouper les jours par semaine
     const weeks = groupDaysByWeek(hoursByDay, year, month);
@@ -445,22 +461,80 @@ function displayMonthlyHours(total, employee, month, year) {
 }
 
 
-// Fonctions existantes (conservées)
+// Fonction pour obtenir les dates de la période précédente
+function getPreviousPeriodDates(startDateStr, endDateStr) {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const periodLengthDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const prevEndDate = new Date(startDate);
+    prevEndDate.setDate(startDate.getDate() - 1);
+    const prevStartDate = new Date(prevEndDate);
+    prevStartDate.setDate(prevEndDate.getDate() - periodLengthDays);
+    return {
+        prevStartDate: prevStartDate.toISOString().slice(0, 10),
+        prevEndDate: prevEndDate.toISOString().slice(0, 10)
+    };
+}
+
+// Formatage des pourcentages de changement
+function formatPercentageChange(current, prev) {
+    if (prev === 0) return current > 0 ? '+Inf%' : 'N/A';
+    const change = ((current - prev) / prev) * 100;
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${change.toFixed(2)}%`;
+}
+
+// Fonction principale pour récupérer les statistiques
 async function fetchStats(startDate, endDate) {
     clearResults();
+    document.getElementById('loadingIndicator').textContent = 'Chargement des données...';
+    document.getElementById('loadingIndicator').style.display = 'block';
 
     const { data, error } = await supabase
         .from('event_quot1_fran')
-        .select('Nom, Prix, Ajouté_pour')
+        .select('Nom, Prix, Ajouté_pour, Date')
         .gte('Date', startDate)
         .lte('Date', endDate);
 
+    document.getElementById('loadingIndicator').style.display = 'none';
+
     if (error) {
         console.error("Erreur de récupération :", error);
+        document.getElementById('totalAmount').innerText = 'Erreur de chargement';
+        document.getElementById('averagePricePerEvent').innerText = 'Erreur de chargement';
+        document.getElementById('averageEventsPerDay').innerText = 'Erreur de chargement';
+        updateComparisonDisplays(0, 0, 0, 0, 0, 0);
+        return;
+    }
+
+    exportableStats.period.startDate = startDate;
+    exportableStats.period.endDate = endDate;
+    exportableStats.rawData = data;
+
+    if (data.length === 0) {
+        document.getElementById('totalAmount').innerHTML = `Montant total : <span class="value">Aucune donnée</span>`;
+        document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">Aucune donnée</span>`;
+        document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">Aucune donnée</span>`;
+        exportableStats.summaryMetrics = {
+            totalAmount: 0, averagePricePerEvent: 0, averageEventsPerDay: 0,
+            totalAmountChange: 'N/A', averagePricePerEventChange: 'N/A', averageEventsPerDayChange: 'N/A'
+        };
+        exportableStats.eventsByPerson = {};
+        exportableStats.topClients = [];
+        exportableStats.eventsByDayOfWeek = { labels: [], data: [] };
+        updateComparisonDisplays(0, 0, 0, 0, 0, 0);
         return;
     }
 
     const totalAmount = data.reduce((sum, row) => sum + row.Prix, 0);
+    const averagePricePerEvent = data.length > 0 ? totalAmount / data.length : 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const numberOfDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const averageEventsPerDay = numberOfDays > 0 ? data.length / numberOfDays : 0;
+
     const eventsByPerson = data.reduce((acc, row) => {
         acc[row.Ajouté_pour] = (acc[row.Ajouté_pour] || 0) + 1;
         return acc;
@@ -470,88 +544,280 @@ async function fetchStats(startDate, endDate) {
         acc[row.Nom] = (acc[row.Nom] || 0) + row.Prix;
         return acc;
     }, {});
-
     const topClients = Object.entries(spendingByClient)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
 
-    displayResults(totalAmount, eventsByPerson, topClients);
-}
+    const dayNames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    const eventsByDayOfWeek = new Array(7).fill(0);
 
-function setLastWeek() {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 7);
-    document.getElementById('startDate').value = start.toISOString().slice(0, 10);
-    document.getElementById('endDate').value = end.toISOString().slice(0, 10);
-    updateStats();
-}
-
-function setLastMonth() {
-    const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const end = new Date(today.getFullYear(), today.getMonth(), 0);
-
-    const formattedStart = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
-    const formattedEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
-
-    document.getElementById('startDate').value = formattedStart;
-    document.getElementById('endDate').value = formattedEnd;
-    updateStats();
-}
-
-function setLast30Days() {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 30);
-    document.getElementById('startDate').value = start.toISOString().slice(0, 10);
-    document.getElementById('endDate').value = end.toISOString().slice(0, 10);
-    updateStats();
-}
-
-function clearResults() {
-    document.getElementById('totalAmount').innerText = '';
-    document.getElementById('eventsByPerson').innerText = '';
-    document.getElementById('topClients').innerText = '';
-}
-
-function displayResults(totalAmount, eventsByPerson, topClients) {
-    document.getElementById('totalAmount').innerText = `Montant total : ${totalAmount}€`;
-
-    let eventsText = "Nombre de rendez-vous par employé :\n";
-    for (const [person, count] of Object.entries(eventsByPerson)) {
-        eventsText += `${person} : ${count}\n`;
-    }
-    document.getElementById('eventsByPerson').innerText = eventsText;
-
-    let clientsText = "Top clients :\n";
-    topClients.forEach(([client, amount]) => {
-        clientsText += `${client} : ${amount}€\n`;
+    data.forEach(row => {
+        const [year, month, day] = row.Date.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        let dayIndex = date.getDay();
+        if (dayIndex === 0) {
+            dayIndex = 6;
+        } else {
+            dayIndex--;
+        }
+        eventsByDayOfWeek[dayIndex]++;
     });
-    document.getElementById('topClients').innerText = clientsText;
-}
 
-function calculateManualPeriod() {
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    if (startDate && endDate) {
-        fetchStats(startDate, endDate);
-    } else {
-        alert("Choisissez les dates de début et de fin de période pour faire le calcul.");
+    const orderedDayNames = dayNames;
+    const orderedEventsByDayOfWeek = eventsByDayOfWeek;
+
+    const { prevStartDate, prevEndDate } = getPreviousPeriodDates(startDate, endDate);
+    const { data: prevData, error: prevError } = await supabase
+        .from('event_quot1_fran')
+        .select('Prix')
+        .gte('Date', prevStartDate)
+        .lte('Date', prevEndDate);
+
+    let prevTotalAmount = 0;
+    let prevAveragePricePerEvent = 0;
+    let prevAverageEventsPerDay = 0;
+
+    if (!prevError && prevData.length > 0) {
+        prevTotalAmount = prevData.reduce((sum, row) => sum + row.Prix, 0);
+        prevAveragePricePerEvent = prevData.length > 0 ? prevTotalAmount / prevData.length : 0;
+        const prevStart = new Date(prevStartDate);
+        const prevEnd = new Date(prevEndDate);
+        const prevDiffTime = Math.abs(prevEnd - prevStart);
+        const prevNumberOfDays = Math.ceil(prevDiffTime / (1000 * 60 * 60 * 24)) + 1;
+        prevAverageEventsPerDay = prevNumberOfDays > 0 ? prevData.length / prevNumberOfDays : 0;
     }
+
+    exportableStats.summaryMetrics = {
+        totalAmount: totalAmount,
+        averagePricePerEvent: averagePricePerEvent,
+        averageEventsPerDay: averageEventsPerDay,
+        totalAmountChange: formatPercentageChange(totalAmount, prevTotalAmount),
+        averagePricePerEventChange: formatPercentageChange(averagePricePerEvent, prevAveragePricePerEvent),
+        averageEventsPerDayChange: formatPercentageChange(averageEventsPerDay, prevAverageEventsPerDay)
+    };
+    exportableStats.eventsByPerson = eventsByPerson;
+    exportableStats.topClients = topClients;
+    exportableStats.eventsByDayOfWeek = {
+        labels: orderedDayNames,
+        data: orderedEventsByDayOfWeek
+    };
+
+    displayResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek);
+    updateComparisonDisplays(
+        totalAmount, prevTotalAmount,
+        averagePricePerEvent, prevAveragePricePerEvent,
+        averageEventsPerDay, prevAverageEventsPerDay
+    );
 }
 
-async function updateStats() {
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    if (startDate && endDate) {
-        await fetchStats(startDate, endDate);
+// Mise à jour des comparaisons
+function updateComparisonDisplays(
+    currentTotal, prevTotal,
+    currentAvgPrice, prevAvgPrice,
+    currentAvgEvents, prevAvgEvents
+) {
+    const formatChangeForDisplay = (current, prev) => {
+        if (prev === 0) return current > 0 ? `<span style="color: green;">+Inf%</span>` : `N/A`;
+        const change = ((current - prev) / prev) * 100;
+        const color = change >= 0 ? 'green' : 'red';
+        const sign = change >= 0 ? '+' : '';
+        return `<span style="color: ${color};">${sign}${change.toFixed(2)}%</span> vs période précédente`;
+    };
+
+    document.getElementById('totalAmountComparison').innerHTML = formatChangeForDisplay(currentTotal, prevTotal);
+    document.getElementById('averagePricePerEventComparison').innerHTML = formatChangeForDisplay(currentAvgPrice, prevAvgPrice);
+    document.getElementById('averageEventsPerDayComparison').innerHTML = formatChangeForDisplay(currentAvgEvents, prevAvgEvents);
+}
+
+// Affichage des résultats avec graphiques
+function displayResults(totalAmount, averagePricePerEvent, averageEventsPerDay, eventsByPerson, topClients, orderedDayNames, orderedEventsByDayOfWeek) {
+    document.getElementById('totalAmount').innerHTML = `Montant total : <span class="value">${totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
+    document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">${averagePricePerEvent.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>`;
+    document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">${averageEventsPerDay.toFixed(2)}</span>`;
+
+    // Graphique événements par employé
+    const eventsByPersonCtx = document.getElementById('eventsByPersonChart').getContext('2d');
+    if (eventsByPersonChartInstance) { eventsByPersonChartInstance.destroy(); }
+    eventsByPersonChartInstance = new Chart(eventsByPersonCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(eventsByPerson),
+            datasets: [{
+                label: 'Nombre d\'événements',
+                data: Object.values(eventsByPerson),
+                backgroundColor: 'rgba(0, 170, 163, 0.7)',
+                borderColor: 'rgba(0, 170, 163, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Graphique top clients
+    const topClientsCtx = document.getElementById('topClientsChart').getContext('2d');
+    if (topClientsChartInstance) { topClientsChartInstance.destroy(); }
+    topClientsChartInstance = new Chart(topClientsCtx, {
+        type: 'bar',
+        data: {
+            labels: topClients.map(client => client[0]),
+            datasets: [{
+                label: 'Montant dépensé',
+                data: topClients.map(client => client[1]),
+                backgroundColor: [
+                    'rgba(30, 115, 190, 0.7)', 'rgba(0, 170, 163, 0.7)', 'rgba(87, 87, 96, 0.7)',
+                    'rgba(255, 99, 132, 0.7)', 'rgba(255, 159, 64, 0.7)', 'rgba(255, 205, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(201, 203, 207, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(30, 115, 190, 1)', 'rgba(0, 170, 163, 1)', 'rgba(87, 87, 96, 1)',
+                    'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)',
+                    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Graphique événements par jour de la semaine
+    const eventsByDayOfWeekCtx = document.getElementById('eventsByDayOfWeekChart').getContext('2d');
+    if (eventsByDayOfWeekChartInstance) { eventsByDayOfWeekChartInstance.destroy(); }
+    eventsByDayOfWeekChartInstance = new Chart(eventsByDayOfWeekCtx, {
+        type: 'bar',
+        data: {
+            labels: orderedDayNames,
+            datasets: [{
+                label: 'Nombre d\'événements',
+                data: orderedEventsByDayOfWeek,
+                backgroundColor: 'rgba(30, 115, 190, 0.7)',
+                borderColor: 'rgba(30, 115, 190, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+// Nettoyage des résultats
+function clearResults() {
+    document.getElementById('totalAmount').innerHTML = `Montant total : <span class="value">--</span>`;
+    document.getElementById('averagePricePerEvent').innerHTML = `Prix moyen par événement : <span class="value">--</span>`;
+    document.getElementById('averageEventsPerDay').innerHTML = `Moyenne événements/jour : <span class="value">--</span>`;
+    document.getElementById('totalAmountComparison').innerText = '';
+    document.getElementById('averagePricePerEventComparison').innerText = '';
+    document.getElementById('averageEventsPerDayComparison').innerText = '';
+
+    if (eventsByPersonChartInstance) { eventsByPersonChartInstance.destroy(); eventsByPersonChartInstance = null; }
+    if (topClientsChartInstance) { topClientsChartInstance.destroy(); topClientsChartInstance = null; }
+    if (eventsByDayOfWeekChartInstance) { eventsByDayOfWeekChartInstance.destroy(); eventsByDayOfWeekChartInstance = null; }
+}
+
+// Export CSV
+function exportDataToCsv() {
+    if (exportableStats.rawData.length === 0) {
+        alert('Aucune donnée à exporter');
+        return;
     }
+
+    let csvContent = '';
+    const escapeCsvValue = (value) => {
+        if (value === null || value === undefined) return '""';
+        let stringValue = String(value);
+        if (stringValue.includes('"')) {
+            stringValue = stringValue.replace(/"/g, '""');
+        }
+        return `"${stringValue}"`;
+    };
+
+    const formatCurrencyForCsv = (value) => {
+        return escapeCsvValue(value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }).replace(/,/g, '.'));
+    };
+
+    const formatNumberForCsv = (value, fixed = 0) => escapeCsvValue(value.toFixed(fixed).replace(/,/g, '.'));
+
+    csvContent += '"Rapport Statistiques"\n\n';
+    csvContent += '"Période de calcul"\n';
+    csvContent += '"Date de début",,"Date de fin"\n';
+    csvContent += `${escapeCsvValue(exportableStats.period.startDate)},,${escapeCsvValue(exportableStats.period.endDate)}\n\n`;
+    csvContent += '"Métriques de synthèse"\n';
+    csvContent += '"Métrique",,,"Valeur actuelle","Évolution"\n';
+    csvContent += `${escapeCsvValue('Montant total')},,,${formatCurrencyForCsv(exportableStats.summaryMetrics.totalAmount)},${escapeCsvValue(exportableStats.summaryMetrics.totalAmountChange)}\n`;
+    csvContent += `${escapeCsvValue('Prix moyen par événement')},,,${formatCurrencyForCsv(exportableStats.summaryMetrics.averagePricePerEvent)},${escapeCsvValue(exportableStats.summaryMetrics.averagePricePerEventChange)}\n`;
+    csvContent += `${escapeCsvValue('Moyenne événements/jour')},,,${formatNumberForCsv(exportableStats.summaryMetrics.averageEventsPerDay, 2)},${escapeCsvValue(exportableStats.summaryMetrics.averageEventsPerDayChange)}\n\n`;
+    csvContent += '"Événements par employé"\n';
+    csvContent += '"Employé","Nombre d\'événements"\n';
+    for (const person in exportableStats.eventsByPerson) {
+        csvContent += `${escapeCsvValue(person)},${escapeCsvValue(exportableStats.eventsByPerson[person])}\n`;
+    }
+    csvContent += '\n';
+    csvContent += '"Top clients"\n';
+    csvContent += '"Client",,,"Montant dépensé"\n';
+    exportableStats.topClients.forEach(client => {
+        csvContent += `${escapeCsvValue(client[0])},,,${formatCurrencyForCsv(client[1])}\n`;
+    });
+    csvContent += '\n';
+    csvContent += '"Événements par jour de la semaine"\n';
+    csvContent += '"Jour de la semaine","Nombre d\'événements"\n';
+    exportableStats.eventsByDayOfWeek.labels.forEach((label, index) => {
+        csvContent += `${escapeCsvValue(label)},${escapeCsvValue(exportableStats.eventsByDayOfWeek.data[index])}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `statistiques_${exportableStats.period.startDate}_${exportableStats.period.endDate}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
-// Exposer les fonctions globales
+// Export PDF (nécessite les bibliothèques html2canvas et jspdf)
+async function exportToPdf() {
+    alert('Fonction PDF à implémenter avec html2canvas et jspdf');
+    // Implémentation similaire à votre code existant
+}
+
+// Période - Mois en cours
+function setCurrentMonth() {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    document.getElementById('startDate').value = start.toISOString().slice(0, 10);
+    document.getElementById('endDate').value = end.toISOString().slice(0, 10);
+    updateStats();
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('startDate').addEventListener('change', updateStats);
+    document.getElementById('endDate').addEventListener('change', updateStats);
+    setCurrentMonth(); // Charger les données du mois en cours par défaut
+});
+
+// Fonctions globales
 window.setLastWeek = setLastWeek;
 window.setLastMonth = setLastMonth;
 window.setLast30Days = setLast30Days;
+window.setCurrentMonth = setCurrentMonth;
 window.calculateManualPeriod = calculateManualPeriod;
-window.calculateEmployeeStats = calculateEmployeeStats;
+window.exportDataToCsv = exportDataToCsv;
+window.exportToPdf = exportToPdf;
