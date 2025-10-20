@@ -264,40 +264,98 @@ function calculateMonthlyTotal(data) {
     }, 0);
 }
 
-// Afficher les heures par jour (version encore plus robuste)
+// Afficher les heures par jour groupées par semaine
 function displayDailyHours(hoursByDay, employee, year, month) {
     let html = `<h4>Heures par jour pour ${employee} :</h4>`;
-    html += '<div class="daily-hours-grid">';
 
-    // Créer un tableau avec les jours du mois
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const monthDays = [];
+    // Grouper les jours par semaine
+    const weeks = groupDaysByWeek(hoursByDay, year, month);
+
+    // Afficher chaque semaine
+    weeks.forEach(week => {
+        html += `<div class="week-section">`;
+        html += `<h5>${week.weekLabel}</h5>`;
+        html += `<div class="week-days-grid">`;
+
+        // Afficher les jours de la semaine
+        week.days.forEach(day => {
+            html += `
+                <div class="week-day-item">
+                    <div class="day-header">${day.dayName} ${day.dayNumber}</div>
+                    <div class="day-hours">${day.hours.toFixed(1)}h</div>
+                    <div class="day-date">${day.formattedDate}</div>
+                </div>
+            `;
+        });
+
+        html += `</div></div>`;
+    });
+
+    document.getElementById('employeeDailyHours').innerHTML = html;
+}
+
+// Grouper les jours par semaine
+function groupDaysByWeek(hoursByDay, year, month) {
+    const weeks = {};
+    const monthInt = parseInt(month);
+    const yearInt = parseInt(year);
+
+    // Obtenir tous les jours du mois
+    const daysInMonth = new Date(yearInt, monthInt, 0).getDate();
 
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        monthDays.push({
+        const dateStr = `${yearInt}-${monthInt.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        const dateObj = new Date(yearInt, monthInt - 1, day);
+
+        // Obtenir la semaine
+        const weekNumber = getWeekNumberLocal(dateObj);
+        const weekKey = `Semaine ${weekNumber}`;
+
+        if (!weeks[weekKey]) {
+            weeks[weekKey] = {
+                weekLabel: weekKey,
+                days: []
+            };
+        }
+
+        const dayName = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
+        const formattedDate = dateObj.toLocaleDateString('fr-FR');
+        const hours = hoursByDay[dateStr] || 0;
+
+        weeks[weekKey].days.push({
             dateStr: dateStr,
-            dateObj: new Date(year, month - 1, day), // Création directe sans décalage
-            hours: hoursByDay[dateStr] || 0
+            dayName: dayName,
+            dayNumber: day,
+            formattedDate: formattedDate,
+            hours: hours
         });
     }
 
-    monthDays.forEach(day => {
-        const dayName = day.dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
-        const dayNumber = day.dateObj.getDate();
-        const formattedDate = day.dateObj.toLocaleDateString('fr-FR');
-
-        html += `
-            <div class="day-item">
-                <span class="day-name">${dayName} ${dayNumber}</span>
-                <span class="day-hours">${day.hours.toFixed(1)}h</span>
-                <div class="day-date">${formattedDate}</div>
-            </div>
-        `;
+    // Convertir en tableau et trier par semaine
+    return Object.values(weeks).sort((a, b) => {
+        const weekA = parseInt(a.weekLabel.replace('Semaine ', ''));
+        const weekB = parseInt(b.weekLabel.replace('Semaine ', ''));
+        return weekA - weekB;
     });
+}
 
-    html += '</div>';
-    document.getElementById('employeeDailyHours').innerHTML = html;
+// Obtenir le numéro de semaine local
+function getWeekNumberLocal(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+
+    // Premier jour de l'année
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+
+    // Ajuster pour que la semaine commence le lundi
+    const dayOfWeek = d.getDay();
+    const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lundi=0, Dimanche=6
+
+    // Calculer le numéro de semaine
+    const diff = Math.floor((d - yearStart) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.floor((diff + yearStart.getDay() - 1) / 7) + 1;
+
+    return weekNumber;
 }
 
 // Afficher les heures par semaine (version corrigée)
