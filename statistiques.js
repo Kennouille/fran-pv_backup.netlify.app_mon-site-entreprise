@@ -111,22 +111,25 @@ function calculateHoursByDay(data, year, month) {
     const daysInMonth = new Date(year, month, 0).getDate();
     const hoursByDay = {};
 
-    // Initialiser tous les jours du mois à 0 avec les bonnes dates
+    // Initialiser uniquement les jours du mois (du 1er au dernier)
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         hoursByDay[dateStr] = 0;
     }
 
-    // Ajouter les heures réelles
+    // Ajouter les heures réelles uniquement pour les dates du mois
     data.forEach(event => {
         if (event.nombre_heures) {
-            // S'assurer que la date est bien dans le mois sélectionné
             const eventDate = new Date(event.Date);
             const eventYear = eventDate.getFullYear();
             const eventMonth = eventDate.getMonth() + 1;
 
+            // Vérifier que la date est bien dans le mois sélectionné
             if (eventYear == year && eventMonth == month) {
-                hoursByDay[event.Date] = (hoursByDay[event.Date] || 0) + event.nombre_heures;
+                const dateStr = event.Date; // Format YYYY-MM-DD
+                if (hoursByDay[dateStr] !== undefined) {
+                    hoursByDay[dateStr] += event.nombre_heures;
+                }
             }
         }
     });
@@ -162,20 +165,27 @@ function calculateHoursByWeekLocal(data, year, month) {
     return weeks;
 }
 
-// Obtenir toutes les semaines du mois
+
+// Obtenir toutes les semaines du mois (version corrigée)
 function getAllWeeksInMonth(year, month) {
     const weeks = [];
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
+    const firstDay = new Date(year, month - 1, 1); // 1er du mois
+    const lastDay = new Date(year, month, 0); // Dernier du mois
 
     let currentDate = new Date(firstDay);
 
-    // Reculer jusqu'au lundi de la semaine
-    while (currentDate.getDay() !== 1) { // 1 = lundi
-        currentDate.setDate(currentDate.getDate() - 1);
+    // Commencer au 1er du mois, pas besoin de reculer
+    // Si le 1er n'est pas un lundi, on commence quand même au 1er
+    const weekStart = new Date(currentDate);
+
+    // Trouver le lundi de la semaine qui contient le 1er du mois
+    while (weekStart.getDay() !== 1) { // 1 = lundi
+        weekStart.setDate(weekStart.getDate() - 1);
     }
 
-    // Avancer semaine par semaine
+    currentDate = new Date(weekStart);
+
+    // Avancer semaine par semaine jusqu'à dépasser le mois
     while (currentDate <= lastDay || currentDate.getMonth() === month - 1) {
         const weekStart = new Date(currentDate);
         const weekEnd = new Date(currentDate);
@@ -260,8 +270,14 @@ function displayDailyHours(hoursByDay, employee, year, month) {
     let html = `<h4>Heures par jour pour ${employee} :</h4>`;
     html += '<div class="daily-hours-grid">';
 
-    // Trier les dates
-    const sortedDates = Object.keys(hoursByDay).sort();
+    // Filtrer et trier uniquement les dates du mois
+    const sortedDates = Object.keys(hoursByDay)
+        .filter(date => {
+            const dateObj = new Date(date);
+            return dateObj.getFullYear() == year &&
+                   (dateObj.getMonth() + 1) == month;
+        })
+        .sort();
 
     sortedDates.forEach(date => {
         const dateObj = new Date(date);
