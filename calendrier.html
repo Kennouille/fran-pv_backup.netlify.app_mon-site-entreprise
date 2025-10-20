@@ -5391,27 +5391,30 @@
                     const minCell = row.querySelector('[data-column="Min"]')?.textContent?.trim() || '';
                     const lieuCell = row.querySelector('[data-column="Lieu"]')?.textContent?.trim() || getTranslation('location_not_available');
 
-                    // Récupérer l'ID de l'événement depuis la ligne
-                    const eventId = row.getAttribute('data-event-id') || row.querySelector('[data-column="ID"]')?.textContent?.trim();
+                    // Récupérer le user_id depuis la ligne
+                    const userId = row.getAttribute('data-user-id') || row.querySelector('[data-column="ID"]')?.textContent?.trim();
 
                     let travailValue = getTranslation('work_not_specified');
 
-                    // Si on a un ID d'événement, chercher le Travail dans Supabase
-                    if (eventId) {
+                    // Si on a un user_id, chercher le Travail dans Supabase
+                    if (userId) {
                         try {
+                            console.log('Recherche du travail pour user_id:', userId);
+
                             const { data, error } = await supabase
                                 .from('event_quot1_fran')
                                 .select('Travail')
-                                .eq('id', eventId)
+                                .eq('user_id', userId)  // Utiliser user_id au lieu de id
                                 .single();
 
                             if (!error && data && data.Travail) {
                                 travailValue = data.Travail;
+                                console.log('Travail trouvé dans Supabase:', travailValue);
                             } else {
-                                console.warn(getTranslation('log_work_not_found_supabase'), eventId, error);
+                                console.warn(getTranslation('log_work_not_found_supabase'), userId, error);
                                 // Fallback sur la valeur du tableau si disponible
                                 const travailCell = row.querySelector('[data-column="Travail"]')?.textContent?.trim();
-                                if (travailCell) {
+                                if (travailCell && travailCell !== '-- Sélectionner le statut --') {
                                     travailValue = travailCell;
                                 }
                             }
@@ -5419,17 +5422,21 @@
                             console.error(getTranslation('error_fetching_work_supabase'), error);
                             // Fallback sur la valeur du tableau
                             const travailCell = row.querySelector('[data-column="Travail"]')?.textContent?.trim();
-                            if (travailCell) {
+                            if (travailCell && travailCell !== '-- Sélectionner le statut --') {
                                 travailValue = travailCell;
                             }
                         }
                     } else {
+                        console.warn('Aucun user_id trouvé pour cette ligne');
                         // Fallback si pas d'ID - utiliser la colonne du tableau
                         const travailCell = row.querySelector('[data-column="Travail"]')?.textContent?.trim();
-                        if (travailCell) {
+                        if (travailCell && travailCell !== '-- Sélectionner le statut --') {
                             travailValue = travailCell;
                         }
                     }
+
+                    // Nettoyer le texte du travail (supprimer les options de sélection)
+                    travailValue = travailValue.replace(/-- Sélectionner le statut --/g, '').trim();
 
                     mensaje = getTranslation('whatsapp_msg_type_4_part1') + `\n\n*` + getTranslation('whatsapp_msg_type_4_confirmation_title') + `*\n\n- ` + getTranslation('whatsapp_msg_type_4_date') + `: ${dateCell}\n- ` + getTranslation('whatsapp_msg_type_4_time') + `: ${heureCell}:${minCell}\n- ` + getTranslation('whatsapp_msg_type_4_location') + `: ${lieuCell}\n- ` + getTranslation('whatsapp_msg_type_4_work') + `: ${travailValue}\n\n` + getTranslation('whatsapp_msg_type_4_part2');
                     break;
