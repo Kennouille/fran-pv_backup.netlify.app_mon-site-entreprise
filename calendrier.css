@@ -1438,3 +1438,33 @@ td[data-column="Observations"] {
     color: #f44336;
     font-size: 12px;
 }
+
+/* Styles pour la barre d'alertes de récurrence */
+.recurrence-minicard {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid #ff8c00;
+    transition: all 0.3s ease;
+}
+
+.recurrence-minicard:hover {
+    background: white;
+    transform: scale(1.05);
+}
+
+.recurrence-minicard.urgent {
+    background: rgba(255, 100, 100, 0.9);
+    color: white;
+}
+
+.recurrence-minicard.warning {
+    background: rgba(255, 165, 0, 0.9);
+}
+
+.recurrence-minicard.info {
+    background: rgba(255, 255, 255, 0.9);
+}

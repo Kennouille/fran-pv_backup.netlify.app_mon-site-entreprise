@@ -351,6 +351,168 @@
             }
         }
 
+        // Fonction pour afficher/masquer la barre d'alertes
+        function toggleRecurrenceAlertBar(show) {
+            const alertBar = document.getElementById('recurrence-alert-bar');
+            alertBar.style.display = show ? 'block' : 'none';
+        }
+
+        // Fonction pour mettre à jour le compteur d'alertes
+        function updateAlertCount(count) {
+            document.getElementById('recurrence-alert-count').textContent = count + ' ALERTES RÉCURRENCE';
+        }
+
+        // Fermeture de la barre
+        document.getElementById('close-alert-bar').addEventListener('click', function() {
+            toggleRecurrenceAlertBar(false);
+        });
+
+        // Fermeture du modal en cliquant à l'extérieur
+        document.getElementById('recurrence-alert-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Fonction pour scanner les récurrences qui se terminent bientôt
+        async function scanEndingRecurrences() {
+            console.log("🔍 Scan des récurrences en cours...");
+
+            try {
+                // Récupérer toutes les récurrences actives
+                const { data: events, error } = await supabase
+                    .from('event_quot1_fran')
+                    .select('*')
+                    .not('recurrence_rule', 'is', null)
+                    .not('recurrence_id', 'is', null);
+
+                if (error) {
+                    console.error("Erreur lors du scan:", error);
+                    return;
+                }
+
+                // Grouper par recurrence_id pour éviter les doublons
+                const uniqueRecurrences = {};
+                events.forEach(event => {
+                    if (!uniqueRecurrences[event.recurrence_id]) {
+                        uniqueRecurrences[event.recurrence_id] = event;
+                    }
+                });
+
+                const alerts = [];
+                const today = normalizeToMidnight(new Date());
+
+                // Analyser chaque récurrence unique
+                for (const recurrenceId in uniqueRecurrences) {
+                    const event = uniqueRecurrences[recurrenceId];
+
+                    try {
+                        const rule = JSON.parse(event.recurrence_rule);
+
+                        if (rule.endDate) {
+                            const endDate = parseLocalDate(rule.endDate);
+                            const daysUntilEnd = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+
+                            // Si la récurrence se termine dans moins de 30 jours
+                            if (daysUntilEnd >= 0 && daysUntilEnd <= 30) {
+                                alerts.push({
+                                    event: event,
+                                    rule: rule,
+                                    daysUntilEnd: daysUntilEnd,
+                                    recurrenceId: recurrenceId
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Erreur parsing recurrence_rule:", e);
+                    }
+                }
+
+                // Trier par urgence (jours restants)
+                alerts.sort((a, b) => a.daysUntilEnd - b.daysUntilEnd);
+
+                // Mettre à jour l'affichage
+                updateRecurrenceAlerts(alerts);
+
+            } catch (error) {
+                console.error("Erreur générale du scan:", error);
+            }
+        }
+
+        // Fonction pour mettre à jour l'affichage des alertes
+        function updateRecurrenceAlerts(alerts) {
+            const alertBar = document.getElementById('recurrence-alert-bar');
+            const minicardsContainer = document.getElementById('recurrence-alert-minicards');
+            const countElement = document.getElementById('recurrence-alert-count');
+
+            // Vider les mini-cartes existantes
+            minicardsContainer.innerHTML = '';
+
+            if (alerts.length === 0) {
+                // Masquer la barre si aucune alerte
+                toggleRecurrenceAlertBar(false);
+                return;
+            }
+
+            // Mettre à jour le compteur
+            updateAlertCount(alerts.length);
+
+            // Créer les mini-cartes
+            alerts.forEach(alert => {
+                const minicard = document.createElement('div');
+                minicard.className = `recurrence-minicard ${
+                    alert.daysUntilEnd <= 7 ? 'urgent' :
+                    alert.daysUntilEnd <= 15 ? 'warning' : 'info'
+                }`;
+
+                minicard.innerHTML = `
+                    📞 ${alert.event.Téléphone} - J-${alert.daysUntilEnd}
+                `;
+
+                minicard.addEventListener('click', () => {
+                    showRecurrenceAlertDetail(alert);
+                });
+
+                minicardsContainer.appendChild(minicard);
+            });
+
+            // Afficher la barre
+            toggleRecurrenceAlertBar(true);
+        }
+
+        // Fonction pour afficher le détail d'une alerte (à compléter ensuite)
+        function showRecurrenceAlertDetail(alert) {
+            console.log("Détail de l'alerte:", alert);
+            // Pour l'instant, on va juste afficher une alerte simple
+            alert("Détail de l'alerte pour: " + alert.event.Téléphone + " - J-" + alert.daysUntilEnd);
+
+            // Dans la prochaine étape, on remplira le modal avec toutes les infos
+            // et les boutons d'action
+        }
+
+        // Scanner au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Scanner immédiatement
+            scanEndingRecurrences();
+
+            // Scanner toutes les heures (pour les tests)
+            setInterval(scanEndingRecurrences, 60 * 60 * 1000);
+
+            // Scanner tous les jours à 8h00
+            const now = new Date();
+            const next8AM = new Date();
+            next8AM.setHours(8, 0, 0, 0);
+            if (now > next8AM) {
+                next8AM.setDate(next8AM.getDate() + 1);
+            }
+
+            const timeUntil8AM = next8AM - now;
+            setTimeout(() => {
+                scanEndingRecurrences();
+                setInterval(scanEndingRecurrences, 24 * 60 * 60 * 1000); // Tous les jours
+            }, timeUntil8AM);
+        });
+
 
 
         function formatDateLocal(date) {
@@ -6493,6 +6655,29 @@
 </head>
 
 <body>
+    <!-- Barre de notification des récurrences -->
+    <div id="recurrence-alert-bar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 40px; background: rgba(255, 165, 0, 0.95); z-index: 9999; border-bottom: 2px solid #ff8c00;">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 100%; padding: 0 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: bold;">🔔</span>
+                <span id="recurrence-alert-count" style="font-weight: bold;">0 ALERTES RÉCURRENCE</span>
+            </div>
+            <div id="recurrence-alert-minicards" style="display: flex; gap: 10px; overflow-x: auto; flex: 1; margin: 0 20px;">
+                <!-- Les mini-cartes seront ajoutées dynamiquement ici -->
+            </div>
+            <button id="close-alert-bar" style="background: none; border: none; font-size: 16px; cursor: pointer;">✕</button>
+        </div>
+    </div>
+
+    <!-- Modal de détail des alertes -->
+    <div id="recurrence-alert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div id="recurrence-alert-content">
+                <!-- Le contenu détaillé sera injecté ici -->
+            </div>
+        </div>
+    </div>
+
     <div class="background-image"></div>
     <div id="temporaryMessage" style="display: none; position: fixed; top: 10px; right: 10px; background: #66D19E; color: white; padding: 10px; border-radius: 5px; z-index: 1000;"></div>
     <div class="welcome-message" id="welcome-message"></div>
