@@ -832,19 +832,12 @@ function calculateGeneralManualPeriod() {
 }
 
 // Initialisation des statistiques générales
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('startDate').addEventListener('change', updateGeneralStats);
-    document.getElementById('endDate').addEventListener('change', updateGeneralStats);
-    setCurrentMonth(); // Charger les données du mois en cours par défaut
+// Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEmployeeStats();
+    // NE PAS appeler updateStats() ici car cela appelle l'ancienne fonction
+    // À la place, initialiser les stats générales si les éléments existent
+    if (document.getElementById('startDate') && document.getElementById('endDate')) {
+        setCurrentMonth(); // Charger les stats générales du mois en cours
+    }
 });
-
-// Exposer les fonctions globales pour les statistiques générales
-window.setCurrentMonth = setCurrentMonth;
-window.calculateGeneralManualPeriod = calculateGeneralManualPeriod;
-window.exportDataToCsv = exportDataToCsv;
-window.exportToPdf = exportToPdf;
-
-// Remplacer les anciennes fonctions par les nouvelles
-window.calculateManualPeriod = calculateGeneralManualPeriod;
-window.updateStats = updateGeneralStats;
-window.fetchStats = fetchGeneralStats;
