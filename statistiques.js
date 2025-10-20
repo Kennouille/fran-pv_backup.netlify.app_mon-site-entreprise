@@ -434,6 +434,14 @@ function getWeekNumberLocal(date) {
 
 // Afficher les heures par semaine (version corrigée)
 function displayWeeklyHours(hoursByWeek, employee) {
+    const container = document.getElementById('employeeWeeklyHours');
+
+    // Vérifier si l'élément existe
+    if (!container) {
+        console.warn('❌ Élément employeeWeeklyHours non trouvé dans le DOM');
+        return;
+    }
+
     let html = `<h4>Heures par semaine pour ${employee} :</h4>`;
 
     // Trier les semaines par ordre chronologique
@@ -450,7 +458,8 @@ function displayWeeklyHours(hoursByWeek, employee) {
         });
     }
 
-    document.getElementById('employeeWeeklyHours').innerHTML = html;
+    container.innerHTML = html;
+    console.log('✅ displayWeeklyHours exécuté avec succès');
 }
 
 // Afficher le total mensuel
