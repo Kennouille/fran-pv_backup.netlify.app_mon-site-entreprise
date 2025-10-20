@@ -5386,14 +5386,53 @@
                      mensaje = getTranslation('whatsapp_msg_type_3'); // Traduire
                      break;
                  case 4:
-                     const dateCell = row.querySelector('[data-column="Date"]')?.textContent?.trim() || getTranslation('date_not_available'); // Traduire
-                     const heureCell = row.querySelector('[data-column="Heure"]')?.textContent?.trim() || '';
-                     const minCell = row.querySelector('[data-column="Min"]')?.textContent?.trim() || '';
-                     const lieuCell = row.querySelector('[data-column="Lieu"]')?.textContent?.trim() || getTranslation('location_not_available'); // Traduire
-                     const travailCell = row.querySelector('[data-column="Travail"]')?.textContent?.trim() || getTranslation('work_not_specified'); // Traduire
+                    const dateCell = row.querySelector('[data-column="Date"]')?.textContent?.trim() || getTranslation('date_not_available');
+                    const heureCell = row.querySelector('[data-column="Heure"]')?.textContent?.trim() || '';
+                    const minCell = row.querySelector('[data-column="Min"]')?.textContent?.trim() || '';
+                    const lieuCell = row.querySelector('[data-column="Lieu"]')?.textContent?.trim() || getTranslation('location_not_available');
 
-                     mensaje = getTranslation('whatsapp_msg_type_4_part1') + `\n\n*` + getTranslation('whatsapp_msg_type_4_confirmation_title') + `*\n\n- ` + getTranslation('whatsapp_msg_type_4_date') + `: ${dateCell}\n- ` + getTranslation('whatsapp_msg_type_4_time') + `: ${heureCell}:${minCell}\n- ` + getTranslation('whatsapp_msg_type_4_location') + `: ${lieuCell}\n- ` + getTranslation('whatsapp_msg_type_4_work') + `: ${travailCell}\n\n` + getTranslation('whatsapp_msg_type_4_part2'); // Traduire
-                     break;
+                    // Récupérer l'ID de l'événement depuis la ligne
+                    const eventId = row.getAttribute('data-event-id') || row.querySelector('[data-column="ID"]')?.textContent?.trim();
+
+                    let travailValue = getTranslation('work_not_specified');
+
+                    // Si on a un ID d'événement, chercher le Travail dans Supabase
+                    if (eventId) {
+                        try {
+                            const { data, error } = await supabase
+                                .from('event_quot1_fran')
+                                .select('Travail')
+                                .eq('id', eventId)
+                                .single();
+
+                            if (!error && data && data.Travail) {
+                                travailValue = data.Travail;
+                            } else {
+                                console.warn(getTranslation('log_work_not_found_supabase'), eventId, error);
+                                // Fallback sur la valeur du tableau si disponible
+                                const travailCell = row.querySelector('[data-column="Travail"]')?.textContent?.trim();
+                                if (travailCell) {
+                                    travailValue = travailCell;
+                                }
+                            }
+                        } catch (error) {
+                            console.error(getTranslation('error_fetching_work_supabase'), error);
+                            // Fallback sur la valeur du tableau
+                            const travailCell = row.querySelector('[data-column="Travail"]')?.textContent?.trim();
+                            if (travailCell) {
+                                travailValue = travailCell;
+                            }
+                        }
+                    } else {
+                        // Fallback si pas d'ID - utiliser la colonne du tableau
+                        const travailCell = row.querySelector('[data-column="Travail"]')?.textContent?.trim();
+                        if (travailCell) {
+                            travailValue = travailCell;
+                        }
+                    }
+
+                    mensaje = getTranslation('whatsapp_msg_type_4_part1') + `\n\n*` + getTranslation('whatsapp_msg_type_4_confirmation_title') + `*\n\n- ` + getTranslation('whatsapp_msg_type_4_date') + `: ${dateCell}\n- ` + getTranslation('whatsapp_msg_type_4_time') + `: ${heureCell}:${minCell}\n- ` + getTranslation('whatsapp_msg_type_4_location') + `: ${lieuCell}\n- ` + getTranslation('whatsapp_msg_type_4_work') + `: ${travailValue}\n\n` + getTranslation('whatsapp_msg_type_4_part2');
+                    break;
              }
 
              let whatsappUrl = `https://api.whatsapp.com/send?phone=${téléphone}&text=${encodeURIComponent(mensaje)}`;
