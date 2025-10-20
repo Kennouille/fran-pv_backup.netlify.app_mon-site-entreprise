@@ -127,8 +127,7 @@ function displayEmployeeStats(data, year, month, employee) {
     const monthlyTotal = calculateMonthlyTotal(data);
 
     displayDailyHours(hoursByDay, employee, year, month);
-    displayWeeklyHours(hoursByWeek, employee);
-    displayMonthlyHours(monthlyTotal, employee, month, year);
+
 }
 
 // Calculer les heures par jour (version simplifiée)
