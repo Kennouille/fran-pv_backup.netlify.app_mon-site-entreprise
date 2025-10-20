@@ -540,6 +540,7 @@
         }
 
         function calculateRelativeMonthlyDate(baseDate, weekOfMonth, dayOfWeek) {
+            const today = normalizeToMidnight(new Date());
             const year = baseDate.getFullYear();
             const month = baseDate.getMonth();
 
@@ -584,10 +585,15 @@
                 }
             }
 
+            // 🔥 CORRECTION : Si la date trouvée est déjà passée, on passe au mois suivant
+            if (foundDate && foundDate < today) {
+                // On recalcule pour le mois suivant
+                const nextMonth = new Date(year, month + 1, 1);
+                return calculateRelativeMonthlyDate(nextMonth, weekOfMonth, dayOfWeek);
+            }
+
             return foundDate;
         }
-
-
 
         function generateRecurrenceDates(startDate, rule) {
             const results = [];
@@ -667,6 +673,8 @@
 
                     if (targetDate && targetDate <= endDate) {
                         results.push(formatDateLocal(targetDate));
+                    } else if (!targetDate) {
+                        console.log("Aucune date valide trouvée pour le mois:", formatDateLocal(current));
                     }
                     current.setMonth(current.getMonth() + 1);
                 }
