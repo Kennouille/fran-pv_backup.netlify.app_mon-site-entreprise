@@ -261,9 +261,8 @@ function displayDailyHours(hoursByDay, employee, year, month) {
         html += `<div class="week-days">`;
 
         // Afficher les 7 jours de la semaine
-        for (let i = 0; i < 7; i++) {
-            const day = week.days[i];
-            if (day) {
+        week.days.forEach(day => {
+            if (day.inMonth) {
                 html += `
                     <div class="week-day">
                         <div class="day-name">${day.dayName}</div>
@@ -274,7 +273,7 @@ function displayDailyHours(hoursByDay, employee, year, month) {
             } else {
                 html += `<div class="week-day empty"></div>`;
             }
-        }
+        });
 
         html += `</div></div>`;
     });
@@ -284,21 +283,27 @@ function displayDailyHours(hoursByDay, employee, year, month) {
     document.getElementById('employeeDailyHours').innerHTML = html;
 }
 
-// Grouper les jours par semaine
+// Grouper les jours par semaine avec les jours vides en début de mois
 function groupDaysByWeek(hoursByDay, year, month) {
     const weeks = {};
     const monthInt = parseInt(month);
     const yearInt = parseInt(year);
 
-    // Obtenir tous les jours du mois
-    const daysInMonth = new Date(yearInt, monthInt, 0).getDate();
+    // Obtenir le premier jour du mois
+    const firstDay = new Date(yearInt, monthInt - 1, 1);
+    const lastDay = new Date(yearInt, monthInt, 0);
 
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${yearInt}-${monthInt.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        const dateObj = new Date(yearInt, monthInt - 1, day);
+    // Trouver le lundi de la semaine qui contient le 1er du mois
+    const weekStart = new Date(firstDay);
+    while (weekStart.getDay() !== 1) { // 1 = lundi
+        weekStart.setDate(weekStart.getDate() - 1);
+    }
 
-        // Obtenir la semaine
-        const weekNumber = getWeekNumberLocal(dateObj);
+    let currentDate = new Date(weekStart);
+
+    // Parcourir toutes les semaines du mois
+    while (currentDate <= lastDay || currentDate.getMonth() === monthInt - 1) {
+        const weekNumber = getWeekNumberLocal(currentDate);
         const weekKey = `Semaine ${weekNumber}`;
 
         if (!weeks[weekKey]) {
@@ -308,18 +313,49 @@ function groupDaysByWeek(hoursByDay, year, month) {
             };
         }
 
-        const dayName = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
-        const formattedDate = dateObj.toLocaleDateString('fr-FR');
-        const hours = hoursByDay[dateStr] || 0;
+        // Ajouter les 7 jours de la semaine
+        for (let i = 0; i < 7; i++) {
+            const currentDay = new Date(currentDate);
+            currentDay.setDate(currentDate.getDate() + i);
 
-        weeks[weekKey].days.push({
-            dateStr: dateStr,
-            dayName: dayName,
-            dayNumber: day,
-            formattedDate: formattedDate,
-            hours: hours
-        });
+            // Vérifier si le jour est dans le mois sélectionné
+            if (currentDay.getMonth() === monthInt - 1 && currentDay.getFullYear() === yearInt) {
+                const dateStr = `${yearInt}-${monthInt.toString().padStart(2, '0')}-${currentDay.getDate().toString().padStart(2, '0')}`;
+                const dayName = currentDay.toLocaleDateString('fr-FR', { weekday: 'short' });
+                const hours = hoursByDay[dateStr] || 0;
+
+                weeks[weekKey].days.push({
+                    dateStr: dateStr,
+                    dayName: dayName,
+                    dayNumber: currentDay.getDate(),
+                    formattedDate: currentDay.toLocaleDateString('fr-FR'),
+                    hours: hours,
+                    inMonth: true
+                });
+            } else {
+                // Jour hors du mois (vide)
+                weeks[weekKey].days.push({
+                    dateStr: '',
+                    dayName: '',
+                    dayNumber: '',
+                    formattedDate: '',
+                    hours: 0,
+                    inMonth: false
+                });
+            }
+        }
+
+        // Passer à la semaine suivante
+        currentDate.setDate(currentDate.getDate() + 7);
     }
+
+    // Convertir en tableau et trier par semaine
+    return Object.values(weeks).sort((a, b) => {
+        const weekA = parseInt(a.weekLabel.replace('Semaine ', ''));
+        const weekB = parseInt(b.weekLabel.replace('Semaine ', ''));
+        return weekA - weekB;
+    });
+}
 
     // Convertir en tableau et trier par semaine
     return Object.values(weeks).sort((a, b) => {

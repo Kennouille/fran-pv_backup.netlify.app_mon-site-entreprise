@@ -15,8 +15,8 @@ body {
 }
 
 .container {
-    width: 80%;
-    max-width: 600px;
+    width: 95%; /* Augmenté de 80% à 95% */
+    max-width: 1200px; /* Augmenté de 600px à 1200px */
     padding: 20px;
     border-radius: 8px;
     background-color: #fff;
@@ -90,7 +90,7 @@ ul, ol {
 }
 
 #eventsByPerson, #topClients {
-    margin-top: 30px; /* Ajout d'espace entre les sections */
+    margin-top: 30px;
 }
 
 .employee-stats {
@@ -123,40 +123,6 @@ ul, ol {
     margin-top: 1rem;
 }
 
-.daily-hours-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.day-item {
-    display: flex;
-    flex-direction: column;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: white;
-    text-align: center;
-}
-
-.day-name {
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-.day-hours {
-    color: #007bff;
-    font-weight: bold;
-    font-size: 1.2em;
-    margin: 0.3rem 0;
-}
-
-.day-date {
-    font-size: 0.8em;
-    color: #666;
-}
-
 .employee-results h4 {
     margin-top: 1rem;
     color: #333;
@@ -164,124 +130,7 @@ ul, ol {
     padding-bottom: 0.5rem;
 }
 
-.week-section {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f8f9fa;
-}
-
-.week-section h5 {
-    margin: 0 0 1rem 0;
-    color: #2c3e50;
-    font-size: 1.1em;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 0.5rem;
-}
-
-.week-days-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
-}
-
-.week-day-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.5rem;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    background-color: white;
-    text-align: center;
-}
-
-.day-header {
-    font-weight: bold;
-    font-size: 0.9em;
-    margin-bottom: 0.3rem;
-    color: #2c3e50;
-}
-
-.day-hours {
-    color: #e74c3c;
-    font-weight: bold;
-    font-size: 1.1em;
-    margin: 0.3rem 0;
-}
-
-.day-date {
-    font-size: 0.8em;
-    color: #7f8c8d;
-}
-
-/* Responsive pour petits écrans */
-@media (max-width: 768px) {
-    .week-days-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .week-days-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.horizontal-weeks-table {
-    overflow-x: auto;
-    margin-top: 1rem;
-}
-
-.weeks-table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: white;
-}
-
-.week-headers th {
-    background-color: #3498db;
-    color: white;
-    padding: 0.8rem;
-    text-align: center;
-    border: 1px solid #2980b9;
-}
-
-.day-label {
-    background-color: #f8f9fa;
-    font-weight: bold;
-    padding: 0.5rem;
-    text-align: center;
-    border: 1px solid #dee2e6;
-    min-width: 60px;
-}
-
-.day-cell {
-    border: 1px solid #dee2e6;
-    padding: 0.5rem;
-    text-align: center;
-    min-width: 80px;
-    height: 60px;
-    vertical-align: top;
-}
-
-.day-cell.empty {
-    background-color: #f8f9fa;
-}
-
-.day-number {
-    font-weight: bold;
-    font-size: 1.1em;
-    margin-bottom: 0.2rem;
-}
-
-.day-hours {
-    color: #e74c3c;
-    font-weight: bold;
-    font-size: 1em;
-}
-
+/* Styles pour l'affichage horizontal des semaines */
 .weeks-rows-container {
     display: flex;
     flex-direction: column;
@@ -308,6 +157,8 @@ ul, ol {
     display: flex;
     gap: 0.5rem;
     flex: 1;
+    flex-wrap: nowrap; /* Empêche le retour à la ligne */
+    overflow-x: auto; /* Permet le scroll horizontal si nécessaire */
 }
 
 .week-day {
@@ -319,6 +170,8 @@ ul, ol {
     border-radius: 4px;
     background-color: white;
     min-width: 70px;
+    text-align: center;
+    flex-shrink: 0; /* Empêche la réduction de taille */
 }
 
 .week-day.empty {
@@ -342,4 +195,33 @@ ul, ol {
     color: #e74c3c;
     font-weight: bold;
     font-size: 0.9em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        width: 98%;
+        max-width: none;
+        padding: 15px;
+    }
+
+    .week-days {
+        flex-wrap: nowrap; /* Garde l'horizontal même sur mobile */
+    }
+
+    .week-day {
+        min-width: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .week-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .week-days {
+        width: 100%;
+        flex-wrap: wrap; /* Permet le retour à la ligne sur très petits écrans */
+    }
 }
