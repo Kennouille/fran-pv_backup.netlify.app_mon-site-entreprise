@@ -407,6 +407,19 @@
       </button>
     </div>
 
+    <div id="info-popup" style="
+      display:none;position:fixed;top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      background:#333;color:#fff;padding:20px;border-radius:8px;
+      max-width:400px;text-align:center;z-index:2000;">
+      <p>Ce site utilise uniquement des cookies essentiels pour assurer son bon fonctionnement.
+      Aucune donnée n’est partagée à des tiers.</p>
+      <button id="close-popup" style="
+        margin-top:10px;padding:6px 12px;
+        background:#4caf50;border:none;color:white;
+        cursor:pointer;border-radius:4px;">Fermer</button>
+    </div>
+
     <script type="module" src="auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -510,6 +523,15 @@
           document.getElementById('decline-cookies').onclick = () => {
             localStorage.setItem('cookiesAccepted','false');
             banner.style.display='none';
+          };
+
+          // 👇 Afficher la boîte personnalisée
+          document.querySelector('#cookie-banner a').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('info-popup').style.display = 'block';
+          });
+          document.getElementById('close-popup').onclick = () => {
+            document.getElementById('info-popup').style.display = 'none';
           };
         })();
 
