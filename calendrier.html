@@ -3836,6 +3836,54 @@
             }
         });
 
+        // Gestion du changement automatique Nom input/select
+        document.getElementById('Téléphone').addEventListener('input', async function() {
+            const telephone = this.value.trim();
+            const nomSelect = document.getElementById('Nom');
+            const nomInput = document.getElementById('Nom-input');
+
+            if (telephone.length >= 3) {
+                // Recherche des noms existants pour ce téléphone
+                const { data: existingNames, error } = await supabase
+                    .from('tableData1_fran')
+                    .select('Nom')
+                    .eq('Téléphone', telephone)
+                    .not('Nom', 'is', null);
+
+                if (error) {
+                    console.error('Erreur recherche noms:', error);
+                    return;
+                }
+
+                // Extraire les noms uniques
+                const uniqueNames = [...new Set(existingNames.map(item => item.Nom))].filter(Boolean);
+
+                if (uniqueNames.length > 0) {
+                    // Afficher le select et masquer l'input
+                    nomSelect.innerHTML = '<option value="" data-i18n="select_name">-- Sélectionner un nom --</option>';
+
+                    uniqueNames.forEach(nom => {
+                        const option = document.createElement('option');
+                        option.value = nom;
+                        option.textContent = nom;
+                        nomSelect.appendChild(option);
+                    });
+
+                    nomSelect.style.display = 'block';
+                    nomInput.style.display = 'none';
+                } else {
+                    // Afficher l'input et masquer le select
+                    nomSelect.style.display = 'none';
+                    nomInput.style.display = 'block';
+                }
+            } else {
+                // Réinitialiser si téléphone trop court
+                nomSelect.style.display = 'none';
+                nomInput.style.display = 'block';
+                nomSelect.innerHTML = '<option value="" data-i18n="select_name">-- Sélectionner un nom --</option>';
+            }
+        });
+
         // Fonction générique pour la géolocalisation et l'enregistrement
         async function handleCheckinCheckout(row, type) {
           try {
@@ -7062,7 +7110,10 @@
             <div class="form-container">
                 <h2 data-i18n="new_event_heading">Nouvel événement</h2>
                 <input type="text" id="Téléphone" placeholder="Téléphone" data-i18n-placeholder="placeholder_phone">
-                <input type="text" id="Nom" placeholder="Nom" data-i18n-placeholder="placeholder_name">
+                <select id="Nom" style="display: none;">
+                    <option value="" data-i18n="select_name">-- Sélectionner un nom --</option>
+                </select>
+                <input type="text" id="Nom-input" placeholder="Nom" data-i18n-placeholder="placeholder_name" style="display: block;">
                 <input type="date" id="Date">
                 <select id="Heure">
                     <option value="7h">7h</option>
