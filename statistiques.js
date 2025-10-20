@@ -245,18 +245,31 @@ function calculateMonthlyTotal(data) {
     }, 0);
 }
 
-// Afficher les heures par jour avec les semaines en lignes
+// Afficher les heures par jour avec les totaux
 function displayDailyHours(hoursByDay, employee, year, month) {
     let html = `<h4>Heures par jour pour ${employee} :</h4>`;
 
     // Grouper les jours par semaine
     const weeks = groupDaysByWeek(hoursByDay, year, month);
 
-    html += `<div class="weeks-rows-container">`;
+    html += `<div class="weeks-with-totals">`;
+    html += `<div class="weeks-header">`;
+    html += `<div class="days-section">Jours</div>`;
+    html += `<div class="total-section">Total heures par semaine</div>`;
+    html += `</div>`;
+
+    let monthlyTotal = 0;
 
     // Afficher chaque semaine en ligne
     weeks.forEach(week => {
-        html += `<div class="week-row">`;
+        // Calculer le total de la semaine
+        const weekTotal = week.days.reduce((total, day) => total + (day.hours || 0), 0);
+        monthlyTotal += weekTotal;
+
+        html += `<div class="week-row-with-total">`;
+
+        // Section jours
+        html += `<div class="days-section">`;
         html += `<div class="week-label">${week.weekLabel}</div>`;
         html += `<div class="week-days">`;
 
@@ -276,8 +289,26 @@ function displayDailyHours(hoursByDay, employee, year, month) {
         });
 
         html += `</div></div>`;
+
+        // Section total hebdomadaire
+        html += `<div class="total-section">`;
+        html += `<div class="weekly-total">${weekTotal.toFixed(1)}h</div>`;
+        html += `</div>`;
+
+        html += `</div>`;
     });
 
+    html += `</div>`;
+
+    // Total mensuel
+    const monthNames = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    const monthName = monthNames[parseInt(month) - 1];
+
+    html += `<div class="monthly-total">`;
+    html += `<strong>Total mensuel pour ${employee} : ${monthName} ${year}</strong> : ${monthlyTotal.toFixed(1)} heures`;
     html += `</div>`;
 
     document.getElementById('employeeDailyHours').innerHTML = html;
