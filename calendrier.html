@@ -3836,11 +3836,10 @@
             }
         });
 
-        // Gestion du changement automatique Nom input/select
+        // Gestion du changement automatique des suggestions de noms
         document.getElementById('Téléphone').addEventListener('input', async function() {
             const telephone = this.value.trim();
-            const nomSelect = document.getElementById('Nom');
-            const nomInput = document.getElementById('Nom-input');
+            const datalist = document.getElementById('noms-list');
 
             if (telephone.length >= 3) {
                 // Recherche des noms existants pour ce téléphone
@@ -3855,32 +3854,22 @@
                     return;
                 }
 
-                // Extraire les noms uniques
+                // Vider la datalist
+                datalist.innerHTML = '';
+
+                // Extraire les noms uniques et ajouter à la datalist
                 const uniqueNames = [...new Set(existingNames.map(item => item.Nom))].filter(Boolean);
 
-                if (uniqueNames.length > 0) {
-                    // Afficher le select et masquer l'input
-                    nomSelect.innerHTML = '<option value="" data-i18n="select_name">-- Sélectionner un nom --</option>';
+                uniqueNames.forEach(nom => {
+                    const option = document.createElement('option');
+                    option.value = nom;
+                    datalist.appendChild(option);
+                });
 
-                    uniqueNames.forEach(nom => {
-                        const option = document.createElement('option');
-                        option.value = nom;
-                        option.textContent = nom;
-                        nomSelect.appendChild(option);
-                    });
-
-                    nomSelect.style.display = 'block';
-                    nomInput.style.display = 'none';
-                } else {
-                    // Afficher l'input et masquer le select
-                    nomSelect.style.display = 'none';
-                    nomInput.style.display = 'block';
-                }
+                console.log(`${uniqueNames.length} noms trouvés pour le téléphone ${telephone}`);
             } else {
-                // Réinitialiser si téléphone trop court
-                nomSelect.style.display = 'none';
-                nomInput.style.display = 'block';
-                nomSelect.innerHTML = '<option value="" data-i18n="select_name">-- Sélectionner un nom --</option>';
+                // Vider la datalist si téléphone trop court
+                datalist.innerHTML = '';
             }
         });
 
@@ -7110,10 +7099,10 @@
             <div class="form-container">
                 <h2 data-i18n="new_event_heading">Nouvel événement</h2>
                 <input type="text" id="Téléphone" placeholder="Téléphone" data-i18n-placeholder="placeholder_phone">
-                <select id="Nom" style="display: none;">
-                    <option value="" data-i18n="select_name">-- Sélectionner un nom --</option>
-                </select>
-                <input type="text" id="Nom-input" placeholder="Nom" data-i18n-placeholder="placeholder_name" style="display: block;">
+                <input type="text" id="Nom" list="noms-list" placeholder="Nom" data-i18n-placeholder="placeholder_name">
+                <datalist id="noms-list">
+                    <!-- Les options seront ajoutées dynamiquement -->
+                </datalist>
                 <input type="date" id="Date">
                 <select id="Heure">
                     <option value="7h">7h</option>
