@@ -3387,7 +3387,7 @@
         }
 
         // -------------------------------------------------------------------------
-        // FORMULAIRE NOUVEL EVENEMENT
+        // FORMULAIRE nouvel événement
         // -------------------------------------------------------------------------
 
         document.getElementById('addEventButton').addEventListener('click', async function() {
@@ -3409,6 +3409,9 @@
             // Nouvelles colonnes pour les photos
             const photo_avant_url = document.getElementById('PhotoAvant') ? document.getElementById('PhotoAvant').value || null : null;
             const photo_apres_url = document.getElementById('PhotoApres') ? document.getElementById('PhotoApres').value || null : null;
+
+            // Récupération de la valeur de la case à cocher pour les photos obligatoires
+            const obligation_photo = document.getElementById('obligationPhotoCheckbox') ? document.getElementById('obligationPhotoCheckbox').checked : false;
 
 
             // 🔹 Récupération des infos de récurrence
@@ -3512,6 +3515,7 @@
                         payé: payé,
                         photo_avant_url: photo_avant_url || existingData[0].photo_avant_url,
                         photo_apres_url: photo_apres_url || existingData[0].photo_apres_url,
+                        obligation_photo: obligation_photo,
                         recurrence_rule: recurrence_rule ? JSON.stringify(recurrence_rule) : existingData[0].recurrence_rule || null
                     })
                     .eq('Téléphone', téléphone);
@@ -3544,6 +3548,7 @@
                         payé: payé,
                         photo_avant_url: photo_avant_url,
                         photo_apres_url: photo_apres_url,
+                        obligation_photo: obligation_photo,
                         recurrence_rule: recurrence_rule ? JSON.stringify(recurrence_rule) : null
                     }]);
 
@@ -3594,6 +3599,7 @@
                         user_id: eventId, // ⚡️ id unique par événement
                         photo_avant_url: photo_avant_url,
                         photo_apres_url: photo_apres_url,
+                        obligation_photo: obligation_photo,
                         recurrence_rule: recurrence_rule ? JSON.stringify(recurrence_rule) : null,
                         recurrence_id: recurrenceId // ✅ identique pour toute la série
                     }]);
@@ -4482,6 +4488,17 @@
                         <td data-column="Observations">
                             <textarea class="observation-text"
                                       data-field="observations">${event.Observations || ''}</textarea>
+
+                            <!-- Case à cocher pour photos obligatoires -->
+                            <div class="obligation-photo-check" style="margin: 8px 0;">
+                                <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;">
+                                    <input type="checkbox" class="obligation-photo-checkbox"
+                                           data-user-id="${event.user_id}"
+                                           ${event.obligation_photo ? 'checked' : ''}>
+                                    Photos obligatoire
+                                </label>
+                            </div>
+
                             <div class="photo-buttons">
                                 <button type="button" class="btn-photo" data-type="avant" data-user-id="${event.user_id}">
                                     ${getTranslation('photo_before')}
@@ -4805,6 +4822,26 @@
                                 });
 
                                 input.click(); // Ouvre la caméra / sélecteur fichier
+                            });
+                        });
+
+                        // Activer les cases à cocher "Photos obligatoire"
+                        row.querySelectorAll('.obligation-photo-checkbox').forEach(checkbox => {
+                            checkbox.addEventListener('change', async () => {
+                                const userId = checkbox.dataset.userId;
+                                const obligationPhoto = checkbox.checked;
+
+                                // Mettre à jour dans event_quot1_fran
+                                const { error } = await supabase
+                                    .from('event_quot1_fran')
+                                    .update({ obligation_photo: obligationPhoto })
+                                    .eq('user_id', userId);
+
+                                if (error) {
+                                    console.error("Erreur mise à jour obligation_photo:", error);
+                                } else {
+                                    console.log("✅ Obligation photo mise à jour:", obligationPhoto);
+                                }
                             });
                         });
 
@@ -7191,6 +7228,15 @@
                         <option value="">-- Sélectionner un employé --</option>
                         <!-- Les options seront ajoutées dynamiquement par JavaScript -->
                     </select>
+                </div>
+                <!-- Photos obligatoire -->
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="obligationPhotoCheckbox">
+                            Photos obligatoire
+                        </label>
+                    </div>
                 </div>
 
 
