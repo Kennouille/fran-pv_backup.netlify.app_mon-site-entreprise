@@ -377,14 +377,44 @@
         // Fonction pour envoyer l'email avec les photos
         async function sendPhotosEmail(event) {
             try {
+                // Préparer le contenu des photos
+                let photosContent = '';
+
+                if (event.photo_avant_url || event.photo_apres_url) {
+                    photosContent = '<h3>📸 Photos jointes :</h3><div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+
+                    if (event.photo_avant_url) {
+                        photosContent += `
+                            <div style="flex: 1; min-width: 200px;">
+                                <h4>Photo Avant</h4>
+                                <img src="${event.photo_avant_url}" alt="Photo avant" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                        `;
+                    }
+
+                    if (event.photo_apres_url) {
+                        photosContent += `
+                            <div style="flex: 1; min-width: 200px;">
+                                <h4>Photo Après</h4>
+                                <img src="${event.photo_apres_url}" alt="Photo après" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                        `;
+                    }
+
+                    photosContent += '</div>';
+                }
+
+                // ⚠️ ASSUREZ-VOUS que toutes ces variables sont bien envoyées :
                 await emailjs.send("service_zh7myzj", "template_q9ce0fk", {
-                    type: "photos",
+                    custom_title: "📸 PHOTOS CLIENT - INTERVENTION 📸",
+                    custom_message: "Voici les photos de l'intervention :",
                     employe: event.Ajouté_pour,
+                    telephone: event.Téléphone,
                     date: event.Date,
                     heure: event.Heure,
                     lieu: event.Lieu,
-                    photo_avant_url: event.photo_avant_url || "",
-                    photo_apres_url: event.photo_apres_url || ""
+                    photos_content: photosContent,  // ⬅️ Doit contenir le HTML des photos
+                    footer_message: ""  // ⬅️ Vide pour les photos
                 });
 
                 showTemporaryMessage("✅ " + getTranslation('photos_sent_success'));
@@ -5248,13 +5278,18 @@
                                 event.alert_status = "active";
                                 alertButton.style.backgroundColor = "red";
 
+                                // POUR LES ALERTES - MODIFIEZ COMME ÇA :
                                 emailjs.send("service_zh7myzj", "template_q9ce0fk", {
-                                  type: "alert",
-                                  employe: event.Ajouté_pour,
-                                  telephone: event.Téléphone,
-                                  date: event.Date,
-                                  heure: event.Heure,
-                                  lieu: event.Lieu
+                                    custom_title: "🚨 ALERTE CLIENT - ACTION REQUISE 🚨",
+                                    custom_message: "Un client nécessite une attention immédiate :",
+                                    employe: event.Ajouté_pour,
+                                    telephone: event.Téléphone,
+                                    date: event.Date,
+                                    heure: event.Heure,
+                                    lieu: event.Lieu,
+                                    photos_content: "",  // ← VIDE pour les alertes
+                                    footer_message: "Merci de prendre contact avec moi dans les plus brefs délais."
+
                                 }).then(
                                   function(response) {
                                     showTemporaryMessage("🚨 " + getTranslation("alert_sent_success"));
