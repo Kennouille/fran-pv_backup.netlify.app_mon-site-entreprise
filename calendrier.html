@@ -3839,12 +3839,13 @@
         // Gestion du changement automatique des suggestions de noms
         document.getElementById('Téléphone').addEventListener('input', async function() {
             const telephone = this.value.trim();
-            const datalist = document.getElementById('noms-list');
+            const nomSelect = document.getElementById('Nom');
+            const nomInput = document.getElementById('Nom-input');
 
             if (telephone.length >= 3) {
-                // Recherche dans TOUS les événements (event_quot1_fran)
+                // Recherche des noms existants
                 const { data: existingNames, error } = await supabase
-                    .from('event_quot1_fran')  // ← CHANGEMENT ICI
+                    .from('event_quot1_fran')
                     .select('Nom')
                     .eq('Téléphone', telephone)
                     .not('Nom', 'is', null);
@@ -3854,22 +3855,32 @@
                     return;
                 }
 
-                // Vider la datalist
-                datalist.innerHTML = '';
-
-                // Extraire les noms uniques et ajouter à la datalist
+                // Extraire les noms uniques
                 const uniqueNames = [...new Set(existingNames.map(item => item.Nom))].filter(Boolean);
 
-                uniqueNames.forEach(nom => {
-                    const option = document.createElement('option');
-                    option.value = nom;
-                    datalist.appendChild(option);
-                });
+                if (uniqueNames.length > 0) {
+                    // Afficher le select avec la flèche
+                    nomSelect.innerHTML = '<option value="">-- Choisir un nom --</option>';
 
-                console.log(`${uniqueNames.length} noms trouvés pour le téléphone ${telephone}:`, uniqueNames);
+                    uniqueNames.forEach(nom => {
+                        const option = document.createElement('option');
+                        option.value = nom;
+                        option.textContent = nom;
+                        nomSelect.appendChild(option);
+                    });
+
+                    nomSelect.style.display = 'block';
+                    nomInput.style.display = 'none';
+                } else {
+                    // Afficher l'input normal
+                    nomSelect.style.display = 'none';
+                    nomInput.style.display = 'block';
+                }
             } else {
-                // Vider la datalist si téléphone trop court
-                datalist.innerHTML = '';
+                // Réinitialiser
+                nomSelect.style.display = 'none';
+                nomInput.style.display = 'block';
+                nomSelect.innerHTML = '<option value="">-- Choisir un nom --</option>';
             }
         });
 
@@ -7099,10 +7110,10 @@
             <div class="form-container">
                 <h2 data-i18n="new_event_heading">Nouvel événement</h2>
                 <input type="text" id="Téléphone" placeholder="Téléphone" data-i18n-placeholder="placeholder_phone">
-                <input type="text" id="Nom" list="noms-list" placeholder="Nom" data-i18n-placeholder="placeholder_name">
-                <datalist id="noms-list">
-                    <!-- Les options seront ajoutées dynamiquement -->
-                </datalist>
+                <select id="Nom" style="display: none;">
+                    <option value="">-- Choisir un nom --</option>
+                </select>
+                <input type="text" id="Nom-input" placeholder="Nom" data-i18n-placeholder="placeholder_name" style="display: block;">
                 <input type="date" id="Date">
                 <select id="Heure">
                     <option value="7h">7h</option>
