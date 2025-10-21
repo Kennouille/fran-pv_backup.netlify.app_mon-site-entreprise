@@ -3842,9 +3842,9 @@
             const datalist = document.getElementById('noms-list');
 
             if (telephone.length >= 3) {
-                // Recherche des noms existants pour ce téléphone
+                // Recherche dans TOUS les événements (event_quot1_fran)
                 const { data: existingNames, error } = await supabase
-                    .from('tableData1_fran')
+                    .from('event_quot1_fran')  // ← CHANGEMENT ICI
                     .select('Nom')
                     .eq('Téléphone', telephone)
                     .not('Nom', 'is', null);
@@ -3866,7 +3866,7 @@
                     datalist.appendChild(option);
                 });
 
-                console.log(`${uniqueNames.length} noms trouvés pour le téléphone ${telephone}`);
+                console.log(`${uniqueNames.length} noms trouvés pour le téléphone ${telephone}:`, uniqueNames);
             } else {
                 // Vider la datalist si téléphone trop court
                 datalist.innerHTML = '';
