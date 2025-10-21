@@ -3808,11 +3808,32 @@
             }
         });
 
-        // Gestion du changement automatique des suggestions de noms
+        // Gestion du bouton "Nouveau nom"
+        document.getElementById('toggle-nom-btn').addEventListener('click', function() {
+            const nomSelect = document.getElementById('Nom');
+            const nomInput = document.getElementById('Nom-input');
+
+            if (nomSelect.style.display === 'block') {
+                // Passer en mode "nouveau nom"
+                nomSelect.style.display = 'none';
+                nomInput.style.display = 'block';
+                nomInput.value = '';
+                nomInput.focus();
+                this.textContent = '← Choisir';
+            } else {
+                // Revenir au select
+                nomSelect.style.display = 'block';
+                nomInput.style.display = 'none';
+                this.textContent = '+ Nouveau';
+            }
+        });
+
+        // Modifiez aussi l'écouteur du téléphone pour gérer le bouton
         document.getElementById('Téléphone').addEventListener('input', async function() {
             const telephone = this.value.trim();
             const nomSelect = document.getElementById('Nom');
             const nomInput = document.getElementById('Nom-input');
+            const toggleBtn = document.getElementById('toggle-nom-btn');
 
             if (telephone.length >= 3) {
                 // Recherche des noms existants
@@ -3843,16 +3864,20 @@
 
                     nomSelect.style.display = 'block';
                     nomInput.style.display = 'none';
+                    toggleBtn.style.display = 'block';
+                    toggleBtn.textContent = '+ Nouveau';
                 } else {
-                    // Afficher l'input normal
+                    // Aucun nom trouvé - mode input par défaut
                     nomSelect.style.display = 'none';
                     nomInput.style.display = 'block';
+                    toggleBtn.style.display = 'none';
                 }
             } else {
                 // Réinitialiser
                 nomSelect.style.display = 'none';
                 nomInput.style.display = 'block';
                 nomSelect.innerHTML = '<option value="">-- Choisir un nom --</option>';
+                toggleBtn.style.display = 'none';
             }
         });
 
@@ -7111,10 +7136,13 @@
             <div class="form-container">
                 <h2 data-i18n="new_event_heading">Nouvel événement</h2>
                 <input type="text" id="Téléphone" placeholder="Téléphone" data-i18n-placeholder="placeholder_phone">
-                <select id="Nom" style="display: none;">
-                    <option value="">-- Choisir un nom --</option>
-                </select>
-                <input type="text" id="Nom-input" placeholder="Nom" data-i18n-placeholder="placeholder_name" style="display: block;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="Nom" style="display: none; flex: 1;">
+                        <option value="">-- Choisir un nom --</option>
+                    </select>
+                    <input type="text" id="Nom-input" placeholder="Nom" data-i18n-placeholder="placeholder_name" style="display: block; flex: 1;">
+                    <button type="button" id="toggle-nom-btn" style="white-space: nowrap; display: none;">+ Nouveau</button>
+                </div>
                 <input type="date" id="Date">
                 <select id="Heure">
                     <option value="7h">7h</option>
