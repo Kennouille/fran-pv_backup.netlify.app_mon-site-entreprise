@@ -374,6 +374,54 @@
             }
         });
 
+        // Fonction pour envoyer l'email avec les photos
+        async function sendPhotosEmail(event) {
+            try {
+                // Préparer le contenu HTML des photos
+                let photosHTML = '<h3>📸 Photos jointes :</h3><div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+
+                // Photo avant
+                if (event.photo_avant_url) {
+                    photosHTML += `
+                        <div style="flex: 1; min-width: 200px;">
+                            <h4>Photo Avant</h4>
+                            <img src="${event.photo_avant_url}" alt="Photo avant" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    `;
+                }
+
+                // Photo après
+                if (event.photo_apres_url) {
+                    photosHTML += `
+                        <div style="flex: 1; min-width: 200px;">
+                            <h4>Photo Après</h4>
+                            <img src="${event.photo_apres_url}" alt="Photo après" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    `;
+                }
+
+                photosHTML += '</div>';
+
+                // Envoyer l'email avec EmailJS
+                await emailjs.send("service_zh7myzj", "template_q9ce0fk", {
+                    type: "photos",
+                    employe: event.Ajouté_pour,
+                    date: event.Date,
+                    heure: event.Heure,
+                    lieu: event.Lieu,
+                    photos: photosHTML,
+                    custom_title: "📸 Photos - " + event.Ajouté_pour,
+                    custom_message: "Photos de l'intervention"
+                });
+
+                showTemporaryMessage("✅ " + getTranslation('photos_sent_success'));
+
+            } catch (error) {
+                console.error("❌ Erreur envoi photos:", error);
+                showTemporaryMessage("❌ " + getTranslation('photos_sent_error'));
+            }
+        }
+
         // Fonction pour scanner les récurrences qui se terminent bientôt
         async function scanEndingRecurrences() {
             console.log("🔍 Scan des récurrences en cours...");
@@ -4534,6 +4582,16 @@
                                             data-user-id="${event.user_id}">✖</span>
                                     </div>` : ''}
                             </div>
+
+                            <!-- BOUTON ENVOYER PHOTOS - ÉTAPE 1 -->
+                            ${(event.photo_avant_url || event.photo_apres_url) ? `
+                            <div class="send-photos-container" style="margin-top: 10px;">
+                                <button type="button" class="btn-send-photos"
+                                        data-event='${JSON.stringify(event)}'>
+                                    📸 ${getTranslation('send_photos')}
+                                </button>
+                            </div>
+                            ` : ''}
                         </td>
 
                         <!-- Nouvelle colonne Nombre d'heures ajoutée ici -->
@@ -4860,6 +4918,30 @@
                                 });
                             });
                         }
+
+                        // Gestion du bouton "Envoyer photos"
+                        document.querySelectorAll('.btn-send-photos').forEach(button => {
+                            button.addEventListener('click', function() {
+                                // Afficher la popup de confirmation
+                                const confirmationPopup = document.getElementById('confirmationPopup');
+                                confirmationPopup.style.display = 'block';
+
+                               document.getElementById('confirmYes').onclick = async function() {
+                                    confirmationPopup.style.display = 'none';
+
+                                    // Récupérer l'événement depuis le data attribute
+                                    const eventData = button.dataset.event;
+                                    const event = JSON.parse(eventData);
+
+                                    // Appeler la fonction d'envoi d'email
+                                    await sendPhotosEmail(event);
+                                };
+
+                                document.getElementById('confirmNo').onclick = function() {
+                                    confirmationPopup.style.display = 'none';
+                                };
+                            });
+                        });
 
                         // Ajout de l'événement pour permettre l'édition avec un double-clic
                         const lieuCell = row.querySelector('[data-column="Lieu"]');
@@ -5194,6 +5276,7 @@
                                 alertButton.style.backgroundColor = "red";
 
                                 emailjs.send("service_zh7myzj", "template_q9ce0fk", {
+                                  type: "alert",
                                   employe: event.Ajouté_pour,
                                   telephone: event.Téléphone,
                                   date: event.Date,

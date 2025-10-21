@@ -1496,3 +1496,19 @@ td[data-column="Observations"] {
     background-color: #c82333 !important;
     border-color: #bd2130 !important;
 }
+
+/* Style du bouton Envoyer photos */
+.btn-send-photos {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    width: 100%;
+}
+
+.btn-send-photos:hover {
+    background-color: #45a049;
+}
