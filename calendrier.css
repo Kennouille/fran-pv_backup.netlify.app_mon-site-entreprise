@@ -1486,3 +1486,13 @@ td[data-column="Observations"] {
     height: 18px;
     cursor: pointer;
 }
+.btn-photo.photo-obligatory {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+.btn-photo.photo-obligatory:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}

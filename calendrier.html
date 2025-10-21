@@ -4489,7 +4489,8 @@
                             <textarea class="observation-text"
                                       data-field="observations">${event.Observations || ''}</textarea>
 
-                            <!-- Case à cocher pour photos obligatoires -->
+                            <!-- Case à cocher pour photos obligatoires (seulement pour configuser) -->
+                            ${isConfigUser ? `
                             <div class="obligation-photo-check" style="margin: 8px 0;">
                                 <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;">
                                     <input type="checkbox" class="obligation-photo-checkbox"
@@ -4498,6 +4499,7 @@
                                     Photos obligatoire
                                 </label>
                             </div>
+                            ` : ''}
 
                             <div class="photo-buttons">
                                 <button type="button" class="btn-photo" data-type="avant" data-user-id="${event.user_id}">
@@ -4825,25 +4827,37 @@
                             });
                         });
 
-                        // Activer les cases à cocher "Photos obligatoire"
-                        row.querySelectorAll('.obligation-photo-checkbox').forEach(checkbox => {
-                            checkbox.addEventListener('change', async () => {
-                                const userId = checkbox.dataset.userId;
-                                const obligationPhoto = checkbox.checked;
+                        // Activer les cases à cocher "Photos obligatoire" (seulement pour configuser)
+                        if (isConfigUser) {
+                            row.querySelectorAll('.obligation-photo-checkbox').forEach(checkbox => {
+                                checkbox.addEventListener('change', async () => {
+                                    const userId = checkbox.dataset.userId;
+                                    const obligationPhoto = checkbox.checked;
 
-                                // Mettre à jour dans event_quot1_fran
-                                const { error } = await supabase
-                                    .from('event_quot1_fran')
-                                    .update({ obligation_photo: obligationPhoto })
-                                    .eq('user_id', userId);
+                                    // Mettre à jour la classe des boutons
+                                    const photoButtons = row.querySelectorAll('.btn-photo');
+                                    photoButtons.forEach(button => {
+                                        if (obligationPhoto) {
+                                            button.classList.add('photo-obligatory');
+                                        } else {
+                                            button.classList.remove('photo-obligatory');
+                                        }
+                                    });
 
-                                if (error) {
-                                    console.error("Erreur mise à jour obligation_photo:", error);
-                                } else {
-                                    console.log("✅ Obligation photo mise à jour:", obligationPhoto);
-                                }
+                                    // Mettre à jour dans event_quot1_fran
+                                    const { error } = await supabase
+                                        .from('event_quot1_fran')
+                                        .update({ obligation_photo: obligationPhoto })
+                                        .eq('user_id', userId);
+
+                                    if (error) {
+                                        console.error("Erreur mise à jour obligation_photo:", error);
+                                    } else {
+                                        console.log("✅ Obligation photo mise à jour:", obligationPhoto);
+                                    }
+                                });
                             });
-                        });
+                        }
 
                         // Ajout de l'événement pour permettre l'édition avec un double-clic
                         const lieuCell = row.querySelector('[data-column="Lieu"]');
