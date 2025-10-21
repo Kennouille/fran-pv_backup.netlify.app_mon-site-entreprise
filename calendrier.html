@@ -377,41 +377,14 @@
         // Fonction pour envoyer l'email avec les photos
         async function sendPhotosEmail(event) {
             try {
-                // Préparer le contenu HTML des photos
-                let photosHTML = '<h3>📸 Photos jointes :</h3><div style="display: flex; gap: 10px; flex-wrap: wrap;">';
-
-                // Photo avant
-                if (event.photo_avant_url) {
-                    photosHTML += `
-                        <div style="flex: 1; min-width: 200px;">
-                            <h4>Photo Avant</h4>
-                            <img src="${event.photo_avant_url}" alt="Photo avant" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                    `;
-                }
-
-                // Photo après
-                if (event.photo_apres_url) {
-                    photosHTML += `
-                        <div style="flex: 1; min-width: 200px;">
-                            <h4>Photo Après</h4>
-                            <img src="${event.photo_apres_url}" alt="Photo après" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                    `;
-                }
-
-                photosHTML += '</div>';
-
-                // Envoyer l'email avec EmailJS
                 await emailjs.send("service_zh7myzj", "template_q9ce0fk", {
                     type: "photos",
                     employe: event.Ajouté_pour,
                     date: event.Date,
                     heure: event.Heure,
                     lieu: event.Lieu,
-                    photos: photosHTML,
-                    custom_title: "📸 Photos - " + event.Ajouté_pour,
-                    custom_message: "Photos de l'intervention"
+                    photo_avant_url: event.photo_avant_url || "",
+                    photo_apres_url: event.photo_apres_url || ""
                 });
 
                 showTemporaryMessage("✅ " + getTranslation('photos_sent_success'));
