@@ -3651,34 +3651,6 @@
             let isCalendarGenerated = false;
             let isTodaySelected = false;
 
-
-            document.getElementById('Téléphone').addEventListener('input', async function() {
-                const téléphone = this.value;
-
-                if (téléphone) {
-                    // Requête pour récupérer les données de tableData1_fran où Téléphone correspond
-                    const { data, error } = await supabase
-                        .from('tableData1_fran')
-                        .select('Nom, Lieu')
-                        .eq('Téléphone', téléphone); // Comparer avec la colonne Téléphone
-
-                    if (error) {
-                        console.error(getTranslation('error_fetching_data'), error); // Traduire
-                    } else if (data.length > 0) {
-                        const { Nom, Lieu } = data[0];
-                        document.getElementById('Nom').value = Nom;
-                        document.getElementById('Lieu').value = Lieu;
-                    } else {
-                        // Si aucun résultat n'est trouvé, vider les champs
-                        document.getElementById('Nom').value = '';
-                        document.getElementById('Lieu').value = '';
-                    }
-                } else {
-                    // Si le champ de téléphone est vide, vider les champs
-                    document.getElementById('Nom').value = '';
-                    document.getElementById('Lieu').value = '';
-                }
-            });
         //--------------------------------------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------------------------------------
@@ -3881,6 +3853,35 @@
                 nomSelect.style.display = 'none';
                 nomInput.style.display = 'block';
                 nomSelect.innerHTML = '<option value="">-- Choisir un nom --</option>';
+            }
+        });
+
+        // Remplir l'adresse quand on choisit un nom dans le select
+        document.getElementById('Nom').addEventListener('change', async function() {
+            const nomSelectionne = this.value;
+            const telephone = document.getElementById('Téléphone').value.trim();
+
+            if (nomSelectionne && telephone) {
+                // Recherche de l'adresse la plus récente pour ce Nom + Téléphone
+                const { data: existingData, error } = await supabase
+                    .from('event_quot1_fran')
+                    .select('Lieu')
+                    .eq('Nom', nomSelectionne)
+                    .eq('Téléphone', telephone)
+                    .not('Lieu', 'is', null)
+                    .order('Date', { ascending: false })
+                    .limit(1);
+
+                if (error) {
+                    console.error('Erreur recherche adresse:', error);
+                    return;
+                }
+
+                if (existingData && existingData.length > 0 && existingData[0].Lieu) {
+                    document.getElementById('Lieu').value = existingData[0].Lieu;
+                } else {
+                    document.getElementById('Lieu').value = '';
+                }
             }
         });
 
