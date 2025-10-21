@@ -4502,10 +4502,12 @@
                             ` : ''}
 
                             <div class="photo-buttons">
-                                <button type="button" class="btn-photo" data-type="avant" data-user-id="${event.user_id}">
+                                <button type="button" class="btn-photo ${event.obligation_photo ? 'photo-obligatory' : ''}"
+                                        data-type="avant" data-user-id="${event.user_id}">
                                     ${getTranslation('photo_before')}
                                 </button>
-                                <button type="button" class="btn-photo" data-type="apres" data-user-id="${event.user_id}">
+                                <button type="button" class="btn-photo ${event.obligation_photo ? 'photo-obligatory' : ''}"
+                                        data-type="apres" data-user-id="${event.user_id}">
                                     ${getTranslation('photo_after')}
                                 </button>
                             </div>
